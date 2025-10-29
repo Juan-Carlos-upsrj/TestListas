@@ -30,6 +30,7 @@ const AttendanceTaker: React.FC<{
         }
     };
     
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             const keyMap: { [key: string]: AttendanceStatus } = {
@@ -47,7 +48,7 @@ const AttendanceTaker: React.FC<{
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentIndex, students]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [currentIndex, students]);
 
     if (!currentStudent) return null;
 

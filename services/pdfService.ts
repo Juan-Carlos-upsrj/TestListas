@@ -1,25 +1,9 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { Group, Student } from '../types';
-
-// The type for HookData seems to be causing issues with the current setup.
-// Defining a minimal interface for the hook data based on its usage in this file.
-interface HookData {
-  pageNumber: number;
-  settings: {
-    margin: {
-      left: number;
-      right: number;
-    }
-  };
-  // Add other properties from HookData if needed in the future, e.g., doc, table, pageCount, cursor
-}
-
-// Extend jsPDF with the autoTable plugin
-// FIX: Using an intersection type for better compatibility with class-based types, which resolves the errors about missing properties on the custom type.
-type jsPDFWithAutoTable = jsPDF & {
-  autoTable: (options: any) => jsPDF;
-};
+import PdfTemplate from '../components/PdfTemplate';
 
 interface ReportData {
   student: Student;
@@ -33,47 +17,73 @@ interface ReportData {
   };
 }
 
-export const exportReportToPDF = (group: Group, reportData: ReportData[]) => {
-  const doc = new jsPDF() as jsPDFWithAutoTable;
-  const tableColumn = ["#", "Matrícula", "Nombre", "Asistencia (%)", "Faltas", "Retardos", "Promedio"];
-  const tableRows: (string | number)[][] = [];
+export const exportReportToPDF = async (group: Group, reportData: ReportData[]) => {
+  // Create a temporary container for our template
+  const templateContainer = document.createElement('div');
+  templateContainer.style.position = 'absolute';
+  templateContainer.style.left = '-9999px'; // Position off-screen
+  document.body.appendChild(templateContainer);
 
-  reportData.forEach((data, index) => {
-    const rowData = [
-      index + 1,
-      data.student.matricula || '-',
-      data.student.name,
-      `${data.attendance.percentage.toFixed(1)}%`,
-      data.attendance.absent,
-      data.attendance.late,
-      data.grade.average,
-    ];
-    tableRows.push(rowData);
+  // Render the React component into the container
+  const root = ReactDOM.createRoot(templateContainer);
+  
+  // Use a promise to wait for the component to render
+  await new Promise<void>((resolve) => {
+    // FIX: A complex inline ref callback was causing TypeScript parsing errors.
+    // By defining the callback function separately, we simplify the JSX and resolve the cascading type and scope errors.
+    const onRender = (el: HTMLDivElement | null) => {
+      if (el) {
+        resolve();
+      }
+    };
+
+    // FIX: Replaced JSX with React.createElement to prevent parsing errors in a .ts file. Using JSX in a .ts file is not standard and was causing compilation errors.
+    root.render(
+      React.createElement(
+        React.StrictMode,
+        null,
+        React.createElement(PdfTemplate, { group, reportData, ref: onRender })
+      )
+    );
+  });
+  
+  // A brief timeout can help ensure all styles and images are loaded
+  await new Promise(resolve => setTimeout(resolve, 100));
+
+  const canvas = await html2canvas(templateContainer, {
+    scale: 2, // Higher scale for better quality
+    useCORS: true, 
   });
 
-  doc.autoTable({
-    head: [tableColumn],
-    body: tableRows,
-    startY: 35,
-    theme: 'striped',
-    headStyles: {
-      fillColor: [22, 163, 74] // green-600 color
-    },
-    didDrawPage: (data: HookData) => {
-      // Header
-      doc.setFontSize(20);
-      doc.setTextColor(40);
-      doc.text('Reporte de Desempeño Académico', 14, 22);
-      doc.setFontSize(12);
-      doc.text(`Grupo: ${group.name} - ${group.subject}`, 14, 30);
+  // Clean up the temporary container
+  root.unmount();
+  document.body.removeChild(templateContainer);
 
-      // Footer
-      const pageCount = doc.getNumberOfPages();
-      doc.setFontSize(10);
-      doc.text(`Página ${data.pageNumber} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
-      doc.text(new Date().toLocaleDateString('es-ES'), doc.internal.pageSize.width - data.settings.margin.right - 30, doc.internal.pageSize.height - 10);
-    },
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'pt',
+    format: 'a4',
   });
 
-  doc.save(`reporte_${group.name.replace(/\s/g, '_')}.pdf`);
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
+  const ratio = canvasWidth / canvasHeight;
+
+  let imgWidth = pdfWidth;
+  let imgHeight = imgWidth / ratio;
+  
+  // If the image is too tall for the page, scale it down.
+  if (imgHeight > pdfHeight) {
+      imgHeight = pdfHeight;
+      imgWidth = imgHeight * ratio;
+  }
+
+  const x = (pdfWidth - imgWidth) / 2;
+  const y = 0;
+
+  pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight);
+  pdf.save(`reporte_${group.name.replace(/\s/g, '_')}.pdf`);
 };
