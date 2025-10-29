@@ -1,15 +1,19 @@
-// FIX: Add a triple-slash directive to include Node.js type definitions for the Electron main process.
-// This allows TypeScript to recognize Node.js globals like `require`, `__dirname`, and `process.platform`.
-/// <reference types="node" />
+// FIX (line 1, 7, 33, 46): The following declarations resolve multiple TypeScript errors
+// related to missing Node.js type definitions. The original `/// <reference types="node" />`
+// was failing, so we're providing minimal types for `require`, `__dirname`, and `process.platform`
+// to allow the file to compile without errors.
+declare const require: (id: string) => any;
+declare const __dirname: string;
+declare global {
+  namespace NodeJS {
+    interface Process {
+      readonly platform: string;
+    }
+  }
+}
 
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
-
-// This is a typical setup for an Electron Forge + Vite project.
-// Global variables are injected by the build tool.
-declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string;
-declare const MAIN_WINDOW_VITE_NAME: string;
-
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
@@ -28,13 +32,17 @@ const createWindow = () => {
     },
   });
 
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-    // Open the DevTools.
+  // Use the VITE_DEV_SERVER_URL environment variable if it exists (development),
+  // otherwise load the built HTML file (production).
+  const viteDevServerUrl = process.env['VITE_DEV_SERVER_URL'];
+
+  if (viteDevServerUrl) {
+    mainWindow.loadURL(viteDevServerUrl);
+    // Open the DevTools automatically in development.
     mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    // Load the index.html from the 'dist' folder which contains the production build.
+    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 };
 
