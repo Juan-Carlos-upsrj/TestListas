@@ -11,7 +11,7 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
-    "@journeyapps/sql.js": "^1.10.0",
+    "sql.js": "^1.10.0",
     "chart.js": "^4.4.3",
     "electron-squirrel-startup": "^1.0.1",
     "framer-motion": "^11.2.10",

@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Group, Student } from '../types';
+import { HookData } from 'jspdf-autotable';
 
 // Extend jsPDF with the autoTable plugin
 // FIX: Using an intersection type for better compatibility with class-based types, which resolves the errors about missing properties on the custom type.
@@ -46,7 +47,7 @@ export const exportReportToPDF = (group: Group, reportData: ReportData[]) => {
     headStyles: {
       fillColor: [22, 163, 74] // green-600 color
     },
-    didDrawPage: function (data) {
+    didDrawPage: (data: HookData) => {
       // Header
       doc.setFontSize(20);
       doc.setTextColor(40);
@@ -55,7 +56,7 @@ export const exportReportToPDF = (group: Group, reportData: ReportData[]) => {
       doc.text(`Grupo: ${group.name} - ${group.subject}`, 14, 30);
 
       // Footer
-      const pageCount = doc.internal.getNumberOfPages();
+      const pageCount = doc.getNumberOfPages();
       doc.setFontSize(10);
       doc.text(`Página ${data.pageNumber} de ${pageCount}`, data.settings.margin.left, doc.internal.pageSize.height - 10);
       doc.text(new Date().toLocaleDateString('es-ES'), doc.internal.pageSize.width - data.settings.margin.right - 30, doc.internal.pageSize.height - 10);
