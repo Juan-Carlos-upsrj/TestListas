@@ -11,7 +11,6 @@
     "dist": "npm run build && electron-builder"
   },
   "dependencies": {
-    "sql.js": "^1.10.0",
     "chart.js": "^4.4.3",
     "electron-squirrel-startup": "^1.0.1",
     "framer-motion": "^11.2.10",
@@ -44,8 +43,7 @@
     "appId": "com.iaev.gestionacademica",
     "files": [
       "dist/**/*",
-      "dist-electron/**/*",
-      "node_modules/sql.js/dist/sql-wasm.wasm"
+      "dist-electron/**/*"
     ],
     "directories": {
       "buildResources": "assets",
