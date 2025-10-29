@@ -1,8 +1,6 @@
-
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch } from 'react';
-import { AppState, AppAction, Group, Student, AttendanceStatus, Evaluation } from '../types';
+import { AppState, AppAction, AttendanceStatus } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
-import { v4 as uuidv4 } from 'uuid';
 
 const today = new Date();
 const nextMonth = new Date();

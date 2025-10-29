@@ -1,7 +1,6 @@
-
 import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Group, AttendanceStatus, Student } from '../types';
+import { AttendanceStatus, Student } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
 import Icon from './icons/Icon';
