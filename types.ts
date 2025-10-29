@@ -72,6 +72,7 @@ export interface AppState {
 }
 
 export type AppAction =
+  | { type: 'SET_INITIAL_STATE'; payload: AppState }
   | { type: 'SET_VIEW'; payload: ActiveView }
   | { type: 'SET_SELECTED_GROUP'; payload: string | null }
   | { type: 'SAVE_GROUP'; payload: Group }

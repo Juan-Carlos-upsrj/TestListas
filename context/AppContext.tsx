@@ -1,6 +1,5 @@
-import React, { createContext, useReducer, useEffect, ReactNode, Dispatch } from 'react';
+import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
 import { AppState, AppAction, AttendanceStatus } from '../types';
-import useLocalStorage from '../hooks/useLocalStorage';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -28,6 +27,17 @@ const defaultState: AppState = {
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
+    case 'SET_INITIAL_STATE':
+        // Merge loaded state with default state to ensure all keys are present
+        // in case the saved file is from an older version of the app.
+        return {
+            ...defaultState,
+            ...action.payload,
+            settings: {
+                ...defaultState.settings,
+                ...(action.payload.settings || {}),
+            },
+        };
     case 'SET_VIEW':
       return { ...state, activeView: action.payload };
     case 'SET_SELECTED_GROUP':
@@ -219,12 +229,33 @@ export const AppContext = createContext<{
 });
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [savedState, setSavedState] = useLocalStorage<AppState>('academic-management-data', defaultState);
-  const [state, dispatch] = useReducer(appReducer, savedState);
+  const [state, dispatch] = useReducer(appReducer, defaultState);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load data from file on startup
   useEffect(() => {
-    setSavedState(state);
-  }, [state, setSavedState]);
+    const loadData = async () => {
+      try {
+        const data = await window.electronAPI.getData();
+        if (data && Object.keys(data).length > 0) {
+          dispatch({ type: 'SET_INITIAL_STATE', payload: data });
+        }
+      } catch (error) {
+        console.error("Failed to load data from file:", error);
+      } finally {
+        setIsLoaded(true);
+      }
+    };
+    loadData();
+  }, []); // Runs only once
+
+  // Save data to file on state change
+  useEffect(() => {
+    if (!isLoaded) {
+      return; // Don't save until initial data is loaded
+    }
+    window.electronAPI.saveData(state);
+  }, [state, isLoaded]);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

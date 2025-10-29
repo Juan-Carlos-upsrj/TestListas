@@ -1,24 +1,55 @@
-// FIX (line 1, 7, 33, 46): The following declarations resolve multiple TypeScript errors
-// related to missing Node.js type definitions. The original `/// <reference types="node" />`
-// was failing, so we're providing minimal types for `require`, `__dirname`, and `process.platform`
-// to allow the file to compile without errors.
-declare const require: (id: string) => any;
-declare const __dirname: string;
-declare global {
-  namespace NodeJS {
-    interface Process {
-      readonly platform: string;
-    }
-  }
-}
-
-import { app, BrowserWindow } from 'electron';
+// FIX: Switched to ES module imports to resolve TypeScript errors with `require`.
+import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
+import fs from 'fs';
+import isSquirrelStartup from 'electron-squirrel-startup';
+import { fileURLToPath } from 'url';
+// FIX: The `process` object is a global in Node.js, so it doesn't need to be imported or required.
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
+if (isSquirrelStartup) {
   app.quit();
 }
+
+// FIX: In ES modules, __dirname is not available by default.
+// This polyfill creates it from import.meta.url, which is the standard ES module approach.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// --- Data Persistence Setup ---
+const dataDir = path.join(app.getPath('home'), 'OneDrive', 'Documentos', 'AsistenciaApp-Data');
+const dataFilePath = path.join(dataDir, 'asistencia.db');
+
+// Ensure data directory and file exist on startup
+try {
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  if (!fs.existsSync(dataFilePath)) {
+    fs.writeFileSync(dataFilePath, JSON.stringify({}));
+  }
+} catch (error) {
+    console.error('Failed to initialize data store:', error);
+}
+
+// --- IPC Handlers for Data ---
+ipcMain.handle('get-data', async () => {
+  try {
+    const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
+    return JSON.parse(fileContent || '{}');
+  } catch (error) {
+    console.error('Failed to read or parse data file:', error);
+    return null; // Return null on error, renderer will use default state
+  }
+});
+
+ipcMain.handle('save-data', async (event, data) => {
+  try {
+    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error('Failed to save data to file:', error);
+  }
+});
 
 const createWindow = () => {
   // Create the browser window.
@@ -26,22 +57,22 @@ const createWindow = () => {
     width: 1280,
     height: 800,
     webPreferences: {
-      // preload is a common pattern, but the file was not provided.
-      // If a preload script is needed, it should be created and referenced here.
-      // preload: path.join(__dirname, 'preload.js'),
+      // Use __dirname which is provided natively in CommonJS
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
     },
   });
 
   // Use the VITE_DEV_SERVER_URL environment variable if it exists (development),
   // otherwise load the built HTML file (production).
-  const viteDevServerUrl = process.env['VITE_DEV_SERVER_URL'];
-
-  if (viteDevServerUrl) {
-    mainWindow.loadURL(viteDevServerUrl);
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     // Open the DevTools automatically in development.
     mainWindow.webContents.openDevTools();
   } else {
     // Load the index.html from the 'dist' folder which contains the production build.
+    // The path should be relative to the 'dist-electron' folder where this script runs.
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 };

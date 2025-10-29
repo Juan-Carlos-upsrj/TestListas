@@ -1,0 +1,7 @@
+import { contextBridge, ipcRenderer } from 'electron';
+import { AppState } from '../types';
+
+contextBridge.exposeInMainWorld('electronAPI', {
+  getData: (): Promise<AppState> => ipcRenderer.invoke('get-data'),
+  saveData: (data: AppState): Promise<void> => ipcRenderer.invoke('save-data', data),
+});
