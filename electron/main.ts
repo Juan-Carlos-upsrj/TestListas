@@ -4,7 +4,9 @@ import path from 'path';
 import fs from 'fs';
 import isSquirrelStartup from 'electron-squirrel-startup';
 import { fileURLToPath } from 'url';
-// FIX: The `process` object is a global in Node.js, so it doesn't need to be imported or required.
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+import { AppState } from '../types';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (isSquirrelStartup) {
@@ -16,39 +18,74 @@ if (isSquirrelStartup) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- Data Persistence Setup ---
+// --- Database Persistence Setup ---
 const dataDir = path.join(app.getPath('home'), 'OneDrive', 'Documentos', 'AsistenciaApp-Data');
 const dataFilePath = path.join(dataDir, 'asistencia.db');
 
-// Ensure data directory and file exist on startup
-try {
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+let db;
+
+async function initializeDatabase() {
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    db = await open({
+      filename: dataFilePath,
+      driver: sqlite3.Database
+    });
+    
+    console.log('Successfully connected to the SQLite database.');
+
+  } catch (error) {
+    console.error('Failed to initialize or connect to database:', error);
   }
-  if (!fs.existsSync(dataFilePath)) {
-    fs.writeFileSync(dataFilePath, JSON.stringify({}));
-  }
-} catch (error) {
-    console.error('Failed to initialize data store:', error);
 }
 
 // --- IPC Handlers for Data ---
-ipcMain.handle('get-data', async () => {
+ipcMain.handle('get-data', async (): Promise<Partial<AppState> | null> => {
+  if (!db) {
+    console.error('Database not initialized.');
+    return null;
+  }
   try {
-    const fileContent = fs.readFileSync(dataFilePath, 'utf-8');
-    return JSON.parse(fileContent || '{}');
+    const groupsFromDb = await db.all('SELECT id, name, subject, classDays FROM groups');
+    const studentsFromDb = await db.all('SELECT id, name, matricula, group_id FROM students');
+
+    const transformedGroups = groupsFromDb.map(group => {
+      return {
+        ...group,
+        id: String(group.id), // Ensure IDs are strings
+        classDays: group.classDays ? group.classDays.split(',') : [],
+        students: studentsFromDb
+          .filter(student => student.group_id === group.id)
+          .map(student => ({
+              ...student,
+              id: String(student.id), // Ensure IDs are strings
+          })),
+      };
+    });
+    
+    // We only return the parts of the state that come from the database.
+    // The rest will use the default state defined in the context.
+    return {
+        groups: transformedGroups,
+    };
   } catch (error) {
-    console.error('Failed to read or parse data file:', error);
+    console.error('Failed to read or parse data from database:', error);
     return null; // Return null on error, renderer will use default state
   }
 });
 
 ipcMain.handle('save-data', async (event, data) => {
-  try {
-    fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
-  } catch (error) {
-    console.error('Failed to save data to file:', error);
-  }
+  // IMPORTANT: Save functionality is temporarily disabled to prevent corruption
+  // of the user's database file. This needs to be implemented carefully.
+  console.log('Save data called, but is currently disabled for safety. Data received:', data);
+  // try {
+  //   fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2));
+  // } catch (error) {
+  //   console.error('Failed to save data to file:', error);
+  // }
 });
 
 const createWindow = () => {
@@ -80,7 +117,10 @@ const createWindow = () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
+app.on('ready', async () => {
+  await initializeDatabase();
+  createWindow();
+});
 
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
