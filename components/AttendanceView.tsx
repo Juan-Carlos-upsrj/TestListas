@@ -1,82 +1,12 @@
 import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { AttendanceStatus, Student } from '../types';
+import { AttendanceStatus } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
 import Icon from './icons/Icon';
 import Modal from './common/Modal';
 import Button from './common/Button';
-
-const AttendanceTaker: React.FC<{
-    students: Student[];
-    date: string;
-    groupAttendance: { [studentId: string]: { [date: string]: AttendanceStatus } };
-    onStatusChange: (studentId: string, status: AttendanceStatus) => void;
-    onClose: () => void;
-}> = ({ students, date, groupAttendance, onStatusChange, onClose }) => {
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const currentStudent = students[currentIndex];
-
-    const handleSetStatus = (status: AttendanceStatus) => {
-        onStatusChange(currentStudent.id, status);
-        goToNext();
-    };
-
-    const goToNext = () => {
-        if (currentIndex < students.length - 1) {
-            setCurrentIndex(currentIndex + 1);
-        } else {
-            onClose();
-        }
-    };
-    
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            const keyMap: { [key: string]: AttendanceStatus } = {
-                'p': AttendanceStatus.Present,
-                'a': AttendanceStatus.Absent,
-                'r': AttendanceStatus.Late,
-                'j': AttendanceStatus.Justified,
-                'i': AttendanceStatus.Exchange,
-            };
-            if (keyMap[e.key.toLowerCase()]) {
-                handleSetStatus(keyMap[e.key.toLowerCase()]);
-            } else if (e.key === 's' || e.key === 'ArrowRight') {
-                goToNext();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentIndex, students]);
-
-    if (!currentStudent) return null;
-
-    const currentStatus = groupAttendance[currentStudent.id]?.[date] || AttendanceStatus.Pending;
-
-    return (
-        <div className="text-center p-4">
-            <p className="text-sm text-slate-500">Pase de lista para: {new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { dateStyle: 'long' })}</p>
-            <p className="text-slate-400 text-sm">Alumno {currentIndex + 1} de {students.length}</p>
-            <h3 className="text-3xl font-bold my-4">{currentStudent.name}</h3>
-            <p className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-6 ${STATUS_STYLES[currentStatus].color}`}>
-                Estado actual: {currentStatus}
-            </p>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-                {ATTENDANCE_STATUSES.map(status => (
-                    <Button key={status} onClick={() => handleSetStatus(status)} className={`${STATUS_STYLES[status].color} !py-3 !text-base`}>
-                        ({STATUS_STYLES[status].key}) {status}
-                    </Button>
-                ))}
-            </div>
-             <Button variant="secondary" onClick={goToNext} className="w-full">
-                (S) Saltar / Siguiente <Icon name="arrow-right" className="w-4 h-4" />
-            </Button>
-            <p className="text-xs text-slate-400 mt-4">Usa los atajos de teclado para un pase de lista más rápido.</p>
-        </div>
-    );
-};
+import AttendanceTaker from './AttendanceTaker';
 
 const AttendanceView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
@@ -100,7 +30,25 @@ const AttendanceView: React.FC = () => {
         if (!selectedGroupId && groups.length > 0) {
             setSelectedGroupId(groups[0].id);
         }
-    }, [groups, selectedGroupId, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [groups, selectedGroupId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const attendanceHeaders = useMemo(() => {
+        if (!group) return null;
+
+        const partial1End = new Date(settings.firstPartialEnd + 'T00:00:00');
+        const grouped: Record<string, Record<string, string[]>> = {};
+
+        classDates.forEach(dateStr => {
+            const date = new Date(dateStr + 'T00:00:00');
+            const partialName = date <= partial1End ? "Primer Parcial" : "Segundo Parcial";
+            const monthName = date.toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase());
+
+            if (!grouped[partialName]) grouped[partialName] = {};
+            if (!grouped[partialName][monthName]) grouped[partialName][monthName] = [];
+            grouped[partialName][monthName].push(dateStr);
+        });
+        return grouped;
+    }, [group, classDates, settings.firstPartialEnd]);
 
     const handleStatusChange = (studentId: string, date: string, status: AttendanceStatus) => {
         if (selectedGroupId) {
@@ -119,6 +67,8 @@ const AttendanceView: React.FC = () => {
         const nextIndex = (currentIndex + 1) % ATTENDANCE_STATUSES.length;
         return ATTENDANCE_STATUSES[nextIndex];
     };
+    
+    const todayStr = new Date().toISOString().split('T')[0];
 
     return (
         <div>
@@ -143,10 +93,26 @@ const AttendanceView: React.FC = () => {
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
-                            <tr className="border-b dark:border-slate-700">
-                                <th className="sticky left-0 bg-white dark:bg-slate-800 p-2 text-left font-semibold z-10">Alumno</th>
+                            <tr>
+                                <th rowSpan={3} className="sticky left-0 bg-white dark:bg-slate-800 p-2 text-left font-semibold z-10 border-b-2 dark:border-slate-600">Alumno</th>
+                                {attendanceHeaders && Object.entries(attendanceHeaders).map(([partialName, months]) => {
+                                    const colspan = Object.values(months).reduce((sum, dates) => sum + dates.length, 0);
+                                    return <th key={partialName} colSpan={colspan} className="p-2 font-semibold text-center text-lg border-b-2 dark:border-slate-600">{partialName}</th>
+                                })}
+                            </tr>
+                            <tr>
+                                {attendanceHeaders && Object.entries(attendanceHeaders).flatMap(([partialName, months]) => 
+                                    Object.entries(months).map(([monthName, dates], index) => 
+                                        <th key={`${partialName}-${monthName}`} colSpan={dates.length} 
+                                        className={`p-2 font-semibold text-center border-b dark:border-slate-700 ${index % 2 === 0 ? 'bg-slate-50 dark:bg-slate-700/50' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                            {monthName}
+                                        </th>
+                                    )
+                                )}
+                            </tr>
+                            <tr>
                                 {classDates.map(date => (
-                                    <th key={date} className="p-2 font-semibold text-center text-sm min-w-[60px]">
+                                    <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b dark:border-slate-700 ${date === todayStr ? 'bg-indigo-100 dark:bg-indigo-900/50' : ''}`}>
                                         {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                     </th>
                                 ))}
@@ -159,7 +125,7 @@ const AttendanceView: React.FC = () => {
                                     {classDates.map(date => {
                                         const status = attendance[group.id]?.[student.id]?.[date] || AttendanceStatus.Pending;
                                         return (
-                                            <td key={date} className="p-0 text-center">
+                                            <td key={date} className={`p-0 text-center ${date === todayStr ? 'bg-indigo-100 dark:bg-indigo-900/50' : ''}`}>
                                                 <button
                                                     onClick={() => handleStatusChange(student.id, date, getNextStatus(status))}
                                                     className={`w-full h-10 text-xs font-bold transition-transform transform hover:scale-110 ${STATUS_STYLES[status].color}`}
@@ -182,7 +148,7 @@ const AttendanceView: React.FC = () => {
                 </div>
             )}
              {group && (
-                <Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title="Pase de Lista Rápido">
+                <Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${group.name}`}>
                     <AttendanceTaker 
                         students={group.students} 
                         date={new Date().toISOString().split('T')[0]} 

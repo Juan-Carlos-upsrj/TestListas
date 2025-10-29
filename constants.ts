@@ -1,4 +1,3 @@
-
 import { AttendanceStatus, DayOfWeek, Professor } from "./types";
 
 export const ATTENDANCE_STATUSES: AttendanceStatus[] = [
@@ -31,9 +30,16 @@ export const MOTIVATIONAL_QUOTES = [
 ];
 
 export const PROFESSORS: Professor[] = [
-    { name: "Ada Lovelace", birthdate: "1815-12-10" },
-    { name: "Grace Hopper", birthdate: "1906-12-09" },
-    { name: "Marie Curie", birthdate: "1867-11-07" },
+    { name: 'Prof. Victor', birthdate: '02-04' },
+    { name: 'Profa. Aziz', birthdate: '04-04' },
+    { name: 'Prof. Isai', birthdate: '05-03' },
+    { name: 'Prof. Mely', birthdate: '06-19' },
+    { name: 'Profa. Yeici', birthdate: '07-03' },
+    { name: 'Prof. Carmi', birthdate: '07-18' },
+    { name: 'Prof. Andy', birthdate: '08-29' },
+    { name: 'Prof. Germán', birthdate: '09-24' },
+    { name: 'Prof. Paco', birthdate: '10-21' },
+    { name: 'Prof. Elia', birthdate: '12-09' },
 ];
 
 export const GRADE_DEADLINES = {

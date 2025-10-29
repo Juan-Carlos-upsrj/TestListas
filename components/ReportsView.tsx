@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useEffect } from 'react';
+import React, { useContext, useMemo, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
 import { getClassDates } from '../services/dateUtils';
@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 const ReportsView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const { groups, attendance, evaluations, grades, settings, selectedGroupId } = state;
+    const [selectedPeriod, setSelectedPeriod] = useState('all'); // 'all', 'p1', 'p2'
 
     const setSelectedGroupId = (id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
@@ -23,14 +24,30 @@ const ReportsView: React.FC = () => {
         if (!selectedGroupId && groups.length > 0) {
             setSelectedGroupId(groups[0].id);
         }
-    }, [groups, selectedGroupId, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [groups, selectedGroupId]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const classDates = useMemo(() => {
         if (group) {
-            return getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
+            let startDate = new Date(settings.semesterStart + 'T00:00:00');
+            let endDate = new Date(settings.semesterEnd + 'T00:00:00');
+            const partial1EndDate = new Date(settings.firstPartialEnd + 'T00:00:00');
+
+            if (selectedPeriod === 'p1') {
+                endDate = partial1EndDate;
+            } else if (selectedPeriod === 'p2') {
+                startDate = new Date(partial1EndDate);
+                startDate.setDate(startDate.getDate() + 1);
+            }
+
+            return getClassDates(
+                startDate.toISOString().split('T')[0],
+                endDate.toISOString().split('T')[0],
+                group.classDays
+            );
         }
         return [];
-    }, [group, settings.semesterStart, settings.semesterEnd]);
+    }, [group, settings.semesterStart, settings.firstPartialEnd, settings.semesterEnd, selectedPeriod]);
+
 
     const reportData = useMemo(() => {
         if (!group) return [];
@@ -38,19 +55,19 @@ const ReportsView: React.FC = () => {
         return group.students.map(student => {
             // Attendance calculation
             const studentAttendance = attendance[group.id]?.[student.id] || {};
-            let present = 0, absent = 0, late = 0, justified = 0, totalClasses = 0;
+            let present = 0, absent = 0, late = 0, justified = 0;
+            
+            const totalClassesInPeriod = classDates.length;
             
             classDates.forEach(date => {
                 const status = studentAttendance[date];
-                if(status && status !== AttendanceStatus.Pending && status !== AttendanceStatus.Exchange) {
-                    totalClasses++;
-                    if (status === AttendanceStatus.Present) present++;
-                    else if (status === AttendanceStatus.Absent) absent++;
-                    else if (status === AttendanceStatus.Late) late++;
-                    else if (status === AttendanceStatus.Justified) justified++;
-                }
+                if (status === AttendanceStatus.Present) present++;
+                else if (status === AttendanceStatus.Absent) absent++;
+                else if (status === AttendanceStatus.Late) late++;
+                else if (status === AttendanceStatus.Justified) justified++;
             });
-            const attendancePercentage = totalClasses > 0 ? ((present + late + justified) / totalClasses) * 100 : 100;
+            const validAttendanceTaken = present + late + justified + absent;
+            const attendancePercentage = validAttendanceTaken > 0 ? ((present + late + justified) / validAttendanceTaken) * 100 : 100;
 
             // Grades calculation
             const studentGrades = grades[group.id]?.[student.id] || {};
@@ -62,14 +79,13 @@ const ReportsView: React.FC = () => {
                 if (studentGrades[ev.id] !== undefined && studentGrades[ev.id] !== null) {
                     totalScore += studentGrades[ev.id];
                 }
-                // Always sum maxScore to calculate average based on all evaluations
                 maxPossibleScore += ev.maxScore;
             });
             const averageGrade = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 10 : 0;
 
             return {
                 student,
-                attendance: { present, absent, late, justified, totalClasses, percentage: attendancePercentage },
+                attendance: { present, absent, late, justified, totalClasses: totalClassesInPeriod, percentage: attendancePercentage },
                 grade: { average: averageGrade.toFixed(1) }
             };
         });
@@ -98,6 +114,16 @@ const ReportsView: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <h1 className="text-3xl font-bold">Reportes</h1>
                 <div className="flex items-center gap-4">
+                     <select
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        className="w-full sm:w-auto p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                        disabled={!group}
+                    >
+                        <option value="all">Semestre Completo</option>
+                        <option value="p1">Primer Parcial</option>
+                        <option value="p2">Segundo Parcial</option>
+                    </select>
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -157,7 +183,7 @@ const ReportsView: React.FC = () => {
                              {group.students.length === 0 && <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo para generar un reporte.</p>}
                         </div>
                         <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
-                             <h3 className="text-lg font-bold mb-4">Resumen de Asistencia</h3>
+                             <h3 className="text-lg font-bold mb-4">Resumen de Asistencia del Periodo</h3>
                             {group.students.length > 0 ? (
                                 <ReportChart reportData={reportData} />
                             ) : (
