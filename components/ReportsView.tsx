@@ -3,8 +3,10 @@ import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { exportAttendanceToCSV, exportGradesToCSV } from '../services/exportService';
+import { exportReportToPDF } from '../services/pdfService';
 import Icon from './icons/Icon';
 import Button from './common/Button';
+import ReportChart from './ReportChart';
 import { motion } from 'framer-motion';
 
 const ReportsView: React.FC = () => {
@@ -59,15 +61,16 @@ const ReportsView: React.FC = () => {
             groupEvaluations.forEach(ev => {
                 if (studentGrades[ev.id] !== undefined && studentGrades[ev.id] !== null) {
                     totalScore += studentGrades[ev.id];
-                    maxPossibleScore += ev.maxScore;
                 }
+                // Always sum maxScore to calculate average based on all evaluations
+                maxPossibleScore += ev.maxScore;
             });
-            const averageGrade = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 10 : null;
+            const averageGrade = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 10 : 0;
 
             return {
                 student,
                 attendance: { present, absent, late, justified, totalClasses, percentage: attendancePercentage },
-                grade: { average: averageGrade }
+                grade: { average: averageGrade.toFixed(1) }
             };
         });
     }, [group, classDates, attendance, grades, evaluations]);
@@ -81,6 +84,12 @@ const ReportsView: React.FC = () => {
     const handleExportGrades = () => {
         if (group && evaluations[group.id] && grades[group.id]) {
             exportGradesToCSV(group, evaluations[group.id], grades[group.id]);
+        }
+    };
+    
+    const handleExportPDF = () => {
+        if (group) {
+            exportReportToPDF(group, reportData);
         }
     };
 
@@ -102,46 +111,59 @@ const ReportsView: React.FC = () => {
 
             {group ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <div className="flex justify-end gap-3 mb-4">
-                        <Button variant="secondary" onClick={handleExportAttendance}>
-                            <Icon name="file-spreadsheet" /> Exportar Asistencia
+                    <div className="flex flex-wrap justify-end gap-3 mb-4">
+                         <Button variant="secondary" onClick={handleExportAttendance}>
+                            <Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar Asistencia (CSV)
                         </Button>
                         <Button variant="secondary" onClick={handleExportGrades}>
-                           <Icon name="file-spreadsheet" /> Exportar Calificaciones
+                           <Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar Calificaciones (CSV)
+                        </Button>
+                        <Button variant="primary" onClick={handleExportPDF}>
+                           <Icon name="book-marked" className="w-4 h-4" /> Exportar Reporte (PDF)
                         </Button>
                     </div>
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg overflow-x-auto">
-                        <table className="w-full border-collapse">
-                            <thead>
-                                <tr className="border-b dark:border-slate-700">
-                                    <th className="p-2 text-left font-semibold">Alumno</th>
-                                    <th className="p-2 text-center font-semibold">Asistencia (%)</th>
-                                    <th className="p-2 text-center font-semibold">Faltas</th>
-                                    <th className="p-2 text-center font-semibold">Retardos</th>
-                                    <th className="p-2 text-center font-semibold">Promedio</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {reportData.map(data => {
-                                    const lowAttendance = data.attendance.percentage < settings.lowAttendanceThreshold;
-                                    const lowGrade = data.grade.average !== null && data.grade.average < 6;
-                                    return (
-                                        <tr key={data.student.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="p-2 font-medium whitespace-nowrap">{data.student.name}</td>
-                                            <td className={`p-2 text-center font-bold ${lowAttendance ? 'text-red-500' : 'text-green-500'}`}>
-                                                {data.attendance.percentage.toFixed(1)}%
-                                            </td>
-                                            <td className="p-2 text-center">{data.attendance.absent}</td>
-                                            <td className="p-2 text-center">{data.attendance.late}</td>
-                                            <td className={`p-2 text-center font-bold ${lowGrade ? 'text-red-500' : ''}`}>
-                                                {data.grade.average !== null ? data.grade.average.toFixed(1) : '-'}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                         {group.students.length === 0 && <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo para generar un reporte.</p>}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg overflow-x-auto">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="border-b dark:border-slate-700">
+                                        <th className="p-2 text-left font-semibold">Alumno</th>
+                                        <th className="p-2 text-center font-semibold">Asistencia (%)</th>
+                                        <th className="p-2 text-center font-semibold">Faltas</th>
+                                        <th className="p-2 text-center font-semibold">Retardos</th>
+                                        <th className="p-2 text-center font-semibold">Promedio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {reportData.map(data => {
+                                        const lowAttendance = data.attendance.percentage < settings.lowAttendanceThreshold;
+                                        const lowGrade = data.grade.average !== null && Number(data.grade.average) < 6;
+                                        return (
+                                            <tr key={data.student.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                                <td className="p-2 font-medium whitespace-nowrap">{data.student.name}</td>
+                                                <td className={`p-2 text-center font-bold ${lowAttendance ? 'text-red-500' : 'text-green-500'}`}>
+                                                    {data.attendance.percentage.toFixed(1)}%
+                                                </td>
+                                                <td className="p-2 text-center">{data.attendance.absent}</td>
+                                                <td className="p-2 text-center">{data.attendance.late}</td>
+                                                <td className={`p-2 text-center font-bold ${lowGrade ? 'text-red-500' : ''}`}>
+                                                    {data.grade.average !== null ? data.grade.average : '-'}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                             {group.students.length === 0 && <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo para generar un reporte.</p>}
+                        </div>
+                        <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
+                             <h3 className="text-lg font-bold mb-4">Resumen de Asistencia</h3>
+                            {group.students.length > 0 ? (
+                                <ReportChart reportData={reportData} />
+                            ) : (
+                                <p className="text-center text-slate-500 py-8">No hay datos para mostrar el gráfico.</p>
+                            )}
+                        </div>
                     </div>
                 </motion.div>
             ) : (

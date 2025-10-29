@@ -2,7 +2,12 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import initSqlJs from 'sql.js';
-import { AppState } from '../types';
+import { fileURLToPath } from 'url';
+
+// ES Module equivalent of __dirname for robust path resolution
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // --- Database Persistence Setup ---
 const dataDir = path.join(app.getPath('home'), 'OneDrive', 'Documentos', 'AsistenciaApp-Data');
@@ -30,13 +35,11 @@ async function initializeDatabase() {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // sql.js needs the wasm file. We load it from the node_modules folder.
-    // electron-builder is configured in package.json to package this file.
-    const sqlJs = await initSqlJs({
-      locateFile: file => path.join(app.getAppPath(), 'node_modules/sql.js/dist', file)
-    });
+    const wasmPath = path.join(__dirname, '../dist/node_modules/sql.js/dist/sql-wasm.wasm');
+    const wasmBinary = fs.readFileSync(wasmPath);
 
-    // If the database file exists, load it. Otherwise, create a new one.
+    const sqlJs = await initSqlJs({ wasmBinary });
+
     if (fs.existsSync(dbFilePath)) {
       const fileBuffer = fs.readFileSync(dbFilePath);
       db = new sqlJs.Database(fileBuffer);
@@ -44,9 +47,6 @@ async function initializeDatabase() {
     } else {
       db = new sqlJs.Database();
       console.log('Created new in-memory SQLite database.');
-      // You could initialize schema here if creating a new DB
-      // const data = db.export();
-      // fs.writeFileSync(dbFilePath, data);
     }
     
   } catch (error) {
@@ -55,7 +55,7 @@ async function initializeDatabase() {
 }
 
 // --- IPC Handlers for Data ---
-ipcMain.handle('get-data', async (): Promise<Partial<AppState> | null> => {
+ipcMain.handle('get-data', async () => {
   if (!db) {
     console.error('Database not initialized.');
     return null;
@@ -92,14 +92,12 @@ ipcMain.handle('get-data', async (): Promise<Partial<AppState> | null> => {
   }
 });
 
-ipcMain.handle('save-data', async (event, data: AppState) => {
+ipcMain.handle('save-data', async (event, data) => {
   if (!db) {
     console.error('Database not initialized, cannot save.');
     return;
   }
   try {
-    // This is a simple but effective strategy for saving:
-    // clear the tables and re-insert everything from the current app state.
     db.exec("BEGIN TRANSACTION;");
     db.exec("DELETE FROM students;");
     db.exec("DELETE FROM groups;");
@@ -118,7 +116,6 @@ ipcMain.handle('save-data', async (event, data: AppState) => {
     studentStmt.free();
     db.exec("COMMIT;");
     
-    // Export the in-memory database to a buffer and write it to the file
     const fileData = db.export();
     fs.writeFileSync(dbFilePath, fileData);
     console.log('Successfully saved data to SQLite database.');
