@@ -21,30 +21,30 @@ interface PdfTemplateProps {
 const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, reportData }, ref) => {
 
   return (
-    <div ref={ref} className="p-10 bg-white" style={{ width: '210mm', minHeight: '297mm', fontFamily: 'sans-serif' }}>
+    <div ref={ref} className="p-6 bg-white text-gray-700" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}>
         {/* Header */}
-        <header className="flex justify-between items-center pb-4 border-b-2 border-gray-800">
-            <div>
-                <h1 className="text-3xl font-bold text-gray-800">Reporte de Desempeño</h1>
-                <h2 className="text-xl text-gray-600">{group.name}</h2>
+        <header className="flex justify-between items-start pb-3 mb-8 border-b-2 border-gray-800">
+            <div className="titulo">
+                <h1 className="text-3xl font-bold text-gray-800 m-0">Reporte de Desempeño</h1>
+                <h2 className="text-xl text-gray-600 m-0 mt-1">{group.name}</h2>
             </div>
-            <div className="text-right">
-                <p className="text-gray-600">{group.subject}</p>
-                <p className="text-sm text-gray-500">Fecha de Emisión: {new Date().toLocaleDateString('es-ES')}</p>
+            <div className="info-grupo text-right">
+                <p className="materia text-gray-600 text-[11pt] m-0">{group.subject}</p>
+                <p className="fecha text-sm text-gray-500 m-0">Fecha de Emisión: {new Date().toLocaleDateString('es-ES')}</p>
             </div>
         </header>
 
         {/* Main Content */}
-        <main className="mt-8">
+        <main>
             <table className="w-full text-left border-collapse">
                 <thead>
                     <tr className="bg-gray-800 text-white">
-                        <th className="p-3">#</th>
-                        <th className="p-3">Matrícula</th>
-                        <th className="p-3">Nombre del Alumno</th>
-                        <th className="p-3 text-center">Asistencia</th>
-                        <th className="p-3 text-center">Faltas</th>
-                        <th className="p-3 text-center">Promedio</th>
+                        <th className="p-3 font-bold">#</th>
+                        <th className="p-3 font-bold">Matrícula</th>
+                        <th className="p-3 font-bold">Nombre del Alumno</th>
+                        <th className="p-3 font-bold text-center">Asistencia (%)</th>
+                        <th className="p-3 font-bold text-center">Faltas</th>
+                        <th className="p-3 font-bold text-center">Promedio</th>
                     </tr>
                 </thead>
                 <tbody>
