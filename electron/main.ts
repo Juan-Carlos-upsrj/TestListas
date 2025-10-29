@@ -1,5 +1,5 @@
-// FIX: Add a triple-slash directive to include Node.js type definitions.
-// This resolves TypeScript errors for 'require', '__dirname', and 'process.platform' not being found.
+// FIX: Add a triple-slash directive to include Node.js type definitions for the Electron main process.
+// This allows TypeScript to recognize Node.js globals like `require`, `__dirname`, and `process.platform`.
 /// <reference types="node" />
 
 import { app, BrowserWindow } from 'electron';
