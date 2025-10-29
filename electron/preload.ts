@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import { AppState } from '../types';
+import type { AppState } from '../types';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getData: (): Promise<AppState> => ipcRenderer.invoke('get-data'),
