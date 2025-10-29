@@ -231,31 +231,53 @@ export const AppContext = createContext<{
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, defaultState);
   const [isLoaded, setIsLoaded] = useState(false);
+  
+  const isElectron = !!window.electronAPI;
 
   // Load data from file on startup
   useEffect(() => {
     const loadData = async () => {
       try {
-        const data = await window.electronAPI.getData();
+        let data: AppState | null = null;
+        if (isElectron) {
+          console.log("Running in Electron, loading data from file...");
+          data = await window.electronAPI.getData();
+        } else {
+          console.log("Running in browser, loading data from localStorage...");
+          const savedData = localStorage.getItem('appState');
+          if (savedData) {
+            data = JSON.parse(savedData);
+          }
+        }
+        
         if (data && Object.keys(data).length > 0) {
           dispatch({ type: 'SET_INITIAL_STATE', payload: data });
         }
       } catch (error) {
-        console.error("Failed to load data from file:", error);
+        console.error("Failed to load data:", error);
       } finally {
         setIsLoaded(true);
       }
     };
     loadData();
-  }, []); // Runs only once
+  }, [isElectron]);
 
   // Save data to file on state change
   useEffect(() => {
     if (!isLoaded) {
       return; // Don't save until initial data is loaded
     }
-    window.electronAPI.saveData(state);
-  }, [state, isLoaded]);
+    
+    if (isElectron) {
+      window.electronAPI.saveData(state);
+    } else {
+       try {
+        localStorage.setItem('appState', JSON.stringify(state));
+      } catch (error) {
+        console.error("Failed to save data to localStorage:", error);
+      }
+    }
+  }, [state, isLoaded, isElectron]);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

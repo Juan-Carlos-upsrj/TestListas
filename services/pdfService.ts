@@ -1,7 +1,19 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Group, Student } from '../types';
-import { HookData } from 'jspdf-autotable';
+
+// The type for HookData seems to be causing issues with the current setup.
+// Defining a minimal interface for the hook data based on its usage in this file.
+interface HookData {
+  pageNumber: number;
+  settings: {
+    margin: {
+      left: number;
+      right: number;
+    }
+  };
+  // Add other properties from HookData if needed in the future, e.g., doc, table, pageCount, cursor
+}
 
 // Extend jsPDF with the autoTable plugin
 // FIX: Using an intersection type for better compatibility with class-based types, which resolves the errors about missing properties on the custom type.

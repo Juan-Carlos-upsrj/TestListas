@@ -3,6 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import initSqlJs from 'sql.js';
 import { fileURLToPath } from 'url';
+// FIX: Import the 'process' module to resolve TypeScript type errors for 'process.platform'.
+import process from 'process';
 
 // ES Module equivalent of __dirname for robust path resolution
 const __filename = fileURLToPath(import.meta.url);
