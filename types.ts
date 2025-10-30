@@ -111,3 +111,10 @@ export interface Professor {
     name: string;
     birthdate: string;
 }
+
+export interface MotivationalQuote {
+    text: string;
+    author: string;
+    icon?: string;
+    image?: string;
+}

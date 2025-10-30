@@ -1,104 +1,88 @@
-import React, { useState, useContext, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
-import { CalendarEvent, Evaluation } from '../types';
+import { CalendarEvent } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
+import Icon from './icons/Icon';
 import EventModal from './EventModal';
 
 const CalendarView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
+    const { groups, settings, calendarEvents } = state;
 
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [isEventModalOpen, setEventModalOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+    const [gcalEvents, setGcalEvents] = useState<CalendarEvent[]>([]);
+    const [isLoadingGcal, setIsLoadingGcal] = useState(false);
+    const [errorGcal, setErrorGcal] = useState<string | null>(null);
+
+    // Fetch Google Calendar events
     useEffect(() => {
         const fetchEvents = async () => {
-            if (state.settings.googleCalendarUrl) {
+            if (settings.googleCalendarUrl) {
+                setIsLoadingGcal(true);
+                setErrorGcal(null);
                 try {
-                    const events = await fetchGoogleCalendarEvents(state.settings.googleCalendarUrl);
-                    setGoogleEvents(events);
+                    const events = await fetchGoogleCalendarEvents(settings.googleCalendarUrl);
+                    setGcalEvents(events);
+                    if (events.length > 0) {
+                        dispatch({ type: 'ADD_TOAST', payload: { message: 'Calendario de Google sincronizado.', type: 'info' } });
+                    }
                 } catch (error) {
-                    console.error(error);
-                    dispatch({ type: 'ADD_TOAST', payload: { message: 'No se pudo cargar el calendario de Google.', type: 'error' } });
-                    setGoogleEvents([]); // Clear events on error
+                    const errorMessage = error instanceof Error ? error.message : 'Error al sincronizar Google Calendar.';
+                    setErrorGcal(errorMessage);
+                    dispatch({ type: 'ADD_TOAST', payload: { message: errorMessage, type: 'error' } });
+                } finally {
+                    setIsLoadingGcal(false);
                 }
             } else {
-                setGoogleEvents([]); // Clear events if URL is removed
+                setGcalEvents([]);
+                setErrorGcal(null);
             }
         };
         fetchEvents();
-    }, [state.settings.googleCalendarUrl, dispatch]);
+    }, [settings.googleCalendarUrl, dispatch]);
 
-    const groupColors = useMemo(() => {
-        const colors = ['bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200', 'bg-pink-200', 'bg-indigo-200'];
-        const mapping: { [groupId: string]: string } = {};
-        state.groups.forEach((group, index) => {
-            mapping[group.id] = colors[index % colors.length];
-        });
-        return mapping;
-    }, [state.groups]);
+    const allEventsByDate = useMemo(() => {
+        const events: { [date: string]: CalendarEvent[] } = {};
 
-    const allEvents = useMemo(() => {
-        const events: CalendarEvent[] = [];
-        const { semesterStart, semesterEnd, firstPartialEnd } = state.settings;
-
-        // 1. Class Day Events
-        state.groups.forEach(group => {
-            const classDates = getClassDates(semesterStart, semesterEnd, group.classDays);
+        const addEvent = (event: CalendarEvent) => {
+            if (!events[event.date]) {
+                events[event.date] = [];
+            }
+            // Avoid duplicates from gcal
+            if (events[event.date].some(e => e.id === event.id)) return;
+            events[event.date].push(event);
+        };
+        
+        // Add class days from groups
+        groups.forEach(group => {
+            const classDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
             classDates.forEach(date => {
-                events.push({
+                addEvent({
                     id: `class-${group.id}-${date}`,
                     date,
-                    title: `${group.name} - Clase`,
+                    title: `Clase: ${group.name}`,
                     type: 'class',
-                    color: groupColors[group.id],
-                    groupId: group.id
+                    color: 'bg-blue-200 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200'
                 });
             });
         });
+
+        // Add saved calendar events
+        calendarEvents.forEach(event => addEvent(event));
         
-        // 2. Evaluation Events
-        Object.entries(state.evaluations).forEach(([groupId, evals]: [string, Evaluation[]]) => {
-            const group = state.groups.find(g => g.id === groupId);
-            if (group) {
-                 evals.forEach(ev => {
-                     // This logic seems incorrect, an evaluation doesn't happen every day.
-                     // For now, let's assume it's a placeholder. A better implementation
-                     // would be to add a date to the Evaluation interface itself.
-                     // Pinning it to semester start for now.
-                     events.push({
-                        id: `eval-${ev.id}`,
-                        date: semesterStart, 
-                        title: `Evaluación: ${ev.name} (${group.name})`,
-                        type: 'evaluation',
-                        color: 'bg-red-200',
-                        groupId
-                     });
-                 });
-            }
+        // Add Google Calendar events
+        gcalEvents.forEach(event => addEvent(event));
+
+        // Sort events within each day
+        Object.values(events).forEach(dayEvents => {
+            dayEvents.sort((a, b) => a.title.localeCompare(b.title));
         });
 
-        // 3. Deadline Events
-        if(firstPartialEnd) events.push({ id: 'deadline-p1', date: firstPartialEnd, title: 'Fin del Primer Parcial', type: 'deadline', color: 'bg-red-300' });
-        if(semesterEnd) events.push({ id: 'deadline-end', date: semesterEnd, title: 'Fin del Semestre', type: 'deadline', color: 'bg-red-300' });
-
-        // 4. Custom & Google Calendar Events
-        events.push(...state.calendarEvents);
-        events.push(...googleEvents);
-
-        // Group events by date
-        const eventsByDate: { [date: string]: CalendarEvent[] } = {};
-        events.forEach(event => {
-            if (!eventsByDate[event.date]) {
-                eventsByDate[event.date] = [];
-            }
-            eventsByDate[event.date].push(event);
-        });
-
-        return eventsByDate;
-    }, [state.groups, state.evaluations, state.settings, state.calendarEvents, groupColors, googleEvents]);
-
+        return events;
+    }, [groups, settings.semesterStart, settings.semesterEnd, calendarEvents, gcalEvents]);
 
     const handlePrevMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
@@ -107,80 +91,99 @@ const CalendarView: React.FC = () => {
     const handleNextMonth = () => {
         setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
     };
-    
-    const handleDayClick = (day: Date) => {
-        setSelectedDate(day);
-        setIsModalOpen(true);
+
+    const handleDateClick = (day: number) => {
+        const clickedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+        setSelectedDate(clickedDate);
+        setEventModalOpen(true);
     };
 
-    const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-    const startDate = new Date(monthStart);
-    startDate.setDate(startDate.getDate() - monthStart.getDay());
-    const endDate = new Date(monthEnd);
-    endDate.setDate(endDate.getDate() + (6 - monthEnd.getDay()));
+    const renderCalendarGrid = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
 
-    const days = [];
-    let day = new Date(startDate);
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    while (day <= endDate) {
-        days.push(new Date(day));
-        day.setDate(day.getDate() + 1);
-    }
+        const startDayOffset = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+        const cells = [];
+        for (let i = 0; i < startDayOffset; i++) {
+            cells.push(<div key={`blank-${i}`} className="border-r border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50"></div>);
+        }
+
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayEvents = allEventsByDate[dateStr] || [];
+            const isToday = dateStr === todayStr;
+
+            cells.push(
+                <div 
+                    key={day} 
+                    className="relative border-r border-b dark:border-slate-700 p-2 min-h-[120px] flex flex-col cursor-pointer transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                    onClick={() => handleDateClick(day)}
+                >
+                    <span className={`text-sm font-semibold ${isToday ? 'bg-indigo-500 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-700 dark:text-slate-300'}`}>
+                        {day}
+                    </span>
+                    <div className="mt-1 space-y-1 overflow-y-auto flex-grow">
+                        {dayEvents.slice(0, 3).map(event => (
+                            <div key={event.id} className={`text-xs px-1.5 py-0.5 rounded-md ${event.color} truncate`}>
+                                {event.title}
+                            </div>
+                        ))}
+                        {dayEvents.length > 3 && (
+                            <div className="text-xs text-slate-500 font-semibold mt-1">
+                                +{dayEvents.length - 3} más
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+        return cells;
+    };
     
-    const today = new Date();
-    today.setHours(0,0,0,0);
+    const weekDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold">Calendario</h1>
-                <div className="flex items-center gap-4">
-                    <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">&lt;</button>
-                    <h2 className="text-xl font-bold text-center w-48">
-                        {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-                    </h2>
-                    <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">&gt;</button>
+                <h1 className="text-3xl font-bold">Calendario Académico</h1>
+                <div className="flex items-center gap-2 sm:gap-4">
+                    <button onClick={handlePrevMonth} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"><Icon name="arrow-left" /></button>
+                    <h2 className="text-xl font-semibold w-48 text-center">{currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}</h2>
+                    <button onClick={handleNextMonth} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"><Icon name="arrow-right" /></button>
                 </div>
             </div>
             
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
-                <div className="grid grid-cols-7 gap-px text-center font-semibold text-sm text-slate-600 dark:text-slate-400 border-b dark:border-slate-700 mb-1">
-                    {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => <div key={d} className="py-2">{d}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-px">
-                    {days.map(d => {
-                        const dateStr = d.toISOString().split('T')[0];
-                        const dayEvents = allEvents[dateStr] || [];
-                        const isToday = d.getTime() === today.getTime();
-                        const isCurrentMonth = d.getMonth() === currentDate.getMonth();
+            {(isLoadingGcal || errorGcal) && (
+                 <div className={`text-center p-3 mb-4 rounded-md text-sm ${errorGcal ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200'}`}>
+                    {isLoadingGcal ? 'Sincronizando con Google Calendar...' : errorGcal}
+                 </div>
+            )}
 
-                        return (
-                            <div key={d.toString()} onClick={() => handleDayClick(d)} className={`relative min-h-[120px] p-2 border border-transparent hover:border-indigo-400 cursor-pointer transition-colors ${isCurrentMonth ? '' : 'bg-slate-50 dark:bg-slate-800/50 text-slate-400'}`}>
-                                <span className={`absolute top-2 left-2 flex items-center justify-center w-7 h-7 rounded-full text-sm ${isToday ? 'bg-indigo-500 text-white font-bold' : ''}`}>
-                                    {d.getDate()}
-                                </span>
-                                <div className="mt-8 space-y-1 overflow-y-auto max-h-[80px]">
-                                    {dayEvents.slice(0, 3).map(event => (
-                                        <div key={event.id} className={`px-1.5 py-0.5 text-xs rounded truncate text-slate-800 ${event.color}`}>
-                                            {event.title}
-                                        </div>
-                                    ))}
-                                    {dayEvents.length > 3 && (
-                                        <div className="text-xs text-slate-500">y {dayEvents.length - 3} más...</div>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    })}
+            <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
+                <div className="grid grid-cols-7">
+                    {weekDays.map(day => (
+                        <div key={day} className="p-3 text-center font-bold border-b-2 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50">{day}</div>
+                    ))}
+                </div>
+                <div className="grid grid-cols-7 border-l dark:border-slate-700">
+                    {renderCalendarGrid()}
                 </div>
             </div>
+            
             {selectedDate && (
                 <EventModal 
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
+                    isOpen={isEventModalOpen} 
+                    onClose={() => setEventModalOpen(false)} 
                     date={selectedDate}
-                    events={allEvents[selectedDate.toISOString().split('T')[0]] || []}
+                    events={allEventsByDate[selectedDate.toISOString().split('T')[0]] || []}
                 />
             )}
         </div>
