@@ -47,7 +47,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
-            className={`relative z-10 w-full ${sizeClasses[size]} bg-white dark:bg-slate-800 rounded-xl shadow-2xl flex flex-col`}
+            className={`relative z-10 w-full ${sizeClasses[size]} bg-white dark:bg-slate-800 rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
           >
             <header className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{title}</h2>
