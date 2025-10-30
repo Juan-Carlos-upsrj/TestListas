@@ -15,6 +15,7 @@ const EvaluationForm: React.FC<{
 }> = ({ evaluation, onSave, onCancel }) => {
     const [name, setName] = useState(evaluation?.name || '');
     const [maxScore, setMaxScore] = useState(evaluation?.maxScore || 10);
+    const [partial, setPartial] = useState<1 | 2>(evaluation?.partial || 1);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,7 +23,7 @@ const EvaluationForm: React.FC<{
             alert('Por favor, ingresa un nombre válido y una puntuación máxima mayor a 0.');
             return;
         }
-        onSave({ id: evaluation?.id || uuidv4(), name, maxScore });
+        onSave({ id: evaluation?.id || uuidv4(), name, maxScore, partial });
     };
 
     return (
@@ -32,9 +33,18 @@ const EvaluationForm: React.FC<{
                     <label htmlFor="evalName" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Nombre de la Evaluación</label>
                     <input type="text" id="evalName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 block w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
                 </div>
-                <div>
-                    <label htmlFor="maxScore" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Puntuación Máxima</label>
-                    <input type="number" id="maxScore" value={maxScore} onChange={e => setMaxScore(Number(e.target.value))} min="1" required className="mt-1 block w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="maxScore" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Puntuación Máxima</label>
+                        <input type="number" id="maxScore" value={maxScore} onChange={e => setMaxScore(Number(e.target.value))} min="1" required className="mt-1 block w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                    </div>
+                    <div>
+                        <label htmlFor="partial" className="block text-sm font-medium text-slate-700 dark:text-slate-300">Parcial</label>
+                        <select id="partial" value={partial} onChange={e => setPartial(Number(e.target.value) as 1 | 2)} className="mt-1 block w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500">
+                            <option value={1}>Primer Parcial</option>
+                            <option value={2}>Segundo Parcial</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             <div className="flex justify-end gap-3 mt-6">
@@ -58,7 +68,7 @@ const GradesView: React.FC = () => {
     };
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
-    const groupEvaluations = useMemo(() => evaluations[selectedGroupId || ''] || [], [evaluations, selectedGroupId]);
+    const groupEvaluations = useMemo(() => (evaluations[selectedGroupId || ''] || []).sort((a,b) => a.partial - b.partial), [evaluations, selectedGroupId]);
     const groupGrades = useMemo(() => grades[selectedGroupId || ''] || {}, [grades, selectedGroupId]);
 
     useEffect(() => {
@@ -141,6 +151,7 @@ const GradesView: React.FC = () => {
                         <div className="flex flex-wrap gap-2">
                             {groupEvaluations.map(ev => (
                                 <div key={ev.id} className="bg-slate-100 dark:bg-slate-700 p-2 rounded-lg flex items-center gap-2">
+                                    <span className="text-xs bg-indigo-200 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-200 px-1.5 py-0.5 rounded-full font-semibold">P{ev.partial}</span>
                                     <span className="font-semibold">{ev.name}</span>
                                     <span className="text-xs bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">{ev.maxScore} pts</span>
                                     <button onClick={() => { setEditingEvaluation(ev); setEvalModalOpen(true); }} className="text-slate-500 hover:text-blue-500"><Icon name="edit-3" className="w-3 h-3"/></button>

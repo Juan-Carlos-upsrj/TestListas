@@ -42,6 +42,7 @@ export interface Evaluation {
   id: string;
   name: string;
   maxScore: number;
+  partial: 1 | 2;
 }
 
 export interface Settings {
@@ -125,17 +126,26 @@ export interface MotivationalQuote {
 
 export type StudentStatus = 'Destacado' | 'Regular' | 'En Riesgo';
 
+export interface ReportMonthlyAttendance {
+    [monthYear: string]: { // e.g., "Enero 2024"
+        percentage: number;
+        present: number;
+        totalClasses: number;
+    }
+}
+
 export interface ReportData {
   student: Student;
-  attendance: {
-    percentage: number;
-    present: number;
-    absent: number;
-    late: number;
-    totalClasses: number;
-  };
-  grade: {
-    average: string | number;
-  };
   status: StudentStatus;
+  // Averages
+  totalAttendancePercentage: number;
+  totalGradeAverage: string | number;
+  // Partial 1
+  p1AttendancePercentage: number;
+  p1GradeAverage: string | number;
+  // Partial 2
+  p2AttendancePercentage: number;
+  p2GradeAverage: string | number;
+  // Monthly Breakdown
+  monthlyAttendance: ReportMonthlyAttendance;
 }

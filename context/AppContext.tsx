@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
-import { AppState, AppAction, AttendanceStatus, Group } from '../types';
+import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
 
 const today = new Date();
@@ -41,12 +41,22 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
         }));
 
+        // Data migration: Ensure all evaluations have a partial property.
+        const loadedEvaluations = loadedState.evaluations || {};
+        const migratedEvaluations: AppState['evaluations'] = {};
+        Object.keys(loadedEvaluations).forEach(groupId => {
+            migratedEvaluations[groupId] = (loadedEvaluations[groupId] || []).map((ev: Evaluation) => ({
+                ...ev,
+                partial: ev.partial || 1, // Default existing evals to partial 1
+            }));
+        });
+
         return {
             ...defaultState,
             ...loadedState,
             groups: migratedGroups,
             attendance: loadedState.attendance || defaultState.attendance,
-            evaluations: loadedState.evaluations || defaultState.evaluations,
+            evaluations: migratedEvaluations,
             grades: loadedState.grades || defaultState.grades,
             calendarEvents: loadedState.calendarEvents || defaultState.calendarEvents,
             toasts: loadedState.toasts || defaultState.toasts,
