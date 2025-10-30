@@ -5,7 +5,7 @@ export interface CalendarEvent {
   id: string;
   date: string; // YYYY-MM-DD
   title: string;
-  type: 'class' | 'evaluation' | 'deadline' | 'custom';
+  type: 'class' | 'evaluation' | 'deadline' | 'custom' | 'gcal';
   color: string;
   groupId?: string;
 }
@@ -48,6 +48,7 @@ export interface Settings {
   showMatricula: boolean;
   theme: 'light' | 'dark';
   lowAttendanceThreshold: number;
+  googleCalendarUrl: string;
 }
 
 export type ActiveView = 'dashboard' | 'groups' | 'attendance' | 'grades' | 'reports' | 'calendar';

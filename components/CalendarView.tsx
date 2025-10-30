@@ -1,7 +1,8 @@
-import React, { useState, useContext, useMemo } from 'react';
+import React, { useState, useContext, useMemo, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { CalendarEvent, Evaluation } from '../types';
 import { getClassDates } from '../services/dateUtils';
+import { fetchGoogleCalendarEvents } from '../services/calendarService';
 import EventModal from './EventModal';
 
 const CalendarView: React.FC = () => {
@@ -9,6 +10,19 @@ const CalendarView: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [googleEvents, setGoogleEvents] = useState<CalendarEvent[]>([]);
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            if (state.settings.googleCalendarUrl) {
+                const events = await fetchGoogleCalendarEvents(state.settings.googleCalendarUrl);
+                setGoogleEvents(events);
+            } else {
+                setGoogleEvents([]); // Clear events if URL is removed
+            }
+        };
+        fetchEvents();
+    }, [state.settings.googleCalendarUrl]);
 
     const groupColors = useMemo(() => {
         const colors = ['bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200', 'bg-pink-200', 'bg-indigo-200'];
@@ -39,13 +53,9 @@ const CalendarView: React.FC = () => {
         });
         
         // 2. Evaluation Events
-        // FIX: Add type annotation for evals to resolve TypeScript error where it was inferred as 'unknown'.
         Object.entries(state.evaluations).forEach(([groupId, evals]: [string, Evaluation[]]) => {
             const group = state.groups.find(g => g.id === groupId);
             if (group) {
-                 // Assuming evaluations don't have a date, let's distribute them somewhat arbitrarily for demo
-                 // A real app would need a date field on the evaluation object.
-                 // For now, let's just add them to the start of the semester.
                  evals.forEach(ev => {
                      events.push({
                         id: `eval-${ev.id}`,
@@ -63,8 +73,9 @@ const CalendarView: React.FC = () => {
         if(firstPartialEnd) events.push({ id: 'deadline-p1', date: firstPartialEnd, title: 'Fin del Primer Parcial', type: 'deadline', color: 'bg-red-300' });
         if(semesterEnd) events.push({ id: 'deadline-end', date: semesterEnd, title: 'Fin del Semestre', type: 'deadline', color: 'bg-red-300' });
 
-        // 4. Custom Events
+        // 4. Custom & Google Calendar Events
         events.push(...state.calendarEvents);
+        events.push(...googleEvents);
 
         // Group events by date
         const eventsByDate: { [date: string]: CalendarEvent[] } = {};
@@ -76,7 +87,7 @@ const CalendarView: React.FC = () => {
         });
 
         return eventsByDate;
-    }, [state.groups, state.evaluations, state.settings, state.calendarEvents, groupColors]);
+    }, [state.groups, state.evaluations, state.settings, state.calendarEvents, groupColors, googleEvents]);
 
 
     const handlePrevMonth = () => {

@@ -48,7 +48,10 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                     <ul className="space-y-2">
                         {events.map(event => (
                             <li key={event.id} className={`flex items-center justify-between p-2 rounded-lg text-slate-800 ${event.color}`}>
-                                <span>{event.title}</span>
+                                <div className="flex items-center gap-2">
+                                    {event.type === 'gcal' && <Icon name="google" className="w-4 h-4 text-slate-600" />}
+                                    <span>{event.title}</span>
+                                </div>
                                 {event.type === 'custom' && (
                                     <button onClick={() => handleDeleteEvent(event.id)} className="p-1 text-slate-600 hover:text-red-500">
                                         <Icon name="trash-2" className="w-4 h-4" />

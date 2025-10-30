@@ -20,6 +20,7 @@ const defaultState: AppState = {
     showMatricula: true,
     theme: 'light',
     lowAttendanceThreshold: 80,
+    googleCalendarUrl: '',
   },
   activeView: 'dashboard',
   selectedGroupId: null,
@@ -28,18 +29,25 @@ const defaultState: AppState = {
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
-    case 'SET_INITIAL_STATE':
-        // Merge loaded state with default state to ensure all keys are present
-        // in case the saved file is from an older version of the app.
+    case 'SET_INITIAL_STATE': {
+        const loadedState = action.payload || {};
+        // Defensively merge loaded state with default state to ensure data integrity
+        // and prevent crashes from null/undefined values in saved data.
         return {
             ...defaultState,
-            ...action.payload,
+            ...loadedState,
+            groups: loadedState.groups || defaultState.groups,
+            attendance: loadedState.attendance || defaultState.attendance,
+            evaluations: loadedState.evaluations || defaultState.evaluations,
+            grades: loadedState.grades || defaultState.grades,
+            calendarEvents: loadedState.calendarEvents || defaultState.calendarEvents,
+            toasts: loadedState.toasts || defaultState.toasts,
             settings: {
                 ...defaultState.settings,
-                ...(action.payload.settings || {}),
+                ...(loadedState.settings || {}),
             },
-            calendarEvents: action.payload.calendarEvents || [],
         };
+    }
     case 'SET_VIEW':
       return { ...state, activeView: action.payload };
     case 'SET_SELECTED_GROUP':

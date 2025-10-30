@@ -78,14 +78,15 @@ const Dashboard: React.FC = () => {
 
   const upcomingBirthdays = useMemo(() => {
     return PROFESSORS.map(p => {
-        const birthDate = new Date(p.birthdate);
-        const nextBirthday = new Date(today.getFullYear(), birthDate.getMonth(), birthDate.getDate());
-        if(nextBirthday < today) {
+        const [month, day] = p.birthdate.split('-').map(Number);
+        // month - 1 because Date constructor months are 0-indexed
+        const nextBirthday = new Date(today.getFullYear(), month - 1, day);
+        if (nextBirthday < today) {
             nextBirthday.setFullYear(today.getFullYear() + 1);
         }
         const diffDays = Math.ceil((nextBirthday.getTime() - today.getTime()) / (1000 * 3600 * 24));
         return { ...p, diffDays, nextBirthday };
-    }).filter(p => p.diffDays <= 30).sort((a,b) => a.diffDays - b.diffDays);
+    }).filter(p => p.diffDays <= 30).sort((a, b) => a.diffDays - b.diffDays);
   }, [today]);
 
   const todayBirthdayProf = useMemo(() => upcomingBirthdays.find(p => p.diffDays === 0), [upcomingBirthdays]);
