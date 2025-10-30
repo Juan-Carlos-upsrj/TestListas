@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import SettingsModal from './SettingsModal';
@@ -29,8 +27,7 @@ const Sidebar: React.FC = () => {
   return (
     <>
       <aside className="w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col transition-colors duration-300">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
-          <img src="/logo.png" alt="Logo de la Aplicación" className="w-8 h-8" />
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center">
           <h1 className="text-xl font-bold text-slate-800 dark:text-white">Gestión Académica</h1>
         </div>
         <nav className="flex-grow p-4">
