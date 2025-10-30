@@ -29,7 +29,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
     <div ref={ref} className="bg-white font-sans text-slate-800" style={{ width: '297mm', minHeight: '210mm', boxSizing: 'border-box' }}>
       <div className="p-10">
         {/* Header */}
-        <header className={`p-4 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
+        <header className={`p-6 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
                     {logoBase64 && <img src={logoBase64} alt="Logo" style={{ width: '48px', height: '48px' }} />}
@@ -43,30 +43,29 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                     <p><span className="font-semibold">Fecha:</span> {new Date().toLocaleDateString('es-ES')}</p>
                 </div>
             </div>
+            <div className="mt-4 pt-4 border-t border-white/20 grid grid-cols-3 gap-4 text-center">
+              <div>
+                  <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Alumnos</span>
+                  <p className="text-2xl font-bold">{group.students.length}</p>
+              </div>
+              <div>
+                  <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Evaluaciones</span>
+                  <p className="text-2xl font-bold">{groupEvaluations.length}</p>
+              </div>
+              <div>
+                  <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Días de Clase</span>
+                  <p className="text-2xl font-bold">{classDates.length}</p>
+              </div>
+            </div>
         </header>
 
         <main className="mt-6">
-            {/* --- GROUP SUMMARY PAGE --- */}
+            {/* --- SMALLER CHART --- */}
             <section className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-3">Resumen del Grupo</h2>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                    <div className="bg-slate-50 rounded-lg p-3 text-center">
-                        <span className="text-xs font-medium text-slate-500">Total de Alumnos</span>
-                        <p className="mt-1 text-2xl font-bold text-slate-900">{group.students.length}</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3 text-center">
-                        <span className="text-xs font-medium text-slate-500">Evaluaciones</span>
-                        <p className="mt-1 text-2xl font-bold text-blue-600">{groupEvaluations.length}</p>
-                    </div>
-                    <div className="bg-slate-50 rounded-lg p-3 text-center">
-                        <span className="text-xs font-medium text-slate-500">Días de Clase</span>
-                        <p className="mt-1 text-2xl font-bold text-green-600">{classDates.length}</p>
-                    </div>
-                </div>
+                <h2 className="text-xl font-bold text-slate-900 mb-3 text-center">Asistencia Mensual (Promedio)</h2>
                 <div className="bg-slate-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-center mb-2 text-sm">Asistencia Mensual (Promedio)</h3>
                     {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
-                        <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} />
+                        <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} height="220px" />
                     ) : (
                         <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
                     )}

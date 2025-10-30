@@ -7,9 +7,10 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 interface ReportChartProps {
   monthlyAttendance: { [monthYear: string]: number };
+  height?: string;
 }
 
-const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance }) => {
+const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '300px' }) => {
   const { state } = useContext(AppContext);
   const isDarkMode = state.settings.theme === 'dark';
 
@@ -89,7 +90,7 @@ const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance }) => {
     }
   };
 
-  return <div style={{ height: '300px' }}><Bar options={options} data={chartData} /></div>;
+  return <div style={{ height }}><Bar options={options} data={chartData} /></div>;
 };
 
 export default React.memo(ReportChart);
