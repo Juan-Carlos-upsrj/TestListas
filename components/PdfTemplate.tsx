@@ -29,13 +29,13 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
     <div ref={ref} className="bg-white font-sans text-slate-800" style={{ width: '297mm', minHeight: '210mm', boxSizing: 'border-box' }}>
       <div className="p-10">
         {/* Header */}
-        <header className={`p-6 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
+        <header className={`p-4 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-4">
-                    {logoBase64 && <img src={logoBase64} alt="Logo" style={{ width: '56px', height: '56px' }} />}
+                    {logoBase64 && <img src={logoBase64} alt="Logo" style={{ width: '48px', height: '48px' }} />}
                     <div>
-                        <h1 className="text-4xl font-bold">Reporte de Grupo</h1>
-                        <p className="opacity-80 text-lg">Grupo: {group.name}</p>
+                        <h1 className="text-3xl font-bold">Reporte de Grupo</h1>
+                        <p className="opacity-80 text-base">Grupo: {group.name}</p>
                     </div>
                 </div>
                 <div className="text-sm text-right">
@@ -45,42 +45,38 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
             </div>
         </header>
 
-        <main className="mt-8">
+        <main className="mt-6">
             {/* --- GROUP SUMMARY PAGE --- */}
-            <section className="mb-8">
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Resumen del Grupo</h2>
-                <div className="grid grid-cols-2 gap-6">
-                    {/* Left Column: Stats */}
-                    <div className="flex flex-col gap-4">
-                         <div className="bg-slate-50 rounded-lg p-4 text-center">
-                            <span className="text-sm font-medium text-slate-500">Total de Alumnos</span>
-                            <p className="mt-1 text-3xl font-bold text-slate-900">{group.students.length}</p>
-                        </div>
-                        <div className="bg-slate-50 rounded-lg p-4 text-center">
-                            <span className="text-sm font-medium text-slate-500">Evaluaciones</span>
-                            <p className="mt-1 text-3xl font-bold text-blue-600">{groupEvaluations.length}</p>
-                        </div>
-                        <div className="bg-slate-50 rounded-lg p-4 text-center">
-                            <span className="text-sm font-medium text-slate-500">Días de Clase</span>
-                            <p className="mt-1 text-3xl font-bold text-green-600">{classDates.length}</p>
-                        </div>
+            <section className="mb-6">
+                <h2 className="text-xl font-bold text-slate-900 mb-3">Resumen del Grupo</h2>
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                        <span className="text-xs font-medium text-slate-500">Total de Alumnos</span>
+                        <p className="mt-1 text-2xl font-bold text-slate-900">{group.students.length}</p>
                     </div>
-                    {/* Right Column: Chart */}
-                    <div className="bg-slate-50 p-4 rounded-lg">
-                        <h3 className="font-bold text-center mb-2">Asistencia Mensual (Promedio)</h3>
-                        {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
-                            <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} />
-                        ) : (
-                            <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
-                        )}
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                        <span className="text-xs font-medium text-slate-500">Evaluaciones</span>
+                        <p className="mt-1 text-2xl font-bold text-blue-600">{groupEvaluations.length}</p>
                     </div>
+                    <div className="bg-slate-50 rounded-lg p-3 text-center">
+                        <span className="text-xs font-medium text-slate-500">Días de Clase</span>
+                        <p className="mt-1 text-2xl font-bold text-green-600">{classDates.length}</p>
+                    </div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-lg">
+                    <h3 className="font-bold text-center mb-2 text-sm">Asistencia Mensual (Promedio)</h3>
+                    {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
+                        <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} />
+                    ) : (
+                        <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
+                    )}
                 </div>
             </section>
 
             {/* --- Detailed Attendance Grid Page(s) --- */}
             <section style={{ breakBefore: 'page' }}>
-                <h2 className="text-2xl font-bold text-slate-900 mb-4">Registro Detallado de Asistencia</h2>
-                <table className="w-full border-collapse text-[8px]">
+                <h2 className="text-xl font-bold text-slate-900 mb-4">Registro Detallado de Asistencia</h2>
+                <table className="w-full border-collapse text-[7px]">
                   <thead>
                       <tr>
                           <th rowSpan={3} className="sticky left-0 bg-white p-1 text-left font-semibold z-10 border-b-2 border-slate-600 align-bottom">Alumno</th>
@@ -102,7 +98,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                       <tr>
                           {classDates.map(date => (
                               <th key={date} className="p-1 font-semibold text-center min-w-[20px] border-b border-slate-400 align-bottom">
-                                  {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
+                                  {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit' })}
                               </th>
                           ))}
                       </tr>
@@ -110,7 +106,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                   <tbody>
                       {group.students.map(student => (
                           <tr key={student.id} className="border-b border-slate-200">
-                              <td className="sticky left-0 bg-white p-1 font-semibold z-10 whitespace-nowrap text-[10px]">{student.name}</td>
+                              <td className="sticky left-0 bg-white p-1 font-semibold z-10 whitespace-nowrap text-[9px]">{student.name}</td>
                               {classDates.map(date => {
                                   const status = groupAttendance[student.id]?.[date] || AttendanceStatus.Pending;
                                   // Use a simplified color for PDF to save ink and improve clarity
@@ -124,7 +120,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                                   };
                                   return (
                                       <td key={date} className={`p-0 text-center border-l border-slate-200 ${simpleColor[status]}`}>
-                                          <div className="w-full h-5 flex items-center justify-center font-bold">
+                                          <div className="w-full h-4 flex items-center justify-center font-bold">
                                               {STATUS_STYLES[status].symbol}
                                           </div>
                                       </td>
@@ -137,7 +133,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
             </section>
         </main>
 
-        <footer className="mt-12 text-center text-xs text-slate-400 border-t pt-4">
+        <footer className="mt-12 text-center text-xs text-slate-400 border-t pt-4" style={{ breakBefore: 'auto' }}>
             <p>Reporte generado por Gestión Académica IAEV</p>
         </footer>
       </div>
