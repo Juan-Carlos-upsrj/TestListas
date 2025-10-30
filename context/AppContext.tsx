@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
-import { AppState, AppAction, AttendanceStatus } from '../types';
+import { AppState, AppAction, AttendanceStatus, CalendarEvent } from '../types';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -12,6 +12,7 @@ const defaultState: AppState = {
   attendance: {},
   evaluations: {},
   grades: {},
+  calendarEvents: [],
   settings: {
     semesterStart: today.toISOString().split('T')[0],
     firstPartialEnd: nextMonth.toISOString().split('T')[0],
@@ -37,6 +38,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
                 ...defaultState.settings,
                 ...(action.payload.settings || {}),
             },
+            calendarEvents: action.payload.calendarEvents || [],
         };
     case 'SET_VIEW':
       return { ...state, activeView: action.payload };
@@ -215,6 +217,16 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, toasts: [...state.toasts, { ...action.payload, id: Date.now() }] };
     case 'REMOVE_TOAST':
       return { ...state, toasts: state.toasts.filter(t => t.id !== action.payload) };
+    case 'SAVE_EVENT': {
+        const eventExists = state.calendarEvents.some(e => e.id === action.payload.id);
+        const newEvents = eventExists
+            ? state.calendarEvents.map(e => e.id === action.payload.id ? action.payload : e)
+            : [...state.calendarEvents, action.payload];
+        return { ...state, calendarEvents: newEvents };
+    }
+    case 'DELETE_EVENT': {
+        return { ...state, calendarEvents: state.calendarEvents.filter(e => e.id !== action.payload) };
+    }
     default:
       return state;
   }

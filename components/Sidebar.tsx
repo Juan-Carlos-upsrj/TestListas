@@ -1,16 +1,19 @@
 
+
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import SettingsModal from './SettingsModal';
 import Icon from './icons/Icon';
 import { motion } from 'framer-motion';
+import { ActiveView } from '../types';
 
-type View = 'dashboard' | 'groups' | 'attendance' | 'reports' | 'grades';
+type View = ActiveView;
 
 const navItems: { view: View; label: string; icon: string }[] = [
   { view: 'dashboard', label: 'Inicio', icon: 'home' },
   { view: 'groups', label: 'Grupos', icon: 'users' },
   { view: 'attendance', label: 'Asistencia', icon: 'check-square' },
+  { view: 'calendar', label: 'Calendario', icon: 'calendar' },
   { view: 'grades', label: 'Calificaciones', icon: 'graduation-cap' },
   { view: 'reports', label: 'Reportes', icon: 'bar-chart-3' },
 ];

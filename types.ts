@@ -1,3 +1,15 @@
+// FIX: The original file had a circular dependency by importing from itself, causing numerous type errors.
+// All type definitions have been consolidated here and circular references removed to create a single source of truth for application types.
+
+export interface CalendarEvent {
+  id: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  type: 'class' | 'evaluation' | 'deadline' | 'custom';
+  color: string;
+  groupId?: string;
+}
+
 export interface Student {
   id: string;
   name: string;
@@ -38,7 +50,7 @@ export interface Settings {
   lowAttendanceThreshold: number;
 }
 
-export type ActiveView = 'dashboard' | 'groups' | 'attendance' | 'grades' | 'reports';
+export type ActiveView = 'dashboard' | 'groups' | 'attendance' | 'grades' | 'reports' | 'calendar';
 
 export interface Toast {
     id: number;
@@ -61,10 +73,11 @@ export interface AppState {
   grades: {
     [groupId: string]: {
       [studentId: string]: {
-        [evaluationId: string]: number;
+        [evaluationId: string]: number | null;
       };
     };
   };
+  calendarEvents: CalendarEvent[];
   settings: Settings;
   activeView: ActiveView;
   selectedGroupId: string | null;
@@ -72,13 +85,15 @@ export interface AppState {
 }
 
 export type AppAction =
-  | { type: 'SET_INITIAL_STATE'; payload: AppState }
+  // The payload for SET_INITIAL_STATE is Partial because data loaded
+  // from storage might be from an older version of the app.
+  | { type: 'SET_INITIAL_STATE'; payload: Partial<AppState> }
   | { type: 'SET_VIEW'; payload: ActiveView }
   | { type: 'SET_SELECTED_GROUP'; payload: string | null }
   | { type: 'SAVE_GROUP'; payload: Group }
   | { type: 'DELETE_GROUP'; payload: string }
   | { type: 'SAVE_STUDENT'; payload: { groupId: string; student: Student } }
-  | { type: 'BULK_ADD_STUDENTS', payload: { groupId: string, students: Student[] } }
+  | { type: 'BULK_ADD_STUDENTS'; payload: { groupId: string; students: Student[] } }
   | { type: 'DELETE_STUDENT'; payload: { groupId: string; studentId: string } }
   | { type: 'UPDATE_ATTENDANCE'; payload: { groupId: string; studentId: string; date: string; status: AttendanceStatus } }
   | { type: 'QUICK_ATTENDANCE'; payload: { groupId: string; date: string } }
@@ -86,8 +101,10 @@ export type AppAction =
   | { type: 'DELETE_EVALUATION'; payload: { groupId: string; evaluationId: string } }
   | { type: 'UPDATE_GRADE'; payload: { groupId: string; studentId: string; evaluationId: string; score: number | null } }
   | { type: 'UPDATE_SETTINGS'; payload: Partial<Settings> }
-  | { type: 'ADD_TOAST'; payload: { message: string; type: 'success' | 'error' | 'info' } }
-  | { type: 'REMOVE_TOAST'; payload: number };
+  | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
+  | { type: 'REMOVE_TOAST'; payload: number }
+  | { type: 'SAVE_EVENT'; payload: CalendarEvent }
+  | { type: 'DELETE_EVENT'; payload: string };
 
 export interface Professor {
     name: string;

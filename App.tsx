@@ -1,4 +1,5 @@
 
+
 import React, { useContext, useEffect } from 'react';
 import { AppContext } from './context/AppContext';
 import Sidebar from './components/Sidebar';
@@ -8,6 +9,7 @@ import AttendanceView from './components/AttendanceView';
 import ReportsView from './components/ReportsView';
 import GradesView from './components/GradesView';
 import ToastContainer from './components/ToastContainer';
+import CalendarView from './components/CalendarView';
 
 const App: React.FC = () => {
   const { state } = useContext(AppContext);
@@ -28,6 +30,8 @@ const App: React.FC = () => {
         return <GroupManagement />;
       case 'attendance':
         return <AttendanceView />;
+      case 'calendar':
+        return <CalendarView />;
       case 'grades':
         return <GradesView />;
       case 'reports':
