@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import { forwardRef } from 'react';
 import { Group, Evaluation, GroupReportSummary, AttendanceStatus } from '../types';
 import { GROUP_COLORS, STATUS_STYLES } from '../constants';
 import ReportChart from './ReportChart';
