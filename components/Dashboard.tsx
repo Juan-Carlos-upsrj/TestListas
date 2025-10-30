@@ -72,7 +72,7 @@ const Dashboard: React.FC = () => {
         const nextWeek = new Date(today);
         nextWeek.setDate(today.getDate() + 7);
 
-        const allEvents: CalendarEvent[] = [...calendarEvents];
+        const allEvents: CalendarEvent[] = [...calendarEvents, ...gcalEvents];
         groups.forEach(group => {
             const classDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
             classDates.forEach(date => {
@@ -87,7 +87,7 @@ const Dashboard: React.FC = () => {
             .filter(event => event.eventDate >= today && event.eventDate <= nextWeek)
             .sort((a, b) => a.eventDate.getTime() - b.eventDate.getTime())
             .slice(0, 5);
-    }, [calendarEvents, groups, settings]);
+    }, [calendarEvents, groups, settings, gcalEvents]);
     
     const attendanceToday = useMemo(() => {
         const todayStr = new Date().toISOString().split('T')[0];

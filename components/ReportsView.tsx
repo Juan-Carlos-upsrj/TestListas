@@ -18,6 +18,7 @@ const ReportsView: React.FC = () => {
     }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
+    const groupEvaluations = useMemo(() => (evaluations[selectedGroupId || ''] || []).sort((a,b) => a.partial - b.partial), [evaluations, selectedGroupId]);
 
     useEffect(() => {
         if (!selectedGroupId && groups.length > 0) {
@@ -44,9 +45,9 @@ const ReportsView: React.FC = () => {
         });
 
         // 2. Get all evaluations and categorize them by partial
-        const groupEvaluations = evaluations[group.id] || [];
-        const p1Evals = groupEvaluations.filter(e => e.partial === 1);
-        const p2Evals = groupEvaluations.filter(e => e.partial === 2);
+        const allGroupEvaluations = evaluations[group.id] || [];
+        const p1Evals = allGroupEvaluations.filter(e => e.partial === 1);
+        const p2Evals = allGroupEvaluations.filter(e => e.partial === 2);
 
         // 3. Process each student
         return group.students.map(student => {
@@ -97,7 +98,7 @@ const ReportsView: React.FC = () => {
                 monthlyAttendance[monthYear] = calculateAttendance(monthlyDates[monthYear]);
             });
             
-            const totalGrade = calculateGrades(groupEvaluations);
+            const totalGrade = calculateGrades(allGroupEvaluations);
             const p1Grade = calculateGrades(p1Evals);
             const p2Grade = calculateGrades(p2Evals);
             
@@ -120,6 +121,7 @@ const ReportsView: React.FC = () => {
                 p2AttendancePercentage: p2Att.percentage,
                 p2GradeAverage: p2Grade,
                 monthlyAttendance,
+                grades: studentGrades,
             };
         });
     }, [group, settings, attendance, grades, evaluations]);
@@ -133,13 +135,13 @@ const ReportsView: React.FC = () => {
 
     const handleExportGrades = () => {
         if (group && evaluations[group.id] && grades[group.id]) {
-            exportGradesToCSV(group, evaluations[group.id], grades[group.id]);
+            exportGradesToCSV(group, groupEvaluations, grades[group.id]);
         }
     };
     
     const handleExportPDF = () => {
         if (group) {
-            exportReportToPDF(group, reportData);
+            exportReportToPDF(group, reportData, groupEvaluations);
         }
     };
 

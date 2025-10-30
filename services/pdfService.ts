@@ -2,11 +2,11 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Group, ReportData } from '../types';
+import { Group, ReportData, Evaluation } from '../types';
 import PdfTemplate from '../components/PdfTemplate';
 import { getImageAsBase64 } from './imageUtils';
 
-export const exportReportToPDF = async (group: Group, reportData: ReportData[]) => {
+export const exportReportToPDF = async (group: Group, reportData: ReportData[], evaluations: Evaluation[]) => {
   // First, get the logo as a Base64 string to ensure it renders correctly
   const logoBase64 = await getImageAsBase64('/logo.png');
 
@@ -31,7 +31,7 @@ export const exportReportToPDF = async (group: Group, reportData: ReportData[]) 
       React.createElement(
         React.StrictMode,
         null,
-        React.createElement(PdfTemplate, { group, reportData, logoBase64, ref: onRender })
+        React.createElement(PdfTemplate, { group, reportData, logoBase64, evaluations, ref: onRender })
       )
     );
   });

@@ -1,11 +1,12 @@
 import { forwardRef } from 'react';
-import { Group, ReportData, StudentStatus } from '../types';
+import { Group, ReportData, StudentStatus, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
 
 interface PdfTemplateProps {
   group: Group;
   reportData: ReportData[];
   logoBase64: string;
+  evaluations: Evaluation[];
 }
 
 const statusStyles: { [key in StudentStatus]: { text: string; bg: string; } } = {
@@ -14,7 +15,7 @@ const statusStyles: { [key in StudentStatus]: { text: string; bg: string; } } = 
     'En Riesgo': { text: 'text-red-800', bg: 'bg-red-100' },
 };
 
-const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, reportData, logoBase64 }, ref) => {
+const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, reportData, logoBase64, evaluations }, ref) => {
 
   const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
 
@@ -75,6 +76,8 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
                     <div className="space-y-4">
                         {reportData.map((data) => {
                             const statusStyle = statusStyles[data.status];
+                            const p1Evals = evaluations.filter(e => e.partial === 1);
+                            const p2Evals = evaluations.filter(e => e.partial === 2);
                             return (
                                 <div key={data.student.id} className="p-4 border border-slate-200 rounded-lg">
                                     <div className="flex justify-between items-start mb-4">
@@ -89,14 +92,42 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
 
                                     <div className="grid grid-cols-3 gap-4">
                                         {/* Grades Column */}
-                                        <div className="bg-slate-50 p-3 rounded-md">
+                                        <div className="bg-slate-50 p-3 rounded-md col-span-1">
                                             <h4 className="font-semibold text-slate-600 mb-2 text-center">Calificaciones</h4>
-                                            <div className="space-y-1.5 text-sm">
-                                                <div className="flex justify-between font-bold text-base"><span className="font-semibold">Total:</span><span>{data.totalGradeAverage}</span></div>
-                                                <hr/>
-                                                <div className="flex justify-between"><span className="text-slate-500">Parcial 1:</span><span>{data.p1GradeAverage}</span></div>
-                                                <div className="flex justify-between"><span className="text-slate-500">Parcial 2:</span><span>{data.p2GradeAverage}</span></div>
-                                            </div>
+                                            <table className="w-full text-xs">
+                                                <tbody>
+                                                    {p1Evals.map(ev => {
+                                                        const grade = data.grades[ev.id];
+                                                        return (
+                                                            <tr key={ev.id}>
+                                                                <td className="text-left py-0.5 text-slate-500">{ev.name}</td>
+                                                                <td className="text-right py-0.5 font-semibold">{grade !== null && grade !== undefined ? grade : '–'} / {ev.maxScore}</td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                    <tr className="border-t">
+                                                        <td className="text-left py-0.5 font-bold">Promedio P1:</td>
+                                                        <td className="text-right py-0.5 font-bold">{data.p1GradeAverage}</td>
+                                                    </tr>
+                                                    {p2Evals.map(ev => {
+                                                        const grade = data.grades[ev.id];
+                                                        return (
+                                                            <tr key={ev.id}>
+                                                                <td className="text-left py-0.5 text-slate-500">{ev.name}</td>
+                                                                <td className="text-right py-0.5 font-semibold">{grade !== null && grade !== undefined ? grade : '–'} / {ev.maxScore}</td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                     <tr className="border-t">
+                                                        <td className="text-left py-0.5 font-bold">Promedio P2:</td>
+                                                        <td className="text-right py-0.5 font-bold">{data.p2GradeAverage}</td>
+                                                    </tr>
+                                                     <tr className="border-t-2 border-slate-400">
+                                                        <td className="text-left pt-1 font-bold text-sm">Promedio Final:</td>
+                                                        <td className="text-right pt-1 font-bold text-sm">{data.totalGradeAverage}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
                                         </div>
 
                                         {/* Attendance Column */}
