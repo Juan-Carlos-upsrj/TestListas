@@ -1,3 +1,5 @@
+
+
 import React, { useContext, useMemo, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
@@ -76,10 +78,11 @@ const ReportsView: React.FC = () => {
             let maxPossibleScore = 0;
 
             groupEvaluations.forEach(ev => {
-                if (studentGrades[ev.id] !== undefined && studentGrades[ev.id] !== null) {
-                    totalScore += studentGrades[ev.id];
+                const grade = studentGrades[ev.id];
+                if (grade !== undefined && grade !== null) {
+                    totalScore += grade;
+                    maxPossibleScore += ev.maxScore;
                 }
-                maxPossibleScore += ev.maxScore;
             });
             const averageGrade = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 10 : 0;
 

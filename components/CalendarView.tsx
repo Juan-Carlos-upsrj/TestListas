@@ -1,8 +1,7 @@
 import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
-import { CalendarEvent } from '../types';
+import { CalendarEvent, Evaluation } from '../types';
 import { getClassDates } from '../services/dateUtils';
-import Icon from './icons/Icon';
 import EventModal from './EventModal';
 
 const CalendarView: React.FC = () => {
@@ -40,7 +39,8 @@ const CalendarView: React.FC = () => {
         });
         
         // 2. Evaluation Events
-        Object.entries(state.evaluations).forEach(([groupId, evals]) => {
+        // FIX: Add type annotation for evals to resolve TypeScript error where it was inferred as 'unknown'.
+        Object.entries(state.evaluations).forEach(([groupId, evals]: [string, Evaluation[]]) => {
             const group = state.groups.find(g => g.id === groupId);
             if (group) {
                  // Assuming evaluations don't have a date, let's distribute them somewhat arbitrarily for demo

@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
-import { AppState, AppAction, AttendanceStatus, CalendarEvent } from '../types';
+import { AppState, AppAction, AttendanceStatus } from '../types';
 
 const today = new Date();
 const nextMonth = new Date();
