@@ -13,11 +13,14 @@ interface AttendanceTakerProps {
 }
 
 const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, groupAttendance, onStatusChange, onClose }) => {
-    // Filter out students who already have a non-pending attendance status for the given date
-    const pendingStudents = students.filter(s => {
-        const status = groupAttendance[s.id]?.[date];
-        return !status || status === AttendanceStatus.Pending;
-    });
+    // Initialize the list of pending students only once when the component mounts.
+    // This prevents the list from shrinking as attendance is taken, which was causing students to be skipped.
+    const [pendingStudents] = useState(() =>
+        students.filter(s => {
+            const status = groupAttendance[s.id]?.[date];
+            return !status || status === AttendanceStatus.Pending;
+        })
+    );
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
