@@ -33,14 +33,11 @@ const Dashboard: React.FC = () => {
             return; // Only show one birthday at a time, professor takes precedence
         }
         
-        for (const group of groups) {
-            for (const student of group.students) {
-                // Assuming student object might have a birthdate. The type doesn't, so I'll just check the professor for now.
-                // If student type had `birthdate: string;`, this would be the place to check it.
-            }
-        }
+        // The check for student birthdays was removed as the 'student' object
+        // does not currently contain a birthdate property. This can be added
+        // in the future if the data model is updated.
 
-    }, [groups, professor]);
+    }, [professor]);
 
 
     const stats = useMemo(() => {
