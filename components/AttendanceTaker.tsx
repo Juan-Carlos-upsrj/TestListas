@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AttendanceStatus, Student } from '../types';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
 import Icon from './icons/Icon';
@@ -13,8 +13,7 @@ interface AttendanceTakerProps {
 }
 
 const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, groupAttendance, onStatusChange, onClose }) => {
-    // Initialize the list of pending students only once when the component mounts.
-    // This prevents the list from shrinking as attendance is taken, which was causing students to be skipped.
+    // This state is initialized once and correctly captures the students needing attendance.
     const [pendingStudents] = useState(() =>
         students.filter(s => {
             const status = groupAttendance[s.id]?.[date];
@@ -24,37 +23,30 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    if (pendingStudents.length === 0) {
-        return (
-            <div className="text-center p-4">
-                <Icon name="check-circle-2" className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold my-4">¡Todo listo!</h3>
-                <p className="text-slate-500 mb-6">Todos los alumnos ya tienen un estado de asistencia para hoy.</p>
-                <Button onClick={onClose}>Cerrar</Button>
-            </div>
-        );
-    }
-    
-    const currentStudent = pendingStudents[currentIndex];
-
-    const handleSetStatus = (status: AttendanceStatus) => {
-        if(currentStudent) {
-            onStatusChange(currentStudent.id, status);
-        }
-        goToNext();
-    };
-
-    const goToNext = () => {
+    // Memoize callbacks to ensure they are stable and don't cause unnecessary re-renders or effect re-runs.
+    const goToNext = useCallback(() => {
         if (currentIndex < pendingStudents.length - 1) {
             setCurrentIndex(currentIndex + 1);
         } else {
             onClose();
         }
-    };
+    }, [currentIndex, pendingStudents.length, onClose]);
+
+    const handleSetStatus = useCallback((status: AttendanceStatus) => {
+        const currentStudent = pendingStudents[currentIndex];
+        if (currentStudent) {
+            onStatusChange(currentStudent.id, status);
+        }
+        goToNext();
+    }, [currentIndex, pendingStudents, onStatusChange, goToNext]);
     
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // FIX: This useEffect hook is now placed before any conditional returns, adhering to the Rules of Hooks.
+    // It also uses memoized callbacks (useCallback) with a correct dependency array to prevent stale closures.
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
+            // Do not process keys if there are no students to take attendance for.
+            if (pendingStudents.length === 0) return;
+
             const keyMap: { [key: string]: AttendanceStatus } = {
                 'p': AttendanceStatus.Present,
                 'a': AttendanceStatus.Absent,
@@ -70,9 +62,22 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentIndex, pendingStudents]);
+    }, [handleSetStatus, goToNext, pendingStudents.length]);
 
-    if (!currentStudent) return null;
+    // Conditional return for when all attendance is taken.
+    if (pendingStudents.length === 0) {
+        return (
+            <div className="text-center p-4">
+                <Icon name="check-circle-2" className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold my-4">¡Todo listo!</h3>
+                <p className="text-slate-500 mb-6">Todos los alumnos ya tienen un estado de asistencia para hoy.</p>
+                <Button onClick={onClose}>Cerrar</Button>
+            </div>
+        );
+    }
+    
+    const currentStudent = pendingStudents[currentIndex];
+    if (!currentStudent) return null; // Safety check, should not be reached.
 
     const currentStatus = groupAttendance[currentStudent.id]?.[date] || AttendanceStatus.Pending;
 
