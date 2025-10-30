@@ -4,13 +4,14 @@ import { CalendarEvent } from '../types';
 interface VEvent {
     summary?: string;
     dtstart?: string;
+    dtend?: string;
     rrule?: string;
 }
 
 /**
  * A lenient, custom parser for iCal data from Google Calendar.
  * It's designed to be resilient to formatting errors by only parsing what's needed
- * (SUMMARY, DTSTART, RRULE) and ignoring other lines. This avoids crashes caused
+ * (SUMMARY, DTSTART, DTEND, RRULE) and ignoring other lines. This avoids crashes caused
  * by strict parsers on slightly malformed feeds.
  * 
  * @param {string} icsData The raw iCal data string.
@@ -48,6 +49,8 @@ const customIcsParser = (icsData: string): CalendarEvent[] => {
             currentVEvent.summary = value;
         } else if (key.startsWith('DTSTART')) {
             currentVEvent.dtstart = value;
+        } else if (key.startsWith('DTEND')) {
+            currentVEvent.dtend = value;
         } else if (key.startsWith('RRULE')) {
             currentVEvent.rrule = value;
         }
@@ -58,9 +61,9 @@ const customIcsParser = (icsData: string): CalendarEvent[] => {
 
 
 /**
- * Processes a single VEvent object, expanding recurring events if necessary.
+ * Processes a single VEvent object, expanding multi-day and recurring events.
  * @param {VEvent} vevent The VEvent to process.
- * @returns {CalendarEvent[]} An array of calendar events, expanded if recurring.
+ * @returns {CalendarEvent[]} An array of calendar events, expanded if necessary.
  */
 const processVEvent = (vevent: VEvent): CalendarEvent[] => {
     if (!vevent.summary || !vevent.dtstart) {
@@ -74,8 +77,6 @@ const processVEvent = (vevent: VEvent): CalendarEvent[] => {
         const match = dateStr.match(/(\d{4})(\d{2})(\d{2})/);
         if (!match) return null;
         const [, year, month, day] = match.map(Number);
-        // Note: This creates a date in the system's local timezone.
-        // For all-day events from Google Calendar (VALUE=DATE), this is correct.
         return new Date(year, month - 1, day);
     };
     
@@ -84,64 +85,70 @@ const processVEvent = (vevent: VEvent): CalendarEvent[] => {
     const startDate = parseIcsDate(vevent.dtstart);
     if (!startDate) return [];
 
-    // If it's not a recurring event, just add the single instance.
-    if (!vevent.rrule) {
-        events.push({
-            id: `gcal-${uuidv4()}`,
-            date: formatDate(startDate),
-            title: title,
-            type: 'gcal',
-            color: 'bg-orange-200',
-        });
+    const endDate = vevent.dtend ? parseIcsDate(vevent.dtend) : null;
+    
+    // Handle multi-day, non-recurring event first
+    if (endDate && endDate > startDate && !vevent.rrule) {
+        let currentDate = new Date(startDate);
+        const eventUuid = uuidv4();
+        while (currentDate < endDate) {
+             events.push({
+                id: `gcal-${eventUuid}-${formatDate(currentDate)}`,
+                date: formatDate(currentDate),
+                title: title,
+                type: 'gcal',
+                color: 'bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200',
+            });
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
         return events;
     }
 
     // Handle simple weekly recurrence rule.
-    const rruleParts = vevent.rrule.split(';').reduce((acc, part) => {
-        const [key, val] = part.split('=');
-        if (key) acc[key] = val;
-        return acc;
-    }, {} as Record<string, string>);
-    
-    if (rruleParts.FREQ === 'WEEKLY' && rruleParts.BYDAY) {
-        const dayMap: { [key: string]: number } = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
-        const rruleDays = rruleParts.BYDAY.split(',').map(d => dayMap[d as keyof typeof dayMap]).filter(d => d !== undefined);
+    if (vevent.rrule) {
+        const rruleParts = vevent.rrule.split(';').reduce((acc, part) => {
+            const [key, val] = part.split('=');
+            if (key) acc[key] = val;
+            return acc;
+        }, {} as Record<string, string>);
         
-        const now = new Date();
-        const windowStart = new Date(now.getFullYear(), now.getMonth() - 6, 1);
-        const windowEnd = new Date(now.getFullYear(), now.getMonth() + 6, 0);
+        if (rruleParts.FREQ === 'WEEKLY' && rruleParts.BYDAY) {
+            const dayMap: { [key: string]: number } = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+            const rruleDays = rruleParts.BYDAY.split(',').map(d => dayMap[d as keyof typeof dayMap]).filter(d => d !== undefined);
+            
+            const now = new Date();
+            const windowStart = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+            const windowEnd = new Date(now.getFullYear(), now.getMonth() + 6, 0);
 
-        // Start iteration from the later of the event start date or the window start date.
-        let currentDate = startDate > windowStart ? new Date(startDate) : new Date(windowStart);
-        
-        let i = 0;
-        const MAX_EVENTS = 500; // Safety break
+            let currentDate = startDate > windowStart ? new Date(startDate) : new Date(windowStart);
+            let i = 0;
+            const MAX_EVENTS = 500; 
 
-        while (currentDate <= windowEnd && i < MAX_EVENTS) {
-            // Ensure we don't add events before the actual start date.
-            if (currentDate >= startDate && rruleDays.includes(currentDate.getDay())) {
-                events.push({
-                    id: `gcal-${uuidv4()}-${formatDate(currentDate)}`,
-                    date: formatDate(currentDate),
-                    title: title,
-                    type: 'gcal',
-                    color: 'bg-orange-200',
-                });
-                i++;
+            while (currentDate <= windowEnd && i < MAX_EVENTS) {
+                if (currentDate >= startDate && rruleDays.includes(currentDate.getDay())) {
+                    events.push({
+                        id: `gcal-${uuidv4()}-${formatDate(currentDate)}`,
+                        date: formatDate(currentDate),
+                        title: title,
+                        type: 'gcal',
+                        color: 'bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200',
+                    });
+                    i++;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
             }
-            currentDate.setDate(currentDate.getDate() + 1);
+            return events;
         }
-    } else {
-        // If RRULE is not understood, fall back to adding just the start date.
-        events.push({
-            id: `gcal-${uuidv4()}`,
-            date: formatDate(startDate),
-            title: title,
-            type: 'gcal',
-            color: 'bg-orange-200',
-        });
     }
 
+    // Fallback for single-day events or unhandled RRULEs
+    events.push({
+        id: `gcal-${uuidv4()}`,
+        date: formatDate(startDate),
+        title: title,
+        type: 'gcal',
+        color: 'bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200',
+    });
     return events;
 };
 

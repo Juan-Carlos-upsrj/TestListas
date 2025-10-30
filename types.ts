@@ -1,3 +1,5 @@
+// FIX: The self-import of types from this file was removed to fix circular dependency errors.
+
 // FIX: The original file had a circular dependency by importing from itself, causing numerous type errors.
 // All type definitions have been consolidated here and circular references removed to create a single source of truth for application types.
 
@@ -24,6 +26,7 @@ export interface Group {
   subject: string;
   classDays: DayOfWeek[];
   students: Student[];
+  color: string; // e.g., 'indigo', 'green', etc.
 }
 
 export enum AttendanceStatus {

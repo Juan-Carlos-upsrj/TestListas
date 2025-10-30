@@ -1,5 +1,6 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
 import { AppState, AppAction, AttendanceStatus } from '../types';
+import { GROUP_COLORS } from '../constants';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -60,7 +61,12 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           groups: state.groups.map(g => g.id === action.payload.id ? action.payload : g),
         };
       }
-      return { ...state, groups: [...state.groups, action.payload] };
+      // Assign a color to a new group
+      const newGroup = {
+        ...action.payload,
+        color: action.payload.color || GROUP_COLORS[state.groups.length % GROUP_COLORS.length].name,
+      };
+      return { ...state, groups: [...state.groups, newGroup] };
     }
     case 'DELETE_GROUP': {
         const newGroups = state.groups.filter(g => g.id !== action.payload);

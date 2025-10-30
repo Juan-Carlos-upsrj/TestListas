@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import Icon from './icons/Icon';
-import { DAYS_OF_WEEK } from '../constants';
+import { DAYS_OF_WEEK, GROUP_COLORS } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Form for creating/editing a group
@@ -17,6 +17,7 @@ const GroupForm: React.FC<{
     const [name, setName] = useState(group?.name || '');
     const [subject, setSubject] = useState(group?.subject || '');
     const [classDays, setClassDays] = useState<DayOfWeek[]>(group?.classDays || []);
+    const [color, setColor] = useState(group?.color || GROUP_COLORS[0].name);
 
     const handleDayToggle = (day: DayOfWeek) => {
         setClassDays(prev =>
@@ -35,7 +36,8 @@ const GroupForm: React.FC<{
             name,
             subject,
             classDays,
-            students: group?.students || []
+            students: group?.students || [],
+            color
         });
     };
 
@@ -66,6 +68,20 @@ const GroupForm: React.FC<{
                             >
                                 {day}
                             </button>
+                        ))}
+                    </div>
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium mb-2">Color del Grupo</label>
+                    <div className="flex flex-wrap gap-3">
+                        {GROUP_COLORS.map(c => (
+                            <button
+                                type="button"
+                                key={c.name}
+                                onClick={() => setColor(c.name)}
+                                title={c.name}
+                                className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${color === c.name ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-800' : ''}`}
+                            />
                         ))}
                     </div>
                 </div>
@@ -237,21 +253,29 @@ const GroupManagement: React.FC = () => {
                     </div>
                     {groups.length > 0 ? (
                         <ul className="space-y-2">
-                           {groups.map(group => (
-                               <li key={group.id} onClick={() => handleSelectGroup(group.id)}
-                                   className={`p-3 rounded-lg cursor-pointer transition-colors ${selectedGroupId === group.id ? 'bg-indigo-500 text-white shadow' : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600'}`}>
+                           {groups.map(group => {
+                                const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
+                                return (
+                                <li key={group.id} onClick={() => handleSelectGroup(group.id)}
+                                    className={`p-3 rounded-lg cursor-pointer transition-colors border-l-4 ${selectedGroupId === group.id ? `${groupColor.bg} text-white` : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 border-transparent'}`}
+                                    style={{ borderColor: selectedGroupId === group.id ? '' : (GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0]).bg.replace('bg-', '#') }}
+                                >
                                    <div className="flex justify-between items-start">
-                                       <div>
-                                           <p className="font-semibold">{group.name}</p>
-                                           <p className={`text-sm ${selectedGroupId === group.id ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>{group.subject}</p>
+                                       <div className="flex items-start gap-3">
+                                            <span className={`w-2 h-2 ${groupColor.bg} rounded-full mt-2 flex-shrink-0`}></span>
+                                            <div>
+                                               <p className="font-semibold">{group.name}</p>
+                                               <p className={`text-sm ${selectedGroupId === group.id ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>{group.subject}</p>
+                                           </div>
                                        </div>
-                                       <div className="flex gap-2 items-center">
+                                       <div className="flex gap-2 items-center flex-shrink-0">
                                             <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setGroupModalOpen(true); }} className="p-1 hover:text-blue-400"><Icon name="edit-3" className="w-4 h-4"/></button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }} className="p-1 hover:text-red-400"><Icon name="trash-2" className="w-4 h-4"/></button>
                                        </div>
                                    </div>
                                </li>
-                           ))}
+                               );
+                            })}
                         </ul>
                     ) : (
                         <p className="text-center py-8 text-slate-500">No has creado ningún grupo todavía.</p>

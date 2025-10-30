@@ -41,3 +41,14 @@ export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
         icon: "pie-chart"
     }
 ];
+
+export const GROUP_COLORS = [
+    { name: 'indigo', bg: 'bg-indigo-500', text: 'text-white', calendar: 'bg-indigo-200 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200' },
+    { name: 'sky', bg: 'bg-sky-500', text: 'text-white', calendar: 'bg-sky-200 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200' },
+    { name: 'teal', bg: 'bg-teal-500', text: 'text-white', calendar: 'bg-teal-200 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
+    { name: 'emerald', bg: 'bg-emerald-500', text: 'text-white', calendar: 'bg-emerald-200 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200' },
+    { name: 'amber', bg: 'bg-amber-500', text: 'text-white', calendar: 'bg-amber-200 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
+    { name: 'rose', bg: 'bg-rose-500', text: 'text-white', calendar: 'bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
+    { name: 'fuchsia', bg: 'bg-fuchsia-500', text: 'text-white', calendar: 'bg-fuchsia-200 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
+    { name: 'slate', bg: 'bg-slate-500', text: 'text-white', calendar: 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-100' },
+];

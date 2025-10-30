@@ -4,6 +4,7 @@ import { AppContext } from '../context/AppContext';
 import { CalendarEvent } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
+import { GROUP_COLORS } from '../constants';
 import Icon from './icons/Icon';
 import EventModal from './EventModal';
 
@@ -58,13 +59,14 @@ const CalendarView: React.FC = () => {
         
         groups.forEach(group => {
             const classDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
+            const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
             classDates.forEach(date => {
                 addEvent({
                     id: `class-${group.id}-${date}`,
                     date,
                     title: `Clase: ${group.name}`,
                     type: 'class',
-                    color: 'bg-blue-200 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200'
+                    color: groupColor.calendar
                 });
             });
         });
