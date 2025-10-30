@@ -10,10 +10,11 @@ const parseIcsData = (icsData: string): CalendarEvent[] => {
         const vevents = comp.getAllSubcomponents('vevent');
         const events: CalendarEvent[] = [];
 
-        // Define a time window to expand recurring events (e.g., 6 months past, 6 months future)
+        // Define a time window to expand recurring events.
+        // iCal.Duration does not support 'months', so we use 'weeks' (26 weeks ~ 6 months).
         const now = iCal.Time.now();
-        const start = now.clone().subtract(new iCal.Duration({ months: 6 }));
-        const end = now.clone().add(new iCal.Duration({ months: 6 }));
+        const start = now.clone().subtract(new iCal.Duration({ weeks: 26 }));
+        const end = now.clone().add(new iCal.Duration({ weeks: 26 }));
 
         vevents.forEach((vevent: any) => {
             const event = new iCal.Event(vevent);
@@ -21,7 +22,10 @@ const parseIcsData = (icsData: string): CalendarEvent[] => {
             if (event.isRecurring()) {
                 const iterator = event.iterator();
                 let next;
-                while ((next = iterator.next()) && next.compare(end) <= 0) {
+                let i = 0;
+                const MAX_OCCURRENCES = 1000; // Safety break
+
+                while ((next = iterator.next()) && next.compare(end) <= 0 && i < MAX_OCCURRENCES) {
                     if (next.compare(start) >= 0) {
                         const occurrence = event.getOccurrenceDetails(next);
                         const occurrenceStartDate = occurrence.startDate.toJSDate();
@@ -33,6 +37,7 @@ const parseIcsData = (icsData: string): CalendarEvent[] => {
                             color: 'bg-orange-200',
                         });
                     }
+                    i++;
                 }
             } else {
                 // Handle non-recurring events
