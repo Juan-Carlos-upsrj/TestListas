@@ -3,6 +3,7 @@
   "productName": "Gestión Académica IAEV",
   "version": "1.0.0",
   "description": "Aplicación de escritorio para gestión académica.",
+  "author": "Gestión Académica IAEV",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
@@ -41,7 +42,6 @@
   },
   "build": {
     "appId": "com.iaev.gestionacademica",
-    "icon": "public/logo.png",
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
@@ -49,6 +49,9 @@
     "directories": {
       "buildResources": "assets",
       "output": "release"
+    },
+    "win": {
+      "icon": "public/logo.png"
     }
   }
 }
