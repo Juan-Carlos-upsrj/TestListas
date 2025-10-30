@@ -2,10 +2,36 @@ import iCal from 'ical.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CalendarEvent } from '../types';
 
+// A function to clean up common iCal formatting issues before parsing.
+const sanitizeIcsString = (icsString: string): string => {
+    // 1. Normalize line endings to LF for consistent processing.
+    const normalized = icsString.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
+    // 2. Unfold multi-line properties. A line starting with a space or tab is a continuation.
+    const unfolded = normalized.replace(/\n[ \t]/g, '');
+
+    // 3. Filter out any empty lines that might exist.
+    const lines = unfolded.split('\n');
+    const nonEmptyLines = lines.filter(line => line.trim() !== '');
+
+    // 4. Ensure required calendar start/end tags exist if they are missing.
+    // Although unlikely for Google Calendar, this adds robustness.
+    if (!nonEmptyLines.find(line => line.startsWith('BEGIN:VCALENDAR'))) {
+        nonEmptyLines.unshift('BEGIN:VCALENDAR');
+    }
+    if (!nonEmptyLines.find(line => line.startsWith('END:VCALENDAR'))) {
+        nonEmptyLines.push('END:VCALENDAR');
+    }
+
+    // 5. Join back with CRLF as expected by the iCal specification.
+    return nonEmptyLines.join('\r\n');
+};
+
 // Helper to parse ICS data into our CalendarEvent format, now with support for recurring events.
 const parseIcsData = (icsData: string): CalendarEvent[] => {
     try {
-        const jcalData = iCal.parse(icsData);
+        const sanitizedData = sanitizeIcsString(icsData);
+        const jcalData = iCal.parse(sanitizedData);
         const comp = new iCal.Component(jcalData);
         const vevents = comp.getAllSubcomponents('vevent');
         const events: CalendarEvent[] = [];
@@ -55,7 +81,7 @@ const parseIcsData = (icsData: string): CalendarEvent[] => {
         });
         return events;
     } catch (parseError) {
-        console.error('Error parsing ICS data:', parseError);
+        console.error('Error parsing sanitized ICS data:', parseError);
         // Propagate the error to be handled by the caller
         throw new Error('Failed to parse calendar data.');
     }
