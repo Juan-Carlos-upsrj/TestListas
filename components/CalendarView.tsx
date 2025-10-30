@@ -6,7 +6,7 @@ import { fetchGoogleCalendarEvents } from '../services/calendarService';
 import EventModal from './EventModal';
 
 const CalendarView: React.FC = () => {
-    const { state } = useContext(AppContext);
+    const { state, dispatch } = useContext(AppContext);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -15,14 +15,20 @@ const CalendarView: React.FC = () => {
     useEffect(() => {
         const fetchEvents = async () => {
             if (state.settings.googleCalendarUrl) {
-                const events = await fetchGoogleCalendarEvents(state.settings.googleCalendarUrl);
-                setGoogleEvents(events);
+                try {
+                    const events = await fetchGoogleCalendarEvents(state.settings.googleCalendarUrl);
+                    setGoogleEvents(events);
+                } catch (error) {
+                    console.error(error);
+                    dispatch({ type: 'ADD_TOAST', payload: { message: 'No se pudo cargar el calendario de Google.', type: 'error' } });
+                    setGoogleEvents([]); // Clear events on error
+                }
             } else {
                 setGoogleEvents([]); // Clear events if URL is removed
             }
         };
         fetchEvents();
-    }, [state.settings.googleCalendarUrl]);
+    }, [state.settings.googleCalendarUrl, dispatch]);
 
     const groupColors = useMemo(() => {
         const colors = ['bg-blue-200', 'bg-green-200', 'bg-yellow-200', 'bg-purple-200', 'bg-pink-200', 'bg-indigo-200'];
@@ -57,9 +63,13 @@ const CalendarView: React.FC = () => {
             const group = state.groups.find(g => g.id === groupId);
             if (group) {
                  evals.forEach(ev => {
+                     // This logic seems incorrect, an evaluation doesn't happen every day.
+                     // For now, let's assume it's a placeholder. A better implementation
+                     // would be to add a date to the Evaluation interface itself.
+                     // Pinning it to semester start for now.
                      events.push({
                         id: `eval-${ev.id}`,
-                        date: semesterStart,
+                        date: semesterStart, 
                         title: `Evaluación: ${ev.name} (${group.name})`,
                         type: 'evaluation',
                         color: 'bg-red-200',
@@ -70,7 +80,7 @@ const CalendarView: React.FC = () => {
         });
 
         // 3. Deadline Events
-        if(firstPartialEnd) events.push({ id: 'deadline-p1', date: firstPartialEnd, title: 'Fin del Primer Parcial', type: 'deadline', color: 'bg-red-300' });
+        if(firstPartialEnd) events.push({ id: 'deadline-p1', date: firstPartialEnd, title: 'Fin del Primer Parcial', type: 'deadline', color: 'bg-red-30á00' });
         if(semesterEnd) events.push({ id: 'deadline-end', date: semesterEnd, title: 'Fin del Semestre', type: 'deadline', color: 'bg-red-300' });
 
         // 4. Custom & Google Calendar Events
