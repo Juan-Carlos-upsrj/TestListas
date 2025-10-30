@@ -33,8 +33,13 @@ const parseIcsData = (icsData: string): CalendarEvent[] => {
 
 export const fetchGoogleCalendarEvents = async (url: string): Promise<CalendarEvent[]> => {
     if (!url || !url.startsWith('http')) return [];
+    
+    // Use a CORS proxy to bypass browser security restrictions when fetching the iCal file.
+    const proxyUrl = 'https://corsproxy.io/?';
+    const fetchUrl = `${proxyUrl}${url}`;
+
     try {
-        const response = await fetch(url);
+        const response = await fetch(fetchUrl);
         if (!response.ok) {
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
