@@ -41,6 +41,7 @@
   },
   "build": {
     "appId": "com.iaev.gestionacademica",
+    "icon": "public/logo.png",
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
