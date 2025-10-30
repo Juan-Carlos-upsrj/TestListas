@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useEffect } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Evaluation } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -61,9 +61,9 @@ const GradesView: React.FC = () => {
     const [isEvalModalOpen, setEvalModalOpen] = useState(false);
     const [editingEvaluation, setEditingEvaluation] = useState<Evaluation | undefined>(undefined);
 
-    const setSelectedGroupId = (id: string | null) => {
+    const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
-    };
+    }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
     const groupEvaluations = useMemo(() => (evaluations[selectedGroupId || ''] || []).sort((a,b) => a.partial - b.partial), [evaluations, selectedGroupId]);
@@ -73,7 +73,7 @@ const GradesView: React.FC = () => {
         if (!selectedGroupId && groups.length > 0) {
             setSelectedGroupId(groups[0].id);
         }
-    }, [groups, selectedGroupId, dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [groups, selectedGroupId, setSelectedGroupId]);
     
     const handleSaveEvaluation = (evaluation: Evaluation) => {
         if (selectedGroupId) {

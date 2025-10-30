@@ -1,4 +1,4 @@
-import React, { useContext, useMemo, useEffect } from 'react';
+import React, { useContext, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus, ReportData, Evaluation, ReportMonthlyAttendance, StudentStatus } from '../types';
 import { getClassDates } from '../services/dateUtils';
@@ -13,9 +13,9 @@ const ReportsView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const { groups, attendance, evaluations, grades, settings, selectedGroupId } = state;
 
-    const setSelectedGroupId = (id: string | null) => {
+    const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
-    };
+    }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
 
@@ -23,7 +23,7 @@ const ReportsView: React.FC = () => {
         if (!selectedGroupId && groups.length > 0) {
             setSelectedGroupId(groups[0].id);
         }
-    }, [groups, selectedGroupId]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [groups, selectedGroupId, setSelectedGroupId]);
 
     const reportData: ReportData[] = useMemo(() => {
         if (!group) return [];

@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useEffect } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
 import { getClassDates } from '../services/dateUtils';
@@ -13,9 +13,9 @@ const AttendanceView: React.FC = () => {
     const { groups, attendance, settings, selectedGroupId } = state;
     const [isTakerOpen, setTakerOpen] = useState(false);
     
-    const setSelectedGroupId = (id: string | null) => {
+    const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
-    };
+    }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
 
@@ -30,7 +30,7 @@ const AttendanceView: React.FC = () => {
         if (!selectedGroupId && groups.length > 0) {
             setSelectedGroupId(groups[0].id);
         }
-    }, [groups, selectedGroupId]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [groups, selectedGroupId, setSelectedGroupId]);
 
     const attendanceHeaders = useMemo(() => {
         if (!group) return null;
