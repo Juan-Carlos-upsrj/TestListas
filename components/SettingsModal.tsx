@@ -1,9 +1,11 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Settings } from '../types';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import { GROUP_COLORS } from '../constants';
+import { exportBackup, importBackup } from '../services/backupService';
+import Icon from './icons/Icon';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -13,6 +15,7 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { state, dispatch } = useContext(AppContext);
     const [settings, setSettings] = useState<Settings>(state.settings);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         setSettings(state.settings);
@@ -36,6 +39,37 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         dispatch({ type: 'ADD_TOAST', payload: { message: 'Configuración guardada.', type: 'success' } });
         onClose();
     };
+
+    const handleExport = () => {
+        exportBackup(state);
+        dispatch({ type: 'ADD_TOAST', payload: { message: 'Exportando datos...', type: 'info' } });
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (window.confirm('¿Estás seguro de que quieres importar este archivo? Todos los datos actuales se reemplazarán.')) {
+                try {
+                    const importedData = await importBackup(file);
+                    dispatch({ type: 'SET_INITIAL_STATE', payload: importedData });
+                    dispatch({ type: 'ADD_TOAST', payload: { message: 'Datos importados con éxito.', type: 'success' } });
+                    onClose();
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : 'Error desconocido al importar.';
+                    dispatch({ type: 'ADD_TOAST', payload: { message: errorMessage, type: 'error' } });
+                }
+            }
+        }
+        // Reset file input value to allow re-uploading the same file
+        if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Configuración" size="lg">
@@ -119,6 +153,29 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             <p className="text-xs text-slate-500 mt-1">Se marcarán en reportes los alumnos con asistencia por debajo de este porcentaje.</p>
                       </div>
                  </fieldset>
+
+                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                    <legend className="px-2 font-semibold">Copia de Seguridad y Restauración</legend>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                        <Button variant="secondary" onClick={handleExport} className="w-full">
+                            <Icon name="download-cloud" /> Exportar Datos
+                        </Button>
+                        <Button variant="secondary" onClick={handleImportClick} className="w-full">
+                            <Icon name="upload-cloud" /> Importar Datos
+                        </Button>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept=".json"
+                            className="hidden"
+                        />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                        Guarda todos tus datos en un archivo seguro o restáuralos desde una copia anterior.
+                        <strong className="dark:text-amber-300 text-amber-600"> Importante:</strong> Importar datos reemplazará toda la información actual.
+                    </p>
+                </fieldset>
             </div>
              <div className="flex justify-end gap-3 mt-8">
                 <Button variant="secondary" onClick={onClose}>Cancelar</Button>
