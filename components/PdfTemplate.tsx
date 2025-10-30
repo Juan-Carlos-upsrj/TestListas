@@ -87,7 +87,8 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                 <table className="w-full border-collapse text-[7px]">
                   <thead>
                       <tr>
-                          <th rowSpan={3} className="sticky left-0 bg-white p-1 text-left font-semibold z-10 border-b-2 border-slate-600 align-bottom">Alumno</th>
+                          <th rowSpan={3} className="p-1 font-semibold border-b-2 border-slate-600 text-center align-bottom w-[20px]">#</th>
+                          <th rowSpan={3} className="p-1 text-left font-semibold border-b-2 border-slate-600 align-bottom max-w-[150px]">Alumno</th>
                           {attendanceHeaders && Object.entries(attendanceHeaders).map(([partialName, months]) => {
                               const colspan = Object.values(months).reduce((sum, dates) => sum + dates.length, 0);
                               return <th key={partialName} colSpan={colspan} className="p-1 font-semibold text-center text-base border-b-2 border-slate-600">{partialName}</th>
@@ -112,9 +113,10 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                       </tr>
                   </thead>
                   <tbody>
-                      {group.students.map(student => (
+                      {group.students.map((student, index) => (
                           <tr key={student.id} className="border-b border-slate-200">
-                              <td className="sticky left-0 bg-white p-1 font-semibold z-10 whitespace-nowrap text-[9px]">{student.name}</td>
+                              <td className="p-1 text-center border-r border-slate-200">{index + 1}</td>
+                              <td className="p-1 font-semibold text-[9px] max-w-[150px]">{student.name}</td>
                               {classDates.map(date => {
                                   const status = groupAttendance[student.id]?.[date] || AttendanceStatus.Pending;
                                   const simpleColor = {
