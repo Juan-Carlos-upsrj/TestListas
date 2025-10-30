@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useContext, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { CalendarEvent } from '../types';
@@ -51,12 +52,10 @@ const CalendarView: React.FC = () => {
             if (!events[event.date]) {
                 events[event.date] = [];
             }
-            // Avoid duplicates from gcal
             if (events[event.date].some(e => e.id === event.id)) return;
             events[event.date].push(event);
         };
         
-        // Add class days from groups
         groups.forEach(group => {
             const classDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
             classDates.forEach(date => {
@@ -70,15 +69,11 @@ const CalendarView: React.FC = () => {
             });
         });
 
-        // Add saved calendar events
         calendarEvents.forEach(event => addEvent(event));
-        
-        // Add Google Calendar events
         gcalEvents.forEach(event => addEvent(event));
 
-        // Sort events within each day
         Object.values(events).forEach(dayEvents => {
-            dayEvents.sort((a, b) => a.title.localeCompare(b.title));
+            dayEvents.sort((a,b) => (a.type === 'gcal' ? -1 : 1) - (b.type === 'gcal' ? -1 : 1) || a.title.localeCompare(b.title));
         });
 
         return events;
@@ -118,8 +113,22 @@ const CalendarView: React.FC = () => {
         for (let day = 1; day <= daysInMonth; day++) {
             const date = new Date(year, month, day);
             const dateStr = date.toISOString().split('T')[0];
-            const dayEvents = allEventsByDate[dateStr] || [];
+            const dayEvents = [...(allEventsByDate[dateStr] || [])];
+            const dayOfWeek = date.getDay();
             const isToday = dateStr === todayStr;
+            
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                const weekendEvent: CalendarEvent = {
+                    id: `weekend-rest-${dateStr}`,
+                    date: dateStr,
+                    title: "Sé feliz y descansa",
+                    type: 'custom',
+                    color: 'bg-purple-200 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200'
+                };
+                if (!dayEvents.some(e => e.id === weekendEvent.id)) {
+                    dayEvents.unshift(weekendEvent);
+                }
+            }
 
             cells.push(
                 <div 
