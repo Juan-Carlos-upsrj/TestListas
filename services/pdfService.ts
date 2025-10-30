@@ -2,11 +2,18 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Group, ReportData, Evaluation, GroupReportSummary } from '../types';
+import { Group, Evaluation, GroupReportSummary, AttendanceStatus } from '../types';
 import PdfTemplate from '../components/PdfTemplate';
 import { getImageAsBase64 } from './imageUtils';
 
-export const exportReportToPDF = async (group: Group, reportData: ReportData[], evaluations: Evaluation[], groupSummary: GroupReportSummary) => {
+export const exportReportToPDF = async (
+    group: Group,
+    groupSummary: GroupReportSummary,
+    classDates: string[],
+    groupAttendance: { [studentId: string]: { [date: string]: AttendanceStatus; }; },
+    attendanceHeaders: Record<string, Record<string, string[]>> | null,
+    groupEvaluations: Evaluation[]
+) => {
   const logoBase64 = await getImageAsBase64('/logo.png');
 
   const templateContainer = document.createElement('div');
@@ -21,7 +28,16 @@ export const exportReportToPDF = async (group: Group, reportData: ReportData[], 
       React.createElement(
         React.StrictMode,
         null,
-        React.createElement(PdfTemplate, { group, reportData, logoBase64, evaluations, groupSummary, ref: (el) => { if (el) resolve(); } })
+        React.createElement(PdfTemplate, { 
+            group,
+            groupSummary,
+            classDates,
+            groupAttendance,
+            attendanceHeaders,
+            groupEvaluations,
+            logoBase64,
+            ref: (el) => { if (el) resolve(); } 
+        })
       )
     );
   });

@@ -3,6 +3,7 @@ import { AppContext } from '../context/AppContext';
 import { AttendanceStatus, GroupReportSummary } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { exportAttendanceToCSV, exportGradesToCSV } from '../services/exportService';
+import { exportReportToPDF } from '../services/pdfService';
 import Icon from './icons/Icon';
 import Button from './common/Button';
 import ReportChart from './ReportChart';
@@ -113,6 +114,22 @@ const ReportsView: React.FC = () => {
         }
     };
 
+    const handleExportPDF = () => {
+        if (group && groupSummaryData && attendanceHeaders) {
+            exportReportToPDF(
+                group,
+                groupSummaryData,
+                classDates,
+                attendance[group.id] || {},
+                attendanceHeaders,
+                groupEvaluations
+            );
+        } else {
+             dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos suficientes para generar el PDF.', type: 'error' } });
+        }
+    };
+
+
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
@@ -130,6 +147,9 @@ const ReportsView: React.FC = () => {
             {group ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                     <div className="flex flex-wrap justify-end gap-3 mb-4">
+                        <Button variant="secondary" onClick={handleExportPDF}>
+                            <Icon name="download-cloud" className="w-4 h-4" /> Exportar a PDF
+                        </Button>
                          <Button variant="secondary" onClick={handleExportAttendance}>
                             <Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar Asistencia (CSV)
                         </Button>
