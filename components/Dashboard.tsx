@@ -7,7 +7,7 @@ import { CalendarEvent, DayOfWeek, Group, AttendanceStatus } from '../types';
 import FridayCelebration from './FridayCelebration';
 import BirthdayCelebration from './BirthdayCelebration';
 import { getClassDates } from '../services/dateUtils';
-import { MOTIVATIONAL_QUOTES } from '../constants';
+import { MOTIVATIONAL_QUOTES, GROUP_COLORS } from '../constants';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
 import Modal from './common/Modal';
 import Button from './common/Button';
@@ -44,7 +44,12 @@ const Dashboard: React.FC = () => {
         const fetchEvents = async () => {
             if (settings.googleCalendarUrl) {
                 try {
-                    const events = await fetchGoogleCalendarEvents(settings.googleCalendarUrl);
+                    // FIX: The fetchGoogleCalendarEvents function requires a color class argument.
+                    // This was missing, causing a runtime error. The color is now retrieved from settings,
+                    // with a fallback to a default 'amber' color, consistent with CalendarView.
+                    const gcalColorName = settings.googleCalendarColor || 'amber';
+                    const gcalColor = GROUP_COLORS.find(c => c.name === gcalColorName) || GROUP_COLORS.find(c => c.name === 'amber')!;
+                    const events = await fetchGoogleCalendarEvents(settings.googleCalendarUrl, gcalColor.calendar);
                     setGcalEvents(events);
                 } catch (error) {
                     console.error("Failed to fetch Google Calendar events for dashboard", error);
@@ -54,7 +59,7 @@ const Dashboard: React.FC = () => {
             }
         };
         fetchEvents();
-    }, [settings.googleCalendarUrl]);
+    }, [settings.googleCalendarUrl, settings.googleCalendarColor]);
 
     const stats = useMemo(() => ({
         totalGroups: groups.length,

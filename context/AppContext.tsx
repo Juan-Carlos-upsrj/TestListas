@@ -1,5 +1,5 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
-import { AppState, AppAction, AttendanceStatus } from '../types';
+import { AppState, AppAction, AttendanceStatus, Group } from '../types';
 import { GROUP_COLORS } from '../constants';
 
 const today = new Date();
@@ -22,6 +22,7 @@ const defaultState: AppState = {
     theme: 'light',
     lowAttendanceThreshold: 80,
     googleCalendarUrl: '',
+    googleCalendarColor: 'amber',
   },
   activeView: 'dashboard',
   selectedGroupId: null,
@@ -32,12 +33,18 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
     case 'SET_INITIAL_STATE': {
         const loadedState = action.payload || {};
-        // Defensively merge loaded state with default state to ensure data integrity
-        // and prevent crashes from null/undefined values in saved data.
+        
+        // Data migration: Ensure all groups have a color property for backward compatibility.
+        const loadedGroups: Group[] = loadedState.groups || [];
+        const migratedGroups = loadedGroups.map((group, index) => ({
+            ...group,
+            color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
+        }));
+
         return {
             ...defaultState,
             ...loadedState,
-            groups: loadedState.groups || defaultState.groups,
+            groups: migratedGroups,
             attendance: loadedState.attendance || defaultState.attendance,
             evaluations: loadedState.evaluations || defaultState.evaluations,
             grades: loadedState.grades || defaultState.grades,

@@ -26,7 +26,10 @@ const CalendarView: React.FC = () => {
                 setIsLoadingGcal(true);
                 setErrorGcal(null);
                 try {
-                    const events = await fetchGoogleCalendarEvents(settings.googleCalendarUrl);
+                    const gcalColorName = settings.googleCalendarColor || 'amber';
+                    const gcalColor = GROUP_COLORS.find(c => c.name === gcalColorName) || GROUP_COLORS.find(c => c.name === 'amber')!;
+                    
+                    const events = await fetchGoogleCalendarEvents(settings.googleCalendarUrl, gcalColor.calendar);
                     setGcalEvents(events);
                     if (events.length > 0) {
                         dispatch({ type: 'ADD_TOAST', payload: { message: 'Calendario de Google sincronizado.', type: 'info' } });
@@ -44,7 +47,7 @@ const CalendarView: React.FC = () => {
             }
         };
         fetchEvents();
-    }, [settings.googleCalendarUrl, dispatch]);
+    }, [settings.googleCalendarUrl, settings.googleCalendarColor, dispatch]);
 
     const allEventsByDate = useMemo(() => {
         const events: { [date: string]: CalendarEvent[] } = {};

@@ -52,6 +52,7 @@ export interface Settings {
   theme: 'light' | 'dark';
   lowAttendanceThreshold: number;
   googleCalendarUrl: string;
+  googleCalendarColor: string;
 }
 
 export type ActiveView = 'dashboard' | 'groups' | 'attendance' | 'grades' | 'reports' | 'calendar';

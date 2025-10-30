@@ -3,6 +3,7 @@ import { AppContext } from '../context/AppContext';
 import { Settings } from '../types';
 import Modal from './common/Modal';
 import Button from './common/Button';
+import { GROUP_COLORS } from '../constants';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -59,18 +60,34 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 
                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
                     <legend className="px-2 font-semibold">Integración de Calendario</legend>
-                    <div>
-                        <label htmlFor="googleCalendarUrl" className="block text-sm font-medium">URL de Google Calendar (formato iCal público)</label>
-                        <input
-                            type="url"
-                            id="googleCalendarUrl"
-                            name="googleCalendarUrl"
-                            value={settings.googleCalendarUrl}
-                            onChange={handleChange}
-                            placeholder="Pega aquí la dirección pública en formato iCal"
-                            className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Esto permitirá mostrar los eventos de tu calendario de Google directamente en la aplicación.</p>
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="googleCalendarUrl" className="block text-sm font-medium">URL de Google Calendar (formato iCal público)</label>
+                            <input
+                                type="url"
+                                id="googleCalendarUrl"
+                                name="googleCalendarUrl"
+                                value={settings.googleCalendarUrl}
+                                onChange={handleChange}
+                                placeholder="Pega aquí la dirección pública en formato iCal"
+                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">Esto permitirá mostrar los eventos de tu calendario de Google directamente en la aplicación.</p>
+                        </div>
+                         <div>
+                            <label className="block text-sm font-medium mb-2">Color para Eventos de Google Calendar</label>
+                            <div className="flex flex-wrap gap-3">
+                                {GROUP_COLORS.map(c => (
+                                    <button
+                                        type="button"
+                                        key={c.name}
+                                        onClick={() => setSettings(s => ({ ...s, googleCalendarColor: c.name }))}
+                                        title={c.name}
+                                        className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${settings.googleCalendarColor === c.name ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-800' : ''}`}
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     </div>
                 </fieldset>
 

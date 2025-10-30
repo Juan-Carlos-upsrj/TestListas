@@ -15,9 +15,10 @@ interface VEvent {
  * by strict parsers on slightly malformed feeds.
  * 
  * @param {string} icsData The raw iCal data string.
+ * @param {string} colorClasses The Tailwind CSS classes to apply to the events.
  * @returns {CalendarEvent[]} An array of parsed calendar events.
  */
-const customIcsParser = (icsData: string): CalendarEvent[] => {
+const customIcsParser = (icsData: string, colorClasses: string): CalendarEvent[] => {
     // Unfold multi-line properties and normalize line endings.
     const unfoldedData = icsData.replace(/\r\n\s/g, '').replace(/\n\s/g, '');
     const lines = unfoldedData.split(/\r\n|\n/);
@@ -36,7 +37,7 @@ const customIcsParser = (icsData: string): CalendarEvent[] => {
         }
 
         if (line.startsWith('END:VEVENT')) {
-            const processedEvents = processVEvent(currentVEvent);
+            const processedEvents = processVEvent(currentVEvent, colorClasses);
             events.push(...processedEvents);
             currentVEvent = null;
             continue;
@@ -63,9 +64,10 @@ const customIcsParser = (icsData: string): CalendarEvent[] => {
 /**
  * Processes a single VEvent object, expanding multi-day and recurring events.
  * @param {VEvent} vevent The VEvent to process.
+ * @param {string} colorClasses The Tailwind CSS classes to apply to the events.
  * @returns {CalendarEvent[]} An array of calendar events, expanded if necessary.
  */
-const processVEvent = (vevent: VEvent): CalendarEvent[] => {
+const processVEvent = (vevent: VEvent, colorClasses: string): CalendarEvent[] => {
     if (!vevent.summary || !vevent.dtstart) {
         return [];
     }
@@ -91,13 +93,14 @@ const processVEvent = (vevent: VEvent): CalendarEvent[] => {
     if (endDate && endDate > startDate && !vevent.rrule) {
         let currentDate = new Date(startDate);
         const eventUuid = uuidv4();
+        // The end date in iCal for all-day events is exclusive, so we loop while less than.
         while (currentDate < endDate) {
              events.push({
                 id: `gcal-${eventUuid}-${formatDate(currentDate)}`,
                 date: formatDate(currentDate),
                 title: title,
                 type: 'gcal',
-                color: 'bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200',
+                color: colorClasses,
             });
             currentDate.setDate(currentDate.getDate() + 1);
         }
@@ -131,7 +134,7 @@ const processVEvent = (vevent: VEvent): CalendarEvent[] => {
                         date: formatDate(currentDate),
                         title: title,
                         type: 'gcal',
-                        color: 'bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200',
+                        color: colorClasses,
                     });
                     i++;
                 }
@@ -147,13 +150,13 @@ const processVEvent = (vevent: VEvent): CalendarEvent[] => {
         date: formatDate(startDate),
         title: title,
         type: 'gcal',
-        color: 'bg-orange-200 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200',
+        color: colorClasses,
     });
     return events;
 };
 
 
-export const fetchGoogleCalendarEvents = async (url: string): Promise<CalendarEvent[]> => {
+export const fetchGoogleCalendarEvents = async (url: string, colorClasses: string): Promise<CalendarEvent[]> => {
     if (!url || !url.startsWith('http')) return [];
     
     // Using a CORS proxy to fetch the iCal file.
@@ -166,7 +169,7 @@ export const fetchGoogleCalendarEvents = async (url: string): Promise<CalendarEv
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         const icsData = await response.text();
-        return customIcsParser(icsData);
+        return customIcsParser(icsData, colorClasses);
     } catch (error) {
         console.error('Error fetching or parsing iCal data:', error);
         throw new Error('Could not fetch calendar data. Please check the URL and its permissions.');

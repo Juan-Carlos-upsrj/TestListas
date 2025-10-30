@@ -26,20 +26,15 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
     // Using inline styles for dimensions to ensure html2canvas captures it correctly
     <div ref={ref} className="bg-slate-50 font-sans text-gray-800" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}>
         <div className="p-8">
-            {/* Logo */}
-            <div className="flex justify-center mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v-1H6.5A2.5 2.5 0 0 1 4 13.5V4h16v16l-3-3-3 3-3-3-3 3-3-3-3 3Z"></path>
-                    <path d="m14 2-4 4 4 4"></path>
-                </svg>
-            </div>
-            
             {/* Header */}
             <header className="mb-8">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900">Reporte de Desempeño</h1>
-                        <p className="text-gray-500 mt-1">Grupo: {group.name}</p>
+                     <div className="flex items-center gap-4">
+                        <img src="/logo.png" alt="Logo" style={{ width: '48px', height: '48px' }} />
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900">Reporte de Desempeño</h1>
+                            <p className="text-gray-500 mt-1">Grupo: {group.name}</p>
+                        </div>
                     </div>
                     <div className="text-sm text-gray-500 text-right">
                         <p>Materia: {group.subject}</p>
