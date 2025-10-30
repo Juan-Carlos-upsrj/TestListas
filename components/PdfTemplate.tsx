@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import React from 'react';
 import { Group, Evaluation, GroupReportSummary, AttendanceStatus } from '../types';
 import { GROUP_COLORS, STATUS_STYLES } from '../constants';
 import ReportChart from './ReportChart';
@@ -11,69 +11,78 @@ interface GroupPdfTemplateProps {
   attendanceHeaders: Record<string, Record<string, string[]>> | null;
   groupEvaluations: Evaluation[];
   logoBase64: string;
+  renderPart: 'summary' | 'grid';
 }
 
-const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({ 
+const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({ 
   group, 
   groupSummary, 
   classDates, 
   groupAttendance, 
   attendanceHeaders, 
   groupEvaluations, 
-  logoBase64 
-}, ref) => {
+  logoBase64,
+  renderPart
+}) => {
   
   const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
 
   return (
-    <div ref={ref} className="bg-white font-sans text-slate-800" style={{ width: '297mm', minHeight: '210mm', boxSizing: 'border-box' }}>
+    <div className="bg-white font-sans text-slate-800" style={{ width: '297mm', minHeight: 'auto', boxSizing: 'border-box' }}>
       <div className="p-10">
-        {/* Header */}
-        <header className={`p-6 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    {logoBase64 && <img src={logoBase64} alt="Logo" style={{ width: '48px', height: '48px' }} />}
-                    <div>
-                        <h1 className="text-3xl font-bold">Reporte de Grupo</h1>
-                        <p className="opacity-80 text-base">Grupo: {group.name}</p>
+        {renderPart === 'summary' && (
+          <>
+            {/* Header */}
+            <header className={`p-6 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-4">
+                        {logoBase64 && <img src={logoBase64} alt="Logo" style={{ width: '48px', height: '48px' }} />}
+                        <div>
+                            <h1 className="text-3xl font-bold">Reporte de Grupo</h1>
+                            <p className="opacity-80 text-base">Grupo: {group.name}</p>
+                        </div>
+                    </div>
+                    <div className="text-sm text-right">
+                        <p><span className="font-semibold">Materia:</span> {group.subject}</p>
+                        <p><span className="font-semibold">Fecha:</span> {new Date().toLocaleDateString('es-ES')}</p>
                     </div>
                 </div>
-                <div className="text-sm text-right">
-                    <p><span className="font-semibold">Materia:</span> {group.subject}</p>
-                    <p><span className="font-semibold">Fecha:</span> {new Date().toLocaleDateString('es-ES')}</p>
+                <div className="mt-4 pt-4 border-t border-white/20 grid grid-cols-3 gap-4 text-center">
+                  <div>
+                      <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Alumnos</span>
+                      <p className="text-2xl font-bold">{group.students.length}</p>
+                  </div>
+                  <div>
+                      <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Evaluaciones</span>
+                      <p className="text-2xl font-bold">{groupEvaluations.length}</p>
+                  </div>
+                  <div>
+                      <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Días de Clase</span>
+                      <p className="text-2xl font-bold">{classDates.length}</p>
+                  </div>
                 </div>
-            </div>
-            <div className="mt-4 pt-4 border-t border-white/20 grid grid-cols-3 gap-4 text-center">
-              <div>
-                  <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Alumnos</span>
-                  <p className="text-2xl font-bold">{group.students.length}</p>
-              </div>
-              <div>
-                  <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Evaluaciones</span>
-                  <p className="text-2xl font-bold">{groupEvaluations.length}</p>
-              </div>
-              <div>
-                  <span className="text-xs font-semibold opacity-80 uppercase tracking-wider">Días de Clase</span>
-                  <p className="text-2xl font-bold">{classDates.length}</p>
-              </div>
-            </div>
-        </header>
+            </header>
 
-        <main className="mt-6">
-            {/* --- SMALLER CHART --- */}
-            <section className="mb-6">
-                <h2 className="text-xl font-bold text-slate-900 mb-3 text-center">Asistencia Mensual (Promedio)</h2>
-                <div className="bg-slate-50 p-4 rounded-lg">
-                    {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
-                        <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} height="220px" />
-                    ) : (
-                        <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
-                    )}
-                </div>
-            </section>
+            <main className="mt-6">
+                {/* --- SMALLER CHART --- */}
+                <section className="mb-6">
+                    <h2 className="text-xl font-bold text-slate-900 mb-3 text-center">Asistencia Mensual (Promedio)</h2>
+                    <div className="bg-slate-50 p-4 rounded-lg">
+                        {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
+                            <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} height="220px" />
+                        ) : (
+                            <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
+                        )}
+                    </div>
+                </section>
+            </main>
+          </>
+        )}
 
+        {renderPart === 'grid' && (
+          <>
             {/* --- Detailed Attendance Grid Page(s) --- */}
-            <section style={{ breakBefore: 'page' }}>
+            <section>
                 <h2 className="text-xl font-bold text-slate-900 mb-4">Registro Detallado de Asistencia</h2>
                 <table className="w-full border-collapse text-[7px]">
                   <thead>
@@ -85,9 +94,9 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                           })}
                       </tr>
                       <tr>
-                          {attendanceHeaders && Object.entries(attendanceHeaders).flatMap(([partialName, months]) => 
+                          {attendanceHeaders && Object.entries(attendanceHeaders).flatMap(([, months]) => 
                               Object.entries(months).map(([monthName, dates]) => 
-                                  <th key={`${partialName}-${monthName}`} colSpan={dates.length} 
+                                  <th key={monthName} colSpan={dates.length} 
                                   className="p-1 font-semibold text-center border-b border-slate-400 bg-slate-50 text-sm">
                                       {monthName}
                                   </th>
@@ -108,14 +117,10 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                               <td className="sticky left-0 bg-white p-1 font-semibold z-10 whitespace-nowrap text-[9px]">{student.name}</td>
                               {classDates.map(date => {
                                   const status = groupAttendance[student.id]?.[date] || AttendanceStatus.Pending;
-                                  // Use a simplified color for PDF to save ink and improve clarity
                                   const simpleColor = {
-                                      [AttendanceStatus.Present]: 'bg-green-100',
-                                      [AttendanceStatus.Absent]: 'bg-red-100',
-                                      [AttendanceStatus.Late]: 'bg-yellow-100',
-                                      [AttendanceStatus.Justified]: 'bg-blue-100',
-                                      [AttendanceStatus.Exchange]: 'bg-purple-100',
-                                      [AttendanceStatus.Pending]: 'bg-slate-100',
+                                      [AttendanceStatus.Present]: 'bg-green-100', [AttendanceStatus.Absent]: 'bg-red-100',
+                                      [AttendanceStatus.Late]: 'bg-yellow-100', [AttendanceStatus.Justified]: 'bg-blue-100',
+                                      [AttendanceStatus.Exchange]: 'bg-purple-100', [AttendanceStatus.Pending]: 'bg-slate-100',
                                   };
                                   return (
                                       <td key={date} className={`p-0 text-center border-l border-slate-200 ${simpleColor[status]}`}>
@@ -130,14 +135,14 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                   </tbody>
               </table>
             </section>
-        </main>
-
-        <footer className="mt-12 text-center text-xs text-slate-400 border-t pt-4" style={{ breakBefore: 'auto' }}>
-            <p>Reporte generado por Gestión Académica IAEV</p>
-        </footer>
+            <footer className="mt-12 text-center text-xs text-slate-400 border-t pt-4">
+                <p>Reporte generado por Gestión Académica IAEV</p>
+            </footer>
+          </>
+        )}
       </div>
     </div>
   );
-});
+};
 
 export default PdfTemplate;
