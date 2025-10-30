@@ -16,6 +16,8 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    // Use the .ico file for the window icon
+    icon: path.join(__dirname, '../../public/logo.ico'),
     webPreferences: {
       // The preload script path is determined by the vite-plugin-electron build output.
       // Typically, it's placed alongside the main process script in 'dist-electron'.
@@ -50,7 +52,7 @@ app.whenReady().then(() => {
             return JSON.parse(data);
         } catch (error) {
             // If the file doesn't exist, it's not an error on first launch, just return null.
-            if (error.code === 'ENOENT') {
+            if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
                 return null;
             }
             // For other errors, log it and return null so the app can start with a default state.

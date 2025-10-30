@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useState, useMemo, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Evaluation } from '../types';
