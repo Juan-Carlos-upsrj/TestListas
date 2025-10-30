@@ -53,7 +53,7 @@ export const exportReportToPDF = async (
   document.body.removeChild(templateContainer);
 
   const pdf = new jsPDF({
-    orientation: 'portrait',
+    orientation: 'landscape',
     unit: 'pt',
     format: 'a4',
   });

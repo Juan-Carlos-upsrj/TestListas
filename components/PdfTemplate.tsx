@@ -26,7 +26,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
   const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
 
   return (
-    <div ref={ref} className="bg-white font-sans text-slate-800" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}>
+    <div ref={ref} className="bg-white font-sans text-slate-800" style={{ width: '297mm', minHeight: '210mm', boxSizing: 'border-box' }}>
       <div className="p-10">
         {/* Header */}
         <header className={`p-6 rounded-xl ${groupColor.bg} ${groupColor.text}`}>
@@ -49,35 +49,38 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
             {/* --- GROUP SUMMARY PAGE --- */}
             <section className="mb-8">
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">Resumen del Grupo</h2>
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                        <span className="text-sm font-medium text-slate-500">Total de Alumnos</span>
-                        <p className="mt-1 text-3xl font-bold text-slate-900">{group.students.length}</p>
+                <div className="grid grid-cols-2 gap-6">
+                    {/* Left Column: Stats */}
+                    <div className="flex flex-col gap-4">
+                         <div className="bg-slate-50 rounded-lg p-4 text-center">
+                            <span className="text-sm font-medium text-slate-500">Total de Alumnos</span>
+                            <p className="mt-1 text-3xl font-bold text-slate-900">{group.students.length}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-4 text-center">
+                            <span className="text-sm font-medium text-slate-500">Evaluaciones</span>
+                            <p className="mt-1 text-3xl font-bold text-blue-600">{groupEvaluations.length}</p>
+                        </div>
+                        <div className="bg-slate-50 rounded-lg p-4 text-center">
+                            <span className="text-sm font-medium text-slate-500">Días de Clase</span>
+                            <p className="mt-1 text-3xl font-bold text-green-600">{classDates.length}</p>
+                        </div>
                     </div>
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                        <span className="text-sm font-medium text-slate-500">Evaluaciones</span>
-                        <p className="mt-1 text-3xl font-bold text-blue-600">{groupEvaluations.length}</p>
+                    {/* Right Column: Chart */}
+                    <div className="bg-slate-50 p-4 rounded-lg">
+                        <h3 className="font-bold text-center mb-2">Asistencia Mensual (Promedio)</h3>
+                        {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
+                            <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} />
+                        ) : (
+                            <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
+                        )}
                     </div>
-                    <div className="bg-slate-50 rounded-lg p-4 text-center">
-                        <span className="text-sm font-medium text-slate-500">Días de Clase</span>
-                        <p className="mt-1 text-3xl font-bold text-green-600">{classDates.length}</p>
-                    </div>
-                </div>
-
-                <div className="bg-slate-50 p-4 rounded-lg">
-                    <h3 className="font-bold text-center mb-2">Asistencia Mensual (Promedio)</h3>
-                    {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
-                        <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} />
-                    ) : (
-                        <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
-                    )}
                 </div>
             </section>
 
             {/* --- Detailed Attendance Grid Page(s) --- */}
             <section style={{ breakBefore: 'page' }}>
                 <h2 className="text-2xl font-bold text-slate-900 mb-4">Registro Detallado de Asistencia</h2>
-                <table className="w-full border-collapse text-[6px]">
+                <table className="w-full border-collapse text-[8px]">
                   <thead>
                       <tr>
                           <th rowSpan={3} className="sticky left-0 bg-white p-1 text-left font-semibold z-10 border-b-2 border-slate-600 align-bottom">Alumno</th>
@@ -98,7 +101,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                       </tr>
                       <tr>
                           {classDates.map(date => (
-                              <th key={date} className="p-1 font-semibold text-center min-w-[10px] border-b border-slate-400 align-bottom" style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}>
+                              <th key={date} className="p-1 font-semibold text-center min-w-[20px] border-b border-slate-400 align-bottom">
                                   {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                               </th>
                           ))}
@@ -107,7 +110,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, GroupPdfTemplateProps>(({
                   <tbody>
                       {group.students.map(student => (
                           <tr key={student.id} className="border-b border-slate-200">
-                              <td className="sticky left-0 bg-white p-1 font-semibold z-10 whitespace-nowrap text-[8px]">{student.name}</td>
+                              <td className="sticky left-0 bg-white p-1 font-semibold z-10 whitespace-nowrap text-[10px]">{student.name}</td>
                               {classDates.map(date => {
                                   const status = groupAttendance[student.id]?.[date] || AttendanceStatus.Pending;
                                   // Use a simplified color for PDF to save ink and improve clarity
