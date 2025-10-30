@@ -1,6 +1,6 @@
 import React, { useContext, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
-import { AttendanceStatus, ReportData, Evaluation, ReportMonthlyAttendance, StudentStatus } from '../types';
+import { AttendanceStatus, ReportData, Evaluation, ReportMonthlyAttendance, StudentStatus, GroupReportSummary } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { exportAttendanceToCSV, exportGradesToCSV } from '../services/exportService';
 import { exportReportToPDF } from '../services/pdfService';
@@ -29,7 +29,6 @@ const ReportsView: React.FC = () => {
     const reportData: ReportData[] = useMemo(() => {
         if (!group) return [];
 
-        // 1. Get all dates and categorize them by partial and month
         const p1EndDate = new Date(settings.firstPartialEnd + 'T00:00:00');
         const allSemesterDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
         
@@ -44,17 +43,14 @@ const ReportsView: React.FC = () => {
             monthlyDates[monthYear].push(d);
         });
 
-        // 2. Get all evaluations and categorize them by partial
         const allGroupEvaluations = evaluations[group.id] || [];
         const p1Evals = allGroupEvaluations.filter(e => e.partial === 1);
         const p2Evals = allGroupEvaluations.filter(e => e.partial === 2);
 
-        // 3. Process each student
         return group.students.map(student => {
             const studentAttendance = attendance[group.id]?.[student.id] || {};
             const studentGrades = grades[group.id]?.[student.id] || {};
 
-            // Helper to calculate attendance for a given list of dates
             const calculateAttendance = (dates: string[]) => {
                 if (dates.length === 0) return { present: 0, totalClasses: 0, percentage: 100 };
                 let present = 0;
@@ -72,7 +68,6 @@ const ReportsView: React.FC = () => {
                 return { present, totalClasses: dates.length, percentage };
             };
 
-            // Helper to calculate grades for a given list of evaluations
             const calculateGrades = (evals: Evaluation[]) => {
                 if (evals.length === 0) return 'N/A';
                 let score = 0;
@@ -88,7 +83,6 @@ const ReportsView: React.FC = () => {
                 return average.toFixed(1);
             };
             
-            // Calculate all the values
             const totalAtt = calculateAttendance(allSemesterDates);
             const p1Att = calculateAttendance(p1Dates);
             const p2Att = calculateAttendance(p2Dates);
@@ -102,7 +96,6 @@ const ReportsView: React.FC = () => {
             const p1Grade = calculateGrades(p1Evals);
             const p2Grade = calculateGrades(p2Evals);
             
-            // Calculate status
             let status: StudentStatus = 'Regular';
             const totalGradeNum = typeof totalGrade === 'string' ? parseFloat(totalGrade) : totalGrade;
             if (totalAtt.percentage < settings.lowAttendanceThreshold || totalGradeNum < 6) {
@@ -125,6 +118,46 @@ const ReportsView: React.FC = () => {
             };
         });
     }, [group, settings, attendance, grades, evaluations]);
+
+    const groupSummaryData: GroupReportSummary | null = useMemo(() => {
+        if (!group || reportData.length === 0) return null;
+
+        const summary: GroupReportSummary = {
+            monthlyAttendance: {},
+            evaluationAverages: {}
+        };
+
+        const monthlyAgg: { [month: string]: { total: number; count: number } } = {};
+        reportData.forEach(student => {
+            Object.entries(student.monthlyAttendance).forEach(([month, stats]) => {
+                if (!monthlyAgg[month]) monthlyAgg[month] = { total: 0, count: 0 };
+                monthlyAgg[month].total += stats.percentage;
+                monthlyAgg[month].count++;
+            });
+        });
+        Object.keys(monthlyAgg).forEach(month => {
+            summary.monthlyAttendance[month] = monthlyAgg[month].total / monthlyAgg[month].count;
+        });
+
+        groupEvaluations.forEach(ev => {
+            let totalScore = 0;
+            let count = 0;
+            reportData.forEach(student => {
+                const grade = student.grades[ev.id];
+                if (grade !== null && grade !== undefined) {
+                    totalScore += grade;
+                    count++;
+                }
+            });
+            summary.evaluationAverages[ev.id] = {
+                name: ev.name,
+                average: count > 0 ? totalScore / count : 0,
+                maxScore: ev.maxScore
+            };
+        });
+
+        return summary;
+    }, [group, reportData, groupEvaluations]);
     
     const handleExportAttendance = () => {
         if (group && attendance[group.id]) {
@@ -140,8 +173,8 @@ const ReportsView: React.FC = () => {
     };
     
     const handleExportPDF = () => {
-        if (group) {
-            exportReportToPDF(group, reportData, groupEvaluations);
+        if (group && groupSummaryData) {
+            exportReportToPDF(group, reportData, groupEvaluations, groupSummaryData);
         }
     };
 

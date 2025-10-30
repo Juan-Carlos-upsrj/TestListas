@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { Group, ReportData, StudentStatus, Evaluation } from '../types';
+import { Group, ReportData, StudentStatus, Evaluation, GroupReportSummary } from '../types';
 import { GROUP_COLORS } from '../constants';
 
 interface PdfTemplateProps {
@@ -7,6 +7,7 @@ interface PdfTemplateProps {
   reportData: ReportData[];
   logoBase64: string;
   evaluations: Evaluation[];
+  groupSummary: GroupReportSummary;
 }
 
 const statusStyles: { [key in StudentStatus]: { text: string; bg: string; } } = {
@@ -15,7 +16,7 @@ const statusStyles: { [key in StudentStatus]: { text: string; bg: string; } } = 
     'En Riesgo': { text: 'text-red-800', bg: 'bg-red-100' },
 };
 
-const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, reportData, logoBase64, evaluations }, ref) => {
+const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, reportData, logoBase64, evaluations, groupSummary }, ref) => {
 
   const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
 
@@ -25,6 +26,12 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
       return sum + (isNaN(grade) ? 0 : grade);
   }, 0) / reportData.length : 0;
   const studentsAtRisk = reportData.filter(d => d.status === 'En Riesgo').length;
+  
+  const sortedMonths = Object.keys(groupSummary.monthlyAttendance).sort((a, b) => {
+      const aDate = new Date(`01 ${a}`);
+      const bDate = new Date(`01 ${b}`);
+      return aDate.getTime() - bDate.getTime();
+  });
 
   return (
     <div ref={ref} className="bg-white font-sans text-slate-800" style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}>
@@ -47,8 +54,8 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
             </header>
 
             <main className="mt-8">
-                {/* Summary Section */}
-                <section className="mb-8">
+                {/* --- GROUP SUMMARY PAGE --- */}
+                <section className="mb-8" style={{ breakAfter: 'page' }}>
                     <h2 className="text-2xl font-bold text-slate-900 mb-4">Estadísticas Clave del Grupo</h2>
                     <div className="grid grid-cols-4 gap-4">
                         <div className="bg-slate-50 rounded-lg p-4 text-center">
@@ -68,9 +75,41 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
                             <p className="mt-1 text-3xl font-bold text-red-600">{studentsAtRisk}</p>
                         </div>
                     </div>
+
+                    <h2 className="text-2xl font-bold text-slate-900 mt-8 mb-4">Resumen General del Grupo</h2>
+                    <div className="grid grid-cols-2 gap-6">
+                        {/* Group Monthly Attendance */}
+                        <div className="bg-slate-50 p-4 rounded-lg">
+                            <h3 className="font-bold text-center mb-2">Asistencia Mensual (Promedio)</h3>
+                             <table className="w-full text-sm">
+                                <tbody>
+                                    {sortedMonths.map(month => (
+                                        <tr key={month} className="border-b">
+                                            <td className="py-1 text-slate-600">{month.charAt(0).toUpperCase() + month.slice(1, -5)}</td>
+                                            <td className="py-1 text-right font-semibold">{groupSummary.monthlyAttendance[month].toFixed(1)}%</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        {/* Group Evaluation Averages */}
+                        <div className="bg-slate-50 p-4 rounded-lg">
+                            <h3 className="font-bold text-center mb-2">Calificaciones (Promedio)</h3>
+                            <table className="w-full text-sm">
+                                <tbody>
+                                    {Object.values(groupSummary.evaluationAverages).map(ev => (
+                                        <tr key={ev.name} className="border-b">
+                                            <td className="py-1 text-slate-600">{ev.name}</td>
+                                            <td className="py-1 text-right font-semibold">{ev.average.toFixed(1)} / {ev.maxScore}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </section>
                 
-                {/* Students Details */}
+                {/* --- INDIVIDUAL STUDENTS PAGE --- */}
                 <section>
                     <h2 className="text-2xl font-bold text-slate-900 mb-4">Desempeño Individual</h2>
                     <div className="space-y-4">
@@ -79,7 +118,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
                             const p1Evals = evaluations.filter(e => e.partial === 1);
                             const p2Evals = evaluations.filter(e => e.partial === 2);
                             return (
-                                <div key={data.student.id} className="p-4 border border-slate-200 rounded-lg">
+                                <div key={data.student.id} className="p-4 border border-slate-200 rounded-lg" style={{ breakInside: 'avoid-page' }}>
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <p className="font-bold text-lg text-slate-900">{data.student.name}</p>

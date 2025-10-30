@@ -1,4 +1,4 @@
-// FIX: Replaced the incorrect import of `DayOfWeek` with its definition and export to resolve a circular dependency and fix type errors across the application. `DayOfWeek` is now correctly defined in `types.ts` as the single source of truth.
+// FIX: Define DayOfWeek here to break circular dependency with constants.ts
 export type DayOfWeek = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes' | 'Sábado';
 
 // FIX: The self-import of types from this file was removed to fix circular dependency errors.
@@ -151,4 +151,22 @@ export interface ReportData {
   monthlyAttendance: ReportMonthlyAttendance;
   // Individual grades
   grades: { [evaluationId: string]: number | null };
+}
+
+
+export interface GroupMonthlyAttendance {
+    [monthYear: string]: number; // month: percentage
+}
+
+export interface GroupEvaluationAverages {
+    [evaluationId: string]: {
+        name: string;
+        average: number;
+        maxScore: number;
+    };
+}
+
+export interface GroupReportSummary {
+    monthlyAttendance: GroupMonthlyAttendance;
+    evaluationAverages: GroupEvaluationAverages;
 }
