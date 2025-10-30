@@ -1,26 +1,30 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import electron from 'vite-plugin-electron';
 import renderer from 'vite-plugin-electron-renderer';
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    electron([
-      {
-        // Main-Process entry.
-        entry: 'electron/main.ts',
-      },
-      {
-        entry: 'electron/preload.ts',
-        onstart(options) {
-          // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete, 
-          // instead of restarting the entire Electron App.
-          options.reload()
+export default defineConfig(async () => {
+  // Importa dinámicamente el plugin de React que es solo ESM
+  const react = (await import('@vitejs/plugin-react')).default;
+
+  return {
+    plugins: [
+      react(),
+      electron([
+        {
+          // Main-Process entry.
+          entry: 'electron/main.ts',
         },
-      },
-    ]),
-    renderer(),
-  ],
+        {
+          entry: 'electron/preload.ts',
+          onstart(options) {
+            // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete, 
+            // instead of restarting the entire Electron App.
+            options.reload()
+          },
+        },
+      ]),
+      renderer(),
+    ],
+  };
 });
