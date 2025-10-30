@@ -1,4 +1,3 @@
-// FIX: Import useMemo hook from React.
 import React, { useContext, useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
@@ -6,49 +5,38 @@ import { AppContext } from '../context/AppContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-interface ReportData {
-  attendance: {
-    percentage: number;
-  };
-}
-
 interface ReportChartProps {
-  reportData: ReportData[];
+  monthlyAttendance: { [monthYear: string]: number };
 }
 
-const ReportChart: React.FC<ReportChartProps> = ({ reportData }) => {
+const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance }) => {
   const { state } = useContext(AppContext);
   const isDarkMode = state.settings.theme === 'dark';
 
   const chartData = useMemo(() => {
-    const excellent = reportData.filter(d => d.attendance.percentage >= 90).length;
-    const good = reportData.filter(d => d.attendance.percentage >= 80 && d.attendance.percentage < 90).length;
-    const regular = reportData.filter(d => d.attendance.percentage >= 70 && d.attendance.percentage < 80).length;
-    const poor = reportData.filter(d => d.attendance.percentage < 70).length;
+    const sortedMonths = Object.keys(monthlyAttendance).sort((a, b) => {
+        const aDate = new Date(`01 ${a}`);
+        const bDate = new Date(`01 ${b}`);
+        return aDate.getTime() - bDate.getTime();
+    });
+
+    const labels = sortedMonths.map(monthYear => monthYear.split(' ').slice(0, -1).join(' ')); // e.g., "enero" from "enero de 2024"
+    const data = sortedMonths.map(monthYear => monthlyAttendance[monthYear]);
     
     return {
-      labels: ['Excelente (>90%)', 'Bueno (80-89%)', 'Regular (70-79%)', 'Bajo (<70%)'],
+      labels: labels,
       datasets: [
         {
-          label: 'Nº de Alumnos',
-          data: [excellent, good, regular, poor],
-          backgroundColor: [
-            'rgba(74, 222, 128, 0.6)', // green-400
-            'rgba(59, 130, 246, 0.6)', // blue-500
-            'rgba(251, 191, 36, 0.6)', // amber-400
-            'rgba(239, 68, 68, 0.6)',  // red-500
-          ],
-          borderColor: [
-            'rgba(34, 197, 94, 1)', // green-500
-            'rgba(37, 99, 235, 1)', // blue-600
-            'rgba(245, 158, 11, 1)', // amber-500
-            'rgba(220, 38, 38, 1)',  // red-600
-          ],
+          label: 'Asistencia Promedio (%)',
+          data: data,
+          backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.6)' : 'rgba(99, 102, 241, 0.8)', // Indigo-500
+          borderColor: isDarkMode ? 'rgba(129, 140, 248, 1)' : 'rgba(79, 70, 229, 1)', // Indigo-400 / Indigo-600
           borderWidth: 1,
+          borderRadius: 4,
         },
       ],
     };
-  }, [reportData]);
+  }, [monthlyAttendance, isDarkMode]);
 
   const options = {
     responsive: true,
@@ -60,13 +48,31 @@ const ReportChart: React.FC<ReportChartProps> = ({ reportData }) => {
       title: {
         display: false,
       },
+      tooltip: {
+            callbacks: {
+                label: function(context: any) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed.y !== null) {
+                        label += context.parsed.y.toFixed(1) + '%';
+                    }
+                    return label;
+                }
+            }
+        }
     },
     scales: {
         y: {
             beginAtZero: true,
+            max: 100,
             ticks: {
-                stepSize: 1,
+                stepSize: 20,
                 color: isDarkMode ? '#94a3b8' : '#475569',
+                callback: function(value: string | number) {
+                    return value + '%';
+                }
             },
             grid: {
                 color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
@@ -86,5 +92,4 @@ const ReportChart: React.FC<ReportChartProps> = ({ reportData }) => {
   return <div style={{ height: '300px' }}><Bar options={options} data={chartData} /></div>;
 };
 
-// React.useMemo is used inside the component, so we wrap it for memoization
 export default React.memo(ReportChart);

@@ -2,8 +2,17 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import path from 'node:path';
 import fs from 'node:fs';
 import type { AppState } from '../types';
+// FIX: Explicitly import process to resolve 'platform' property error.
+import process from 'node:process';
+// FIX: Import fileURLToPath to create a polyfill for __dirname.
+import { fileURLToPath } from 'node:url';
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
+
+// FIX: __dirname is not available in ES modules. This polyfill provides it,
+// which is necessary for TypeScript to resolve the name.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const userDataPath = app.getPath('userData');
 const dataFilePath = path.join(userDataPath, 'appData.json');

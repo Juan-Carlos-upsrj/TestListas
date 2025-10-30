@@ -1,13 +1,13 @@
 import React, { useContext, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
-import { AttendanceStatus, ReportData, Evaluation, ReportMonthlyAttendance, StudentStatus, GroupReportSummary } from '../types';
+import { AttendanceStatus, GroupReportSummary } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { exportAttendanceToCSV, exportGradesToCSV } from '../services/exportService';
-import { exportReportToPDF } from '../services/pdfService';
 import Icon from './icons/Icon';
 import Button from './common/Button';
 import ReportChart from './ReportChart';
 import { motion } from 'framer-motion';
+import { STATUS_STYLES } from '../constants';
 
 const ReportsView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
@@ -18,7 +18,7 @@ const ReportsView: React.FC = () => {
     }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
-    const groupEvaluations = useMemo(() => (evaluations[selectedGroupId || ''] || []).sort((a,b) => a.partial - b.partial), [evaluations, selectedGroupId]);
+    const groupEvaluations = useMemo(() => (evaluations[selectedGroupId || ''] || []), [evaluations, selectedGroupId]);
 
     useEffect(() => {
         if (!selectedGroupId && groups.length > 0) {
@@ -26,14 +26,35 @@ const ReportsView: React.FC = () => {
         }
     }, [groups, selectedGroupId, setSelectedGroupId]);
 
-    const reportData: ReportData[] = useMemo(() => {
-        if (!group) return [];
+    const classDates = useMemo(() => {
+        if (group) {
+            return getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
+        }
+        return [];
+    }, [group, settings.semesterStart, settings.semesterEnd]);
 
-        const p1EndDate = new Date(settings.firstPartialEnd + 'T00:00:00');
+    const attendanceHeaders = useMemo(() => {
+        if (!group) return null;
+
+        const partial1End = new Date(settings.firstPartialEnd + 'T00:00:00');
+        const grouped: Record<string, Record<string, string[]>> = {};
+
+        classDates.forEach(dateStr => {
+            const date = new Date(dateStr + 'T00:00:00');
+            const partialName = date <= partial1End ? "Primer Parcial" : "Segundo Parcial";
+            const monthName = date.toLocaleDateString('es-MX', { month: 'long' }).replace(/^\w/, c => c.toUpperCase());
+
+            if (!grouped[partialName]) grouped[partialName] = {};
+            if (!grouped[partialName][monthName]) grouped[partialName][monthName] = [];
+            grouped[partialName][monthName].push(dateStr);
+        });
+        return grouped;
+    }, [group, classDates, settings.firstPartialEnd]);
+
+    const groupSummaryData: GroupReportSummary | null = useMemo(() => {
+        if (!group) return null;
+
         const allSemesterDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
-        
-        const p1Dates = allSemesterDates.filter(d => new Date(d + 'T00:00:00') <= p1EndDate);
-        const p2Dates = allSemesterDates.filter(d => new Date(d + 'T00:00:00') > p1EndDate);
         
         const monthlyDates: { [monthYear: string]: string[] } = {};
         allSemesterDates.forEach(d => {
@@ -43,19 +64,21 @@ const ReportsView: React.FC = () => {
             monthlyDates[monthYear].push(d);
         });
 
-        const allGroupEvaluations = evaluations[group.id] || [];
-        const p1Evals = allGroupEvaluations.filter(e => e.partial === 1);
-        const p2Evals = allGroupEvaluations.filter(e => e.partial === 2);
+        const summary: GroupReportSummary = {
+            monthlyAttendance: {},
+            evaluationAverages: {}
+        };
 
-        return group.students.map(student => {
-            const studentAttendance = attendance[group.id]?.[student.id] || {};
-            const studentGrades = grades[group.id]?.[student.id] || {};
+        Object.keys(monthlyDates).forEach(monthYear => {
+            const datesInMonth = monthlyDates[monthYear];
+            let totalPercentageSum = 0;
+            let studentsWithAttendanceThisMonth = 0;
 
-            const calculateAttendance = (dates: string[]) => {
-                if (dates.length === 0) return { present: 0, totalClasses: 0, percentage: 100 };
+            group.students.forEach(student => {
+                const studentAttendance = attendance[group.id]?.[student.id] || {};
                 let present = 0;
                 let validAttendanceTaken = 0;
-                dates.forEach(date => {
+                datesInMonth.forEach(date => {
                     const status = studentAttendance[date];
                     if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified) {
                         present++;
@@ -64,124 +87,36 @@ const ReportsView: React.FC = () => {
                         validAttendanceTaken++;
                     }
                 });
-                const percentage = validAttendanceTaken > 0 ? (present / validAttendanceTaken) * 100 : 100;
-                return { present, totalClasses: dates.length, percentage };
-            };
-
-            const calculateGrades = (evals: Evaluation[]) => {
-                if (evals.length === 0) return 'N/A';
-                let score = 0;
-                let maxScore = 0;
-                evals.forEach(ev => {
-                    if (studentGrades[ev.id] !== undefined && studentGrades[ev.id] !== null) {
-                        score += studentGrades[ev.id]!;
-                        maxScore += ev.maxScore;
-                    }
-                });
-                if (maxScore === 0) return 'N/A';
-                const average = (score / maxScore) * 10;
-                return average.toFixed(1);
-            };
-            
-            const totalAtt = calculateAttendance(allSemesterDates);
-            const p1Att = calculateAttendance(p1Dates);
-            const p2Att = calculateAttendance(p2Dates);
-
-            const monthlyAttendance: ReportMonthlyAttendance = {};
-            Object.keys(monthlyDates).forEach(monthYear => {
-                monthlyAttendance[monthYear] = calculateAttendance(monthlyDates[monthYear]);
-            });
-            
-            const totalGrade = calculateGrades(allGroupEvaluations);
-            const p1Grade = calculateGrades(p1Evals);
-            const p2Grade = calculateGrades(p2Evals);
-            
-            let status: StudentStatus = 'Regular';
-            const totalGradeNum = typeof totalGrade === 'string' ? parseFloat(totalGrade) : totalGrade;
-            if (totalAtt.percentage < settings.lowAttendanceThreshold || totalGradeNum < 6) {
-                status = 'En Riesgo';
-            } else if (totalAtt.percentage >= 95 && totalGradeNum >= 9) {
-                status = 'Destacado';
-            }
-
-            return {
-                student,
-                status,
-                totalAttendancePercentage: totalAtt.percentage,
-                totalGradeAverage: totalGrade,
-                p1AttendancePercentage: p1Att.percentage,
-                p1GradeAverage: p1Grade,
-                p2AttendancePercentage: p2Att.percentage,
-                p2GradeAverage: p2Grade,
-                monthlyAttendance,
-                grades: studentGrades,
-            };
-        });
-    }, [group, settings, attendance, grades, evaluations]);
-
-    const groupSummaryData: GroupReportSummary | null = useMemo(() => {
-        if (!group || reportData.length === 0) return null;
-
-        const summary: GroupReportSummary = {
-            monthlyAttendance: {},
-            evaluationAverages: {}
-        };
-
-        const monthlyAgg: { [month: string]: { total: number; count: number } } = {};
-        reportData.forEach(student => {
-            Object.entries(student.monthlyAttendance).forEach(([month, stats]) => {
-                if (!monthlyAgg[month]) monthlyAgg[month] = { total: 0, count: 0 };
-                monthlyAgg[month].total += stats.percentage;
-                monthlyAgg[month].count++;
-            });
-        });
-        Object.keys(monthlyAgg).forEach(month => {
-            summary.monthlyAttendance[month] = monthlyAgg[month].total / monthlyAgg[month].count;
-        });
-
-        groupEvaluations.forEach(ev => {
-            let totalScore = 0;
-            let count = 0;
-            reportData.forEach(student => {
-                const grade = student.grades[ev.id];
-                if (grade !== null && grade !== undefined) {
-                    totalScore += grade;
-                    count++;
+                if (validAttendanceTaken > 0) {
+                    totalPercentageSum += (present / validAttendanceTaken) * 100;
+                    studentsWithAttendanceThisMonth++;
                 }
             });
-            summary.evaluationAverages[ev.id] = {
-                name: ev.name,
-                average: count > 0 ? totalScore / count : 0,
-                maxScore: ev.maxScore
-            };
+            
+            if (studentsWithAttendanceThisMonth > 0) {
+                summary.monthlyAttendance[monthYear] = totalPercentageSum / studentsWithAttendanceThisMonth;
+            }
         });
 
         return summary;
-    }, [group, reportData, groupEvaluations]);
-    
+    }, [group, settings, attendance]);
+
     const handleExportAttendance = () => {
-        if (group && attendance[group.id]) {
-            const allSemesterDates = getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
-            exportAttendanceToCSV(group, allSemesterDates, attendance[group.id]);
+        if (group) {
+            exportAttendanceToCSV(group, classDates, attendance[group.id] || {});
         }
     };
 
     const handleExportGrades = () => {
-        if (group && evaluations[group.id] && grades[group.id]) {
-            exportGradesToCSV(group, groupEvaluations, grades[group.id]);
-        }
-    };
-    
-    const handleExportPDF = () => {
-        if (group && groupSummaryData) {
-            exportReportToPDF(group, reportData, groupEvaluations, groupSummaryData);
+        if (group) {
+            exportGradesToCSV(group, groupEvaluations, grades[group.id] || {});
         }
     };
 
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold">Reportes</h1>
+                <h1 className="text-3xl font-bold">Reportes del Grupo</h1>
                 <select
                     value={selectedGroupId || ''}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -201,58 +136,89 @@ const ReportsView: React.FC = () => {
                         <Button variant="secondary" onClick={handleExportGrades}>
                            <Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar Calificaciones (CSV)
                         </Button>
-                        <Button variant="primary" onClick={handleExportPDF}>
-                           <Icon name="book-marked" className="w-4 h-4" /> Exportar Reporte Detallado (PDF)
-                        </Button>
                     </div>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg overflow-x-auto">
-                            <h3 className="text-lg font-bold mb-4">Resumen del Semestre</h3>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                            <h3 className="text-xl font-bold mb-4">Asistencia Mensual del Grupo</h3>
+                            {groupSummaryData && Object.keys(groupSummaryData.monthlyAttendance).length > 0 ? (
+                                <ReportChart monthlyAttendance={groupSummaryData.monthlyAttendance} />
+                            ) : (
+                                <p className="text-center text-slate-500 py-8">No hay suficientes datos de asistencia para mostrar el gráfico.</p>
+                            )}
+                        </div>
+                        <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center">
+                            <h3 className="text-xl font-bold mb-4">Resumen General</h3>
+                            <div className="space-y-4">
+                               <div className="flex justify-between items-center">
+                                    <span className="font-medium text-slate-500 dark:text-slate-400">Total de Alumnos</span>
+                                    <span className="font-bold text-2xl text-indigo-500">{group.students.length}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="font-medium text-slate-500 dark:text-slate-400">Evaluaciones Creadas</span>
+                                    <span className="font-bold text-2xl text-indigo-500">{groupEvaluations.length}</span>
+                                </div>
+                                 <div className="flex justify-between items-center">
+                                    <span className="font-medium text-slate-500 dark:text-slate-400">Días de Clase</span>
+                                    <span className="font-bold text-2xl text-indigo-500">{classDates.length}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg overflow-x-auto">
+                        <h3 className="text-xl font-bold mb-4">Registro Detallado de Asistencia</h3>
+                        {group.students.length > 0 ? (
                             <table className="w-full border-collapse">
                                 <thead>
-                                    <tr className="border-b dark:border-slate-700">
-                                        <th className="p-2 text-left font-semibold">Alumno</th>
-                                        <th className="p-2 text-center font-semibold">Asistencia Total (%)</th>
-                                        <th className="p-2 text-center font-semibold">Promedio Final</th>
-                                        <th className="p-2 text-center font-semibold">Estado</th>
+                                    <tr>
+                                        <th rowSpan={3} className="sticky left-0 bg-white dark:bg-slate-800 p-2 text-left font-semibold z-10 border-b-2 dark:border-slate-600">Alumno</th>
+                                        {attendanceHeaders && Object.entries(attendanceHeaders).map(([partialName, months]) => {
+                                            const colspan = Object.values(months).reduce((sum, dates) => sum + dates.length, 0);
+                                            return <th key={partialName} colSpan={colspan} className="p-2 font-semibold text-center text-lg border-b-2 dark:border-slate-600">{partialName}</th>
+                                        })}
+                                    </tr>
+                                    <tr>
+                                        {attendanceHeaders && Object.entries(attendanceHeaders).flatMap(([partialName, months]) => 
+                                            Object.entries(months).map(([monthName, dates], index) => 
+                                                <th key={`${partialName}-${monthName}`} colSpan={dates.length} 
+                                                className={`p-2 font-semibold text-center border-b dark:border-slate-700 ${index % 2 === 0 ? 'bg-slate-50 dark:bg-slate-700/50' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                                    {monthName}
+                                                </th>
+                                            )
+                                        )}
+                                    </tr>
+                                    <tr>
+                                        {classDates.map(date => (
+                                            <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b dark:border-slate-700`}>
+                                                {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit' })}
+                                            </th>
+                                        ))}
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {reportData.map(data => {
-                                        const lowAttendance = data.totalAttendancePercentage < settings.lowAttendanceThreshold;
-                                        const lowGrade = typeof data.totalGradeAverage === 'number' && data.totalGradeAverage < 6;
-                                        const statusColors = {
-                                            'En Riesgo': 'text-red-500',
-                                            'Regular': 'text-slate-500',
-                                            'Destacado': 'text-green-500'
-                                        };
-                                        return (
-                                            <tr key={data.student.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                                <td className="p-2 font-medium whitespace-nowrap">{data.student.name}</td>
-                                                <td className={`p-2 text-center font-bold ${lowAttendance ? 'text-red-500' : 'text-green-500'}`}>
-                                                    {data.totalAttendancePercentage.toFixed(1)}%
-                                                </td>
-                                                <td className={`p-2 text-center font-bold ${lowGrade ? 'text-red-500' : ''}`}>
-                                                    {data.totalGradeAverage}
-                                                </td>
-                                                <td className={`p-2 text-center font-semibold ${statusColors[data.status]}`}>
-                                                    {data.status}
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                    {group.students.map(student => (
+                                        <tr key={student.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                            <td className="sticky left-0 bg-white dark:bg-slate-800 p-2 font-medium z-10 whitespace-nowrap">{student.name}</td>
+                                            {classDates.map(date => {
+                                                const status = attendance[group.id]?.[student.id]?.[date] || AttendanceStatus.Pending;
+                                                return (
+                                                    <td key={date} className="p-0 text-center">
+                                                        <div
+                                                            className={`w-full h-10 flex items-center justify-center text-xs font-bold ${STATUS_STYLES[status].color}`}
+                                                        >
+                                                            {STATUS_STYLES[status].symbol}
+                                                        </div>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
-                             {group.students.length === 0 && <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo para generar un reporte.</p>}
-                        </div>
-                        <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
-                             <h3 className="text-lg font-bold mb-4">Distribución de Asistencia (Semestre)</h3>
-                            {group.students.length > 0 ? (
-                                <ReportChart reportData={reportData.map(d => ({ attendance: { percentage: d.totalAttendancePercentage }}))} />
-                            ) : (
-                                <p className="text-center text-slate-500 py-8">No hay datos para mostrar el gráfico.</p>
-                            )}
-                        </div>
+                        ) : (
+                            <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo para generar un reporte.</p>
+                        )}
                     </div>
                 </motion.div>
             ) : (

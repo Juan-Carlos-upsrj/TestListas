@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { Group, ReportData, StudentStatus, Evaluation, GroupReportSummary } from '../types';
+import { Group, ReportData, StudentStatus, Evaluation, GroupReportSummary, ReportMonthlyAttendance } from '../types';
 import { GROUP_COLORS } from '../constants';
 
 interface PdfTemplateProps {
@@ -97,8 +97,9 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
                             <h3 className="font-bold text-center mb-2">Calificaciones (Promedio)</h3>
                             <table className="w-full text-sm">
                                 <tbody>
-                                    {Object.values(groupSummary.evaluationAverages).map(ev => (
-                                        <tr key={ev.name} className="border-b">
+                                    {/* FIX: Refactored to Object.entries for a stable key and added explicit typing to fix 'unknown' type error. */}
+                                    {Object.entries(groupSummary.evaluationAverages).map(([evaluationId, ev]: [string, { name: string; average: number; maxScore: number }]) => (
+                                        <tr key={evaluationId} className="border-b">
                                             <td className="py-1 text-slate-600">{ev.name}</td>
                                             <td className="py-1 text-right font-semibold">{ev.average.toFixed(1)} / {ev.maxScore}</td>
                                         </tr>
@@ -185,7 +186,8 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(({ group, repor
                                             <h4 className="font-semibold text-slate-600 mb-2 text-center">Asistencia Mensual</h4>
                                             <table className="w-full text-xs">
                                                 <tbody>
-                                                    {Object.entries(data.monthlyAttendance).map(([month, stats]) => (
+                                                    {/* FIX: Added explicit typing for [month, stats] to resolve 'unknown' type error on 'stats.percentage'. */}
+                                                    {Object.entries(data.monthlyAttendance).map(([month, stats]: [string, { percentage: number }]) => (
                                                         <tr key={month}>
                                                             <td className="text-left py-0.5 text-slate-500">{month.split(' ')[0].charAt(0).toUpperCase() + month.split(' ')[0].slice(1)}</td>
                                                             <td className="text-right py-0.5 font-semibold">{stats.percentage.toFixed(1)}%</td>
