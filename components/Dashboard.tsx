@@ -7,7 +7,7 @@ import { CalendarEvent, DayOfWeek, Group, AttendanceStatus } from '../types';
 import FridayCelebration from './FridayCelebration';
 import BirthdayCelebration from './BirthdayCelebration';
 import { getClassDates } from '../services/dateUtils';
-import { MOTIVATIONAL_QUOTES, GROUP_COLORS } from '../constants';
+import { MOTIVATIONAL_QUOTES, GROUP_COLORS, PROFESSOR_BIRTHDAYS } from '../constants';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
 import Modal from './common/Modal';
 import Button from './common/Button';
@@ -18,7 +18,6 @@ const Dashboard: React.FC = () => {
     const { groups, settings, calendarEvents, attendance } = state;
 
     const [isFriday, setIsFriday] = useState(false);
-    const professor = { name: 'Profesor', birthdate: '1990-10-26' }; 
     const [birthdayPerson, setBirthdayPerson] = useState<string | null>(null);
     const [gcalEvents, setGcalEvents] = useState<CalendarEvent[]>([]);
     
@@ -35,10 +34,11 @@ const Dashboard: React.FC = () => {
 
         const todayStr = (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
         
-        if (professor.birthdate.substring(5) === todayStr) {
-            setBirthdayPerson(professor.name);
+        const birthdayProf = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayStr);
+        if (birthdayProf) {
+            setBirthdayPerson(birthdayProf.name);
         }
-    }, [professor]);
+    }, []);
 
     useEffect(() => {
         const fetchEvents = async () => {

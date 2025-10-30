@@ -1,4 +1,4 @@
-import { AttendanceStatus, DayOfWeek, MotivationalQuote } from './types';
+import { AttendanceStatus, DayOfWeek, MotivationalQuote, Professor } from './types';
 
 export const DAYS_OF_WEEK: DayOfWeek[] = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -51,4 +51,18 @@ export const GROUP_COLORS = [
     { name: 'rose', bg: 'bg-rose-500', text: 'text-white', calendar: 'bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
     { name: 'fuchsia', bg: 'bg-fuchsia-500', text: 'text-white', calendar: 'bg-fuchsia-200 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
     { name: 'slate', bg: 'bg-slate-500', text: 'text-white', calendar: 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-100' },
+];
+
+export const PROFESSOR_BIRTHDAYS: Professor[] = [
+    { name: 'Prof. Victor', birthdate: '02-04' },
+    { name: 'Profa. Aziz', birthdate: '04-04' },
+    { name: 'Prof. Isai', birthdate: '05-03' },
+    { name: 'Prof. Mely', birthdate: '06-19' },
+    { name: 'Profa. Yeici', birthdate: '07-03' },
+    { name: 'Prof. Carmi', birthdate: '07-18' },
+    { name: 'Prof. Andy', birthdate: '08-29' },
+    { name: 'Prof. Germán', birthdate: '09-24' },
+    { name: 'Prof. Paco', birthdate: '10-21' },
+    { name: 'Prof. Elia', birthdate: '12-09' },
+    { name: 'Prof. Test', birthdate: '10-30' },
 ];
