@@ -1,97 +1,155 @@
-import iCal from 'ical.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CalendarEvent } from '../types';
 
-// A function to clean up common iCal formatting issues before parsing.
-const sanitizeIcsString = (icsString: string): string => {
-    // 1. Normalize line endings to LF for consistent processing.
-    const normalized = icsString.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-    
-    // 2. Unfold multi-line properties. A line starting with a space or tab is a continuation.
-    const unfolded = normalized.replace(/\n[ \t]/g, '');
+interface VEvent {
+    summary?: string;
+    dtstart?: string;
+    rrule?: string;
+}
 
-    // 3. Filter out any empty lines that might exist.
-    const lines = unfolded.split('\n');
-    const nonEmptyLines = lines.filter(line => line.trim() !== '');
+/**
+ * A lenient, custom parser for iCal data from Google Calendar.
+ * It's designed to be resilient to formatting errors by only parsing what's needed
+ * (SUMMARY, DTSTART, RRULE) and ignoring other lines. This avoids crashes caused
+ * by strict parsers on slightly malformed feeds.
+ * 
+ * @param {string} icsData The raw iCal data string.
+ * @returns {CalendarEvent[]} An array of parsed calendar events.
+ */
+const customIcsParser = (icsData: string): CalendarEvent[] => {
+    // Unfold multi-line properties and normalize line endings.
+    const unfoldedData = icsData.replace(/\r\n\s/g, '').replace(/\n\s/g, '');
+    const lines = unfoldedData.split(/\r\n|\n/);
 
-    // 4. Ensure required calendar start/end tags exist if they are missing.
-    // Although unlikely for Google Calendar, this adds robustness.
-    if (!nonEmptyLines.find(line => line.startsWith('BEGIN:VCALENDAR'))) {
-        nonEmptyLines.unshift('BEGIN:VCALENDAR');
+    const events: CalendarEvent[] = [];
+    let currentVEvent: VEvent | null = null;
+
+    for (const line of lines) {
+        if (line.startsWith('BEGIN:VEVENT')) {
+            currentVEvent = {};
+            continue;
+        }
+
+        if (!currentVEvent) {
+            continue;
+        }
+
+        if (line.startsWith('END:VEVENT')) {
+            const processedEvents = processVEvent(currentVEvent);
+            events.push(...processedEvents);
+            currentVEvent = null;
+            continue;
+        }
+
+        const [key, ...valueParts] = line.split(':');
+        const value = valueParts.join(':');
+
+        if (key.startsWith('SUMMARY')) {
+            currentVEvent.summary = value;
+        } else if (key.startsWith('DTSTART')) {
+            currentVEvent.dtstart = value;
+        } else if (key.startsWith('RRULE')) {
+            currentVEvent.rrule = value;
+        }
     }
-    if (!nonEmptyLines.find(line => line.startsWith('END:VCALENDAR'))) {
-        nonEmptyLines.push('END:VCALENDAR');
-    }
 
-    // 5. Join back with CRLF as expected by the iCal specification.
-    return nonEmptyLines.join('\r\n');
+    return events;
 };
 
-// Helper to parse ICS data into our CalendarEvent format, now with support for recurring events.
-const parseIcsData = (icsData: string): CalendarEvent[] => {
-    try {
-        const sanitizedData = sanitizeIcsString(icsData);
-        const jcalData = iCal.parse(sanitizedData);
-        const comp = new iCal.Component(jcalData);
-        const vevents = comp.getAllSubcomponents('vevent');
-        const events: CalendarEvent[] = [];
 
-        // Define a time window to expand recurring events.
-        // iCal.Duration does not support 'months', so we use 'weeks' (26 weeks ~ 6 months).
-        const now = iCal.Time.now();
-        const start = now.clone().subtract(new iCal.Duration({ weeks: 26 }));
-        const end = now.clone().add(new iCal.Duration({ weeks: 26 }));
+/**
+ * Processes a single VEvent object, expanding recurring events if necessary.
+ * @param {VEvent} vevent The VEvent to process.
+ * @returns {CalendarEvent[]} An array of calendar events, expanded if recurring.
+ */
+const processVEvent = (vevent: VEvent): CalendarEvent[] => {
+    if (!vevent.summary || !vevent.dtstart) {
+        return [];
+    }
 
-        vevents.forEach((vevent: any) => {
-            const event = new iCal.Event(vevent);
+    const title = vevent.summary;
+    const events: CalendarEvent[] = [];
 
-            if (event.isRecurring()) {
-                const iterator = event.iterator();
-                let next;
-                let i = 0;
-                const MAX_OCCURRENCES = 1000; // Safety break
+    const parseIcsDate = (dateStr: string): Date | null => {
+        const match = dateStr.match(/(\d{4})(\d{2})(\d{2})/);
+        if (!match) return null;
+        const [, year, month, day] = match.map(Number);
+        // Note: This creates a date in the system's local timezone.
+        // For all-day events from Google Calendar (VALUE=DATE), this is correct.
+        return new Date(year, month - 1, day);
+    };
+    
+    const formatDate = (date: Date): string => date.toISOString().split('T')[0];
 
-                while ((next = iterator.next()) && next.compare(end) <= 0 && i < MAX_OCCURRENCES) {
-                    if (next.compare(start) >= 0) {
-                        const occurrence = event.getOccurrenceDetails(next);
-                        const occurrenceStartDate = occurrence.startDate.toJSDate();
-                        events.push({
-                            id: `gcal-${event.uid}-${occurrence.startDate.toString()}`,
-                            date: occurrenceStartDate.toISOString().split('T')[0],
-                            title: event.summary,
-                            type: 'gcal',
-                            color: 'bg-orange-200',
-                        });
-                    }
-                    i++;
-                }
-            } else {
-                // Handle non-recurring events
-                const startDate = event.startDate.toJSDate();
-                if (startDate >= start.toJSDate() && startDate <= end.toJSDate()) {
-                    events.push({
-                        id: `gcal-${event.uid || uuidv4()}`,
-                        date: startDate.toISOString().split('T')[0],
-                        title: event.summary,
-                        type: 'gcal',
-                        color: 'bg-orange-200',
-                    });
-                }
-            }
+    const startDate = parseIcsDate(vevent.dtstart);
+    if (!startDate) return [];
+
+    // If it's not a recurring event, just add the single instance.
+    if (!vevent.rrule) {
+        events.push({
+            id: `gcal-${uuidv4()}`,
+            date: formatDate(startDate),
+            title: title,
+            type: 'gcal',
+            color: 'bg-orange-200',
         });
         return events;
-    } catch (parseError) {
-        console.error('Error parsing sanitized ICS data:', parseError);
-        // Propagate the error to be handled by the caller
-        throw new Error('Failed to parse calendar data.');
     }
+
+    // Handle simple weekly recurrence rule.
+    const rruleParts = vevent.rrule.split(';').reduce((acc, part) => {
+        const [key, val] = part.split('=');
+        if (key) acc[key] = val;
+        return acc;
+    }, {} as Record<string, string>);
+    
+    if (rruleParts.FREQ === 'WEEKLY' && rruleParts.BYDAY) {
+        const dayMap: { [key: string]: number } = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
+        const rruleDays = rruleParts.BYDAY.split(',').map(d => dayMap[d as keyof typeof dayMap]).filter(d => d !== undefined);
+        
+        const now = new Date();
+        const windowStart = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+        const windowEnd = new Date(now.getFullYear(), now.getMonth() + 6, 0);
+
+        // Start iteration from the later of the event start date or the window start date.
+        let currentDate = startDate > windowStart ? new Date(startDate) : new Date(windowStart);
+        
+        let i = 0;
+        const MAX_EVENTS = 500; // Safety break
+
+        while (currentDate <= windowEnd && i < MAX_EVENTS) {
+            // Ensure we don't add events before the actual start date.
+            if (currentDate >= startDate && rruleDays.includes(currentDate.getDay())) {
+                events.push({
+                    id: `gcal-${uuidv4()}-${formatDate(currentDate)}`,
+                    date: formatDate(currentDate),
+                    title: title,
+                    type: 'gcal',
+                    color: 'bg-orange-200',
+                });
+                i++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+    } else {
+        // If RRULE is not understood, fall back to adding just the start date.
+        events.push({
+            id: `gcal-${uuidv4()}`,
+            date: formatDate(startDate),
+            title: title,
+            type: 'gcal',
+            color: 'bg-orange-200',
+        });
+    }
+
+    return events;
 };
 
 
 export const fetchGoogleCalendarEvents = async (url: string): Promise<CalendarEvent[]> => {
     if (!url || !url.startsWith('http')) return [];
     
-    // Use a CORS proxy to bypass browser security restrictions when fetching the iCal file.
+    // Using a CORS proxy to fetch the iCal file.
     const proxyUrl = 'https://corsproxy.io/?';
     const fetchUrl = `${proxyUrl}${encodeURIComponent(url)}`;
 
@@ -101,10 +159,9 @@ export const fetchGoogleCalendarEvents = async (url: string): Promise<CalendarEv
             throw new Error(`Network response was not ok: ${response.statusText}`);
         }
         const icsData = await response.text();
-        return parseIcsData(icsData);
+        return customIcsParser(icsData);
     } catch (error) {
         console.error('Error fetching or parsing iCal data:', error);
-        // Throw an error so the UI can catch it and notify the user
         throw new Error('Could not fetch calendar data. Please check the URL and its permissions.');
     }
 };
