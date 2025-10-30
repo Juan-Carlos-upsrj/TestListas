@@ -2,22 +2,14 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Group, Student } from '../types';
+import { Group, ReportData } from '../types';
 import PdfTemplate from '../components/PdfTemplate';
-
-interface ReportData {
-  student: Student;
-  attendance: {
-    percentage: number;
-    absent: number;
-    late: number;
-  };
-  grade: {
-    average: string | number;
-  };
-}
+import { getImageAsBase64 } from './imageUtils';
 
 export const exportReportToPDF = async (group: Group, reportData: ReportData[]) => {
+  // First, get the logo as a Base64 string to ensure it renders correctly
+  const logoBase64 = await getImageAsBase64('/logo.png');
+
   // Create a temporary container for our template
   const templateContainer = document.createElement('div');
   templateContainer.style.position = 'absolute';
@@ -29,20 +21,17 @@ export const exportReportToPDF = async (group: Group, reportData: ReportData[]) 
   
   // Use a promise to wait for the component to render
   await new Promise<void>((resolve) => {
-    // FIX: A complex inline ref callback was causing TypeScript parsing errors.
-    // By defining the callback function separately, we simplify the JSX and resolve the cascading type and scope errors.
     const onRender = (el: HTMLDivElement | null) => {
       if (el) {
         resolve();
       }
     };
 
-    // FIX: Replaced JSX with React.createElement to prevent parsing errors in a .ts file. Using JSX in a .ts file is not standard and was causing compilation errors.
     root.render(
       React.createElement(
         React.StrictMode,
         null,
-        React.createElement(PdfTemplate, { group, reportData, ref: onRender })
+        React.createElement(PdfTemplate, { group, reportData, logoBase64, ref: onRender })
       )
     );
   });

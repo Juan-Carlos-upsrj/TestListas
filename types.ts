@@ -122,3 +122,20 @@ export interface MotivationalQuote {
     icon?: string;
     image?: string;
 }
+
+export type StudentStatus = 'Destacado' | 'Regular' | 'En Riesgo';
+
+export interface ReportData {
+  student: Student;
+  attendance: {
+    percentage: number;
+    present: number;
+    absent: number;
+    late: number;
+    totalClasses: number;
+  };
+  grade: {
+    average: string | number;
+  };
+  status: StudentStatus;
+}

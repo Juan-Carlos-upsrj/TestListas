@@ -1,8 +1,9 @@
 
 
+
 import React, { useContext, useMemo, useEffect, useState } from 'react';
 import { AppContext } from '../context/AppContext';
-import { AttendanceStatus } from '../types';
+import { AttendanceStatus, ReportData, StudentStatus } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { exportAttendanceToCSV, exportGradesToCSV } from '../services/exportService';
 import { exportReportToPDF } from '../services/pdfService';
@@ -51,7 +52,7 @@ const ReportsView: React.FC = () => {
     }, [group, settings.semesterStart, settings.firstPartialEnd, settings.semesterEnd, selectedPeriod]);
 
 
-    const reportData = useMemo(() => {
+    const reportData: ReportData[] = useMemo(() => {
         if (!group) return [];
 
         return group.students.map(student => {
@@ -85,14 +86,27 @@ const ReportsView: React.FC = () => {
                 }
             });
             const averageGrade = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 10 : 0;
+            const averageGradeNum = Number(averageGrade.toFixed(1));
+
+            // Status calculation
+            let status: StudentStatus = 'Regular';
+            const isLowAttendance = attendancePercentage < settings.lowAttendanceThreshold;
+            const isLowGrade = averageGradeNum < 6;
+
+            if (isLowAttendance || isLowGrade) {
+                status = 'En Riesgo';
+            } else if (attendancePercentage >= 95 && averageGradeNum >= 9) {
+                status = 'Destacado';
+            }
 
             return {
                 student,
                 attendance: { present, absent, late, justified, totalClasses: totalClassesInPeriod, percentage: attendancePercentage },
-                grade: { average: averageGrade.toFixed(1) }
+                grade: { average: averageGradeNum.toFixed(1) },
+                status,
             };
         });
-    }, [group, classDates, attendance, grades, evaluations]);
+    }, [group, classDates, attendance, grades, evaluations, settings.lowAttendanceThreshold]);
     
     const handleExportAttendance = () => {
         if (group && attendance[group.id]) {
