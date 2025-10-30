@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Icon from './icons/Icon';
 
 // --- Improved Animations based on User Feedback ---
 
@@ -151,13 +153,13 @@ const BirthdayCelebration: React.FC<{ name: string; show: boolean }> = ({ name, 
         <AnimatePresence>
             {isVisible && (
                  <motion.div 
-                    className="fixed inset-0 z-[99] pointer-events-auto cursor-pointer overflow-hidden"
+                    className="fixed inset-0 z-[99] pointer-events-auto cursor-pointer overflow-hidden flex items-center justify-center p-4"
                     onClick={() => setIsVisible(false)}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                 >
-                    <div className="absolute inset-0 bg-black/30" />
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
                     
                     {Array.from({ length: numConfetti }).map((_, i) => <ConfettiPiece key={`c-${i}`} i={i} />)}
                     {Array.from({ length: numBalloons }).map((_, i) => <Balloon key={`b-${i}`} i={i} />)}
@@ -165,14 +167,30 @@ const BirthdayCelebration: React.FC<{ name: string; show: boolean }> = ({ name, 
 
                     <motion.div
                         onClick={(e) => e.stopPropagation()}
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1, transition: { delay: 0.2, duration: 0.5 } }}
-                        exit={{ opacity: 0, scale: 0.5 }}
-                        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm p-12 rounded-2xl shadow-2xl text-center cursor-default"
+                        initial={{ opacity: 0, scale: 0.7, y: 50 }}
+                        animate={{ opacity: 1, scale: 1, y: 0, transition: { type: 'spring', damping: 15, stiffness: 200, delay: 0.2 } }}
+                        exit={{ opacity: 0, scale: 0.8, y: 50 }}
+                        className="relative w-full max-w-md cursor-default"
                     >
-                        <p className="text-6xl mb-6">🎉</p>
-                        <h2 className="text-4xl font-bold">¡Feliz Cumpleaños!</h2>
-                        <p className="text-3xl text-indigo-500 font-semibold mt-2">{name}</p>
+                       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl overflow-hidden">
+                            <div className="relative p-8 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500">
+                                <div className="absolute inset-0 bg-[radial-gradient(#ffffff33_1px,transparent_1px)] [background-size:16px_16px] opacity-20"></div>
+                                <div className="relative text-center">
+                                    <Icon name="cake" className="w-16 h-16 text-white/80 mx-auto mb-4" />
+                                    <h2 className="text-4xl font-bold text-white [text-shadow:_2px_2px_4px_rgb(0_0_0_/_20%)]">
+                                        ¡Feliz Cumpleaños!
+                                    </h2>
+                                </div>
+                            </div>
+                            <div className="p-8 text-center">
+                                <p className="text-5xl font-extrabold bg-gradient-to-r from-fuchsia-600 to-pink-600 dark:from-fuchsia-400 dark:to-pink-400 bg-clip-text text-transparent">
+                                    {name}
+                                </p>
+                                <p className="mt-2 text-slate-500 dark:text-slate-400">
+                                    ¡Te deseamos un día increíble!
+                                </p>
+                            </div>
+                        </div>
                     </motion.div>
                 </motion.div>
             )}
