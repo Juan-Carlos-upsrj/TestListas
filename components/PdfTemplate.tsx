@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { Group, ReportData, StudentStatus, Evaluation, GroupReportSummary, ReportMonthlyAttendance } from '../types';
+import { Group, ReportData, StudentStatus, Evaluation, GroupReportSummary } from '../types';
 import { GROUP_COLORS } from '../constants';
 
 interface PdfTemplateProps {
