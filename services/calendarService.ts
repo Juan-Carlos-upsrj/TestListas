@@ -1,4 +1,4 @@
-import iCal from 'ical-js-parser';
+import iCal from 'ical.js';
 import { v4 as uuidv4 } from 'uuid';
 import { CalendarEvent } from '../types';
 
