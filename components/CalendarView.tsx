@@ -80,7 +80,7 @@ const CalendarView: React.FC = () => {
         });
 
         // 3. Deadline Events
-        if(firstPartialEnd) events.push({ id: 'deadline-p1', date: firstPartialEnd, title: 'Fin del Primer Parcial', type: 'deadline', color: 'bg-red-30á00' });
+        if(firstPartialEnd) events.push({ id: 'deadline-p1', date: firstPartialEnd, title: 'Fin del Primer Parcial', type: 'deadline', color: 'bg-red-300' });
         if(semesterEnd) events.push({ id: 'deadline-end', date: semesterEnd, title: 'Fin del Semestre', type: 'deadline', color: 'bg-red-300' });
 
         // 4. Custom & Google Calendar Events
