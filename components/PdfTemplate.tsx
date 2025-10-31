@@ -78,10 +78,6 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                         )}
                     </div>
                 </section>
-                 <footer className="mt-8 text-center text-xs text-slate-500 pt-4">
-                    <div style={{width: '200px', margin: '0 auto 4px auto', borderTop: '1px solid #64748b'}}></div>
-                    <p className="text-sm font-semibold text-slate-800">{professorName}</p>
-                </footer>
             </main>
           </>
         )}
@@ -143,6 +139,10 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                       ))}
                   </tbody>
               </table>
+               <footer className="mt-12 text-center text-xs text-slate-500 pt-4" style={{ breakInside: 'avoid' }}>
+                    <div style={{width: '250px', margin: '0 auto 4px auto', borderTop: '1px solid #64748b'}}></div>
+                    <p className="text-sm font-semibold text-slate-800">{professorName}</p>
+                </footer>
             </section>
           </>
         )}
