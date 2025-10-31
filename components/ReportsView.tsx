@@ -122,7 +122,8 @@ const ReportsView: React.FC = () => {
                 classDates,
                 attendance[group.id] || {},
                 attendanceHeaders,
-                groupEvaluations
+                groupEvaluations,
+                settings
             );
         } else {
              dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos suficientes para generar el PDF.', type: 'error' } });

@@ -55,6 +55,7 @@ export interface Settings {
   lowAttendanceThreshold: number;
   googleCalendarUrl: string;
   googleCalendarColor: string;
+  professorName: string;
 }
 
 export type ActiveView = 'dashboard' | 'groups' | 'attendance' | 'grades' | 'reports' | 'calendar';

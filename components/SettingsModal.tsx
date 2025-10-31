@@ -92,6 +92,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     </div>
                 </fieldset>
                 
+                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                    <legend className="px-2 font-semibold">Información del Docente</legend>
+                    <div>
+                        <label htmlFor="professorName" className="block text-sm font-medium">Nombre del Profesor/a</label>
+                        <input
+                            type="text"
+                            id="professorName"
+                            name="professorName"
+                            value={settings.professorName}
+                            onChange={handleChange}
+                            placeholder="Ej. Prof. Juan Pérez"
+                            className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                        />
+                        <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los reportes generados.</p>
+                    </div>
+                </fieldset>
+
                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
                     <legend className="px-2 font-semibold">Integración de Calendario</legend>
                     <div className="space-y-4">

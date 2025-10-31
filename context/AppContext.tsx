@@ -23,6 +23,7 @@ const defaultState: AppState = {
     lowAttendanceThreshold: 80,
     googleCalendarUrl: '',
     googleCalendarColor: 'amber',
+    professorName: 'Nombre del Profesor',
   },
   activeView: 'dashboard',
   selectedGroupId: null,

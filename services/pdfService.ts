@@ -2,7 +2,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Group, Evaluation, GroupReportSummary, AttendanceStatus } from '../types';
+import { Group, Evaluation, GroupReportSummary, AttendanceStatus, Settings } from '../types';
 import PdfTemplate from '../components/PdfTemplate';
 import { getImageAsBase64 } from './imageUtils';
 
@@ -46,7 +46,8 @@ export const exportReportToPDF = async (
     classDates: string[],
     groupAttendance: { [studentId: string]: { [date: string]: AttendanceStatus; }; },
     attendanceHeaders: Record<string, Record<string, string[]>> | null,
-    groupEvaluations: Evaluation[]
+    groupEvaluations: Evaluation[],
+    settings: Settings
 ) => {
     const logoBase64 = await getImageAsBase64('/logo.png');
 
@@ -62,6 +63,7 @@ export const exportReportToPDF = async (
     const summaryTemplate = React.createElement(PdfTemplate, { 
         group, groupSummary, classDates, groupAttendance,
         attendanceHeaders, groupEvaluations, logoBase64,
+        professorName: settings.professorName,
         renderPart: 'summary'
     });
     
@@ -78,6 +80,7 @@ export const exportReportToPDF = async (
     const gridTemplate = React.createElement(PdfTemplate, { 
         group, groupSummary, classDates, groupAttendance,
         attendanceHeaders, groupEvaluations, logoBase64,
+        professorName: settings.professorName,
         renderPart: 'grid'
     });
     
