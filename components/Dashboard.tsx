@@ -26,19 +26,23 @@ const Dashboard: React.FC = () => {
     const [groupForTaker, setGroupForTaker] = useState<Group | null>(null);
     const [isMultiGroupModalOpen, setMultiGroupModalOpen] = useState(false);
 
+    // Fix for timezone bug: Use local date methods instead of UTC-based toISOString()
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayDayOfWeek = today.getDay(); // Sunday=0, Monday=1, etc.
+
     useEffect(() => {
-        const today = new Date();
         if (today.getDay() === 5) {
             setIsFriday(true);
         }
 
-        const todayStr = (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
+        const todayBirthdateStr = (today.getMonth() + 1).toString().padStart(2, '0') + '-' + today.getDate().toString().padStart(2, '0');
         
-        const birthdayProf = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayStr);
+        const birthdayProf = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayBirthdateStr);
         if (birthdayProf) {
             setBirthdayPerson(birthdayProf.name);
         }
-    }, []);
+    }, [today]);
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -90,10 +94,8 @@ const Dashboard: React.FC = () => {
     }, [calendarEvents, groups, settings, gcalEvents]);
     
     const attendanceToday = useMemo(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
         let studentsWithClassToday = 0;
         let presentToday = 0;
-        const todayDayOfWeek = new Date(todayStr + 'T00:00:00').getDay();
         const dayMap: { [key in DayOfWeek]: number } = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6 };
         
         groups.forEach(group => {
@@ -110,7 +112,7 @@ const Dashboard: React.FC = () => {
         if (studentsWithClassToday === 0) return null;
         const percentage = (presentToday / studentsWithClassToday) * 100;
         return { total: studentsWithClassToday, present: presentToday, percentage: isNaN(percentage) ? 0 : percentage.toFixed(0) };
-    }, [groups, attendance]);
+    }, [groups, attendance, todayStr, todayDayOfWeek]);
 
     const dailyQuote = useMemo(() => {
         const start = new Date(new Date().getFullYear(), 0, 0);
@@ -131,11 +133,9 @@ const Dashboard: React.FC = () => {
     }, [gcalEvents]);
 
     const groupsWithClassToday = useMemo(() => {
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todayDayOfWeek = new Date(todayStr + 'T00:00:00').getDay();
         const dayMap: { [key in DayOfWeek]: number } = { 'Lunes': 1, 'Martes': 2, 'Miércoles': 3, 'Jueves': 4, 'Viernes': 5, 'Sábado': 6 };
         return groups.filter(group => group.classDays.some(day => dayMap[day] === todayDayOfWeek));
-    }, [groups]);
+    }, [groups, todayDayOfWeek]);
 
     const handleQuickAttendanceClick = () => {
         if (groupsWithClassToday.length === 1) {
@@ -154,7 +154,6 @@ const Dashboard: React.FC = () => {
 
     const handleTakerStatusChange = (studentId: string, status: AttendanceStatus) => {
         if (groupForTaker) {
-            const todayStr = new Date().toISOString().split('T')[0];
             dispatch({ type: 'UPDATE_ATTENDANCE', payload: { groupId: groupForTaker.id, studentId, date: todayStr, status } });
         }
     };
@@ -247,7 +246,7 @@ const Dashboard: React.FC = () => {
                 <Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${groupForTaker.name}`}>
                     <AttendanceTaker 
                         students={groupForTaker.students} 
-                        date={new Date().toISOString().split('T')[0]} 
+                        date={todayStr} 
                         groupAttendance={attendance[groupForTaker.id] || {}}
                         onStatusChange={handleTakerStatusChange}
                         onClose={() => setTakerOpen(false)}

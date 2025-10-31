@@ -1,3 +1,4 @@
+
 import React, { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
@@ -13,6 +14,10 @@ const AttendanceView: React.FC = () => {
     const { groups, attendance, settings, selectedGroupId } = state;
     const [isTakerOpen, setTakerOpen] = useState(false);
     
+    // Fix for timezone bug: Use local date methods instead of UTC-based toISOString()
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
     }, [dispatch]);
@@ -57,7 +62,6 @@ const AttendanceView: React.FC = () => {
     };
     
     const handleTakerStatusChange = (studentId: string, status: AttendanceStatus) => {
-        const todayStr = new Date().toISOString().split('T')[0];
         handleStatusChange(studentId, todayStr, status);
     };
 
@@ -67,8 +71,6 @@ const AttendanceView: React.FC = () => {
         const nextIndex = (currentIndex + 1) % ATTENDANCE_STATUSES.length;
         return ATTENDANCE_STATUSES[nextIndex];
     };
-    
-    const todayStr = new Date().toISOString().split('T')[0];
 
     return (
         <div>
@@ -151,7 +153,7 @@ const AttendanceView: React.FC = () => {
                 <Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${group.name}`}>
                     <AttendanceTaker 
                         students={group.students} 
-                        date={new Date().toISOString().split('T')[0]} 
+                        date={todayStr} 
                         groupAttendance={attendance[group.id] || {}}
                         onStatusChange={handleTakerStatusChange}
                         onClose={() => setTakerOpen(false)}
