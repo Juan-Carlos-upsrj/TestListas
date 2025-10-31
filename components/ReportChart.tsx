@@ -21,7 +21,10 @@ const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '
         return aDate.getTime() - bDate.getTime();
     });
 
-    const labels = sortedMonths.map(monthYear => monthYear.split(' ').slice(0, -1).join(' ')); // e.g., "enero" from "enero de 2024"
+    const labels = sortedMonths.map(monthYear => {
+        const month = monthYear.split(' ')[0];
+        return month.charAt(0).toUpperCase() + month.slice(1);
+    });
     const data = sortedMonths.map(monthYear => monthlyAttendance[monthYear]);
     
     return {
