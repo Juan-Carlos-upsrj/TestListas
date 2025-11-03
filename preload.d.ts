@@ -5,7 +5,7 @@ export {};
 declare global {
   interface Window {
     electronAPI: {
-      getData: () => Promise<AppState>;
+      getData: () => Promise<Partial<AppState>>;
       saveData: (data: AppState) => Promise<void>;
     };
   }

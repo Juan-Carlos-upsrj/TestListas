@@ -1,4 +1,5 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
+// FIX: Removed `Partial` from import as it's a built-in TypeScript utility type.
 import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
 import { getState, saveState } from '../services/dbService';
@@ -287,13 +288,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 1. Try loading from IndexedDB first
-        let data = await getState();
-        
-        // 2. If no data in IndexedDB, try migrating from old storage
-        if (!data || Object.keys(data).length === 0) {
+        let dataToLoad: Partial<AppState> | undefined = await getState();
+        let migrated = false;
+
+        if (!dataToLoad || Object.keys(dataToLoad).length === 0) {
           console.log("No data in IndexedDB, attempting migration from old storage...");
-          let oldData: AppState | null = null;
+          let oldData: Partial<AppState> | null = null;
           if (isElectron) {
             console.log("Running in Electron, loading data from file...");
             oldData = await window.electronAPI.getData();
@@ -301,38 +301,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             console.log("Running in browser, loading data from localStorage...");
             const savedData = localStorage.getItem('appState');
             if (savedData) {
-              oldData = JSON.parse(savedData);
+              try {
+                oldData = JSON.parse(savedData);
+              } catch (e) {
+                console.error("Failed to parse localStorage data, removing it.", e);
+                localStorage.removeItem('appState');
+              }
             }
           }
-          
+
           if (oldData && Object.keys(oldData).length > 0) {
-            console.log("Found old data, migrating to IndexedDB...");
-            dispatch({ type: 'SET_INITIAL_STATE', payload: oldData });
-            // The state update is async, so we save the `oldData` object directly
-            // to ensure the migrated data is what we just loaded.
-            await saveState(oldData as AppState);
-            console.log("Migration complete.");
-            if (!isElectron) {
-              localStorage.removeItem('appState'); // Clean up old storage
-              console.log("Removed old data from localStorage.");
-            }
-            data = oldData;
+            console.log("Found old data. It will be migrated.");
+            dataToLoad = oldData;
+            migrated = true;
           }
         } else {
-           console.log("Successfully loaded data from IndexedDB.");
+          console.log("Successfully loaded data from IndexedDB.");
         }
 
-        if (data && Object.keys(data).length > 0) {
-          dispatch({ type: 'SET_INITIAL_STATE', payload: data });
+        if (dataToLoad && Object.keys(dataToLoad).length > 0) {
+          dispatch({ type: 'SET_INITIAL_STATE', payload: dataToLoad });
         }
+
+        if (migrated && !isElectron) {
+          localStorage.removeItem('appState');
+          console.log("Removed old data from localStorage.");
+        }
+
       } catch (error) {
         console.error("Failed to load data:", error);
+        dispatch({ type: 'ADD_TOAST', payload: { message: 'Error al cargar los datos.', type: 'error' } });
       } finally {
         setIsLoaded(true);
       }
     };
     loadData();
-  }, [isElectron]);
+  }, [isElectron, dispatch]);
 
   // Save data to IndexedDB on state change
   useEffect(() => {
