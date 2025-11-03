@@ -38,10 +38,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_INITIAL_STATE': {
         const loadedState = action.payload || {};
         
-        // Data migration: Ensure all groups have a color property for backward compatibility.
         const loadedGroups: Group[] = loadedState.groups || [];
         const migratedGroups = loadedGroups.map((group, index) => ({
             ...group,
+            classDays: group.classDays || [], // Data migration: Ensure classDays exists to prevent crashes.
             color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
         }));
 

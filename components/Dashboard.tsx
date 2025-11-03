@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Responsive, WidthProvider, Layouts } from 'react-grid-layout';
@@ -133,26 +131,32 @@ const Dashboard: React.FC = () => {
     }), []);
 
     const layouts = useMemo(() => {
-        if (!dashboardLayouts || Object.keys(dashboardLayouts).length === 0) {
+        // If there's no saved layout, it's not a valid object, or it's empty, return the default.
+        if (!dashboardLayouts || typeof dashboardLayouts !== 'object' || Object.keys(dashboardLayouts).length === 0) {
             return defaultLayouts;
         }
 
         const sanitizedLayouts: Layouts = {};
+        // Iterate over the breakpoints defined in the default layout (`lg`, `md`, etc.)
         for (const breakpoint of Object.keys(defaultLayouts)) {
-            const savedLayout = dashboardLayouts[breakpoint] || [];
+            // Get the saved layout for the current breakpoint. Ensure it's an array before proceeding.
+            const savedLayout = Array.isArray(dashboardLayouts[breakpoint]) ? dashboardLayouts[breakpoint] : [];
             const defaultBreakpointLayout = defaultLayouts[breakpoint] || [];
 
-            // 1. Filter out layouts for widgets that no longer exist in the code.
-            const filteredLayout = savedLayout.filter(item => WIDGET_KEYS.includes(item.i));
+            // 1. Filter out invalid items and widgets that no longer exist.
+            // An item is valid if it's an object and its key (`i`) is in our list of current widgets.
+            const filteredLayout = savedLayout.filter(item => 
+                item && typeof item === 'object' && WIDGET_KEYS.includes(item.i)
+            );
             
-            // 2. Find which widgets are defined in the code but are missing from the saved layout.
+            // 2. Find which widgets are defined in the code but are missing from the filtered saved layout.
             const existingKeys = filteredLayout.map(item => item.i);
             const missingKeys = WIDGET_KEYS.filter(key => !existingKeys.includes(key));
             
-            // 3. Get the default layout settings for the missing widgets.
+            // 3. Get the default layout settings for any missing widgets.
             const newItems = defaultBreakpointLayout.filter(item => missingKeys.includes(item.i));
 
-            // 4. Combine the filtered saved layout with the new widget layouts.
+            // 4. Combine the valid saved layout with the new widget layouts.
             sanitizedLayouts[breakpoint] = [...filteredLayout, ...newItems];
         }
         return sanitizedLayouts;
