@@ -1,7 +1,6 @@
 import React, { useContext, useMemo, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import Icon from './icons/Icon';
-import { motion } from 'framer-motion';
 import { CalendarEvent, DayOfWeek, Group, AttendanceStatus, Layouts } from '../types';
 import FridayCelebration from './FridayCelebration';
 import BirthdayCelebration from './BirthdayCelebration';
@@ -84,7 +83,7 @@ const Dashboard: React.FC = () => {
         fetchEvents();
     }, [settings.googleCalendarUrl, settings.googleCalendarColor]);
     
-    const onLayoutChange = (layout: any, allLayouts: Layouts) => {
+    const onLayoutChange = (_layout: any, allLayouts: Layouts) => {
         dispatch({ type: 'SAVE_DASHBOARD_LAYOUT', payload: allLayouts });
     };
 
