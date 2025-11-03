@@ -1,18 +1,18 @@
 import React, { useContext, useMemo, useState, useEffect } from 'react';
-import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
+import { Responsive, WidthProvider, Layouts } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { AppContext } from '../context/AppContext';
 import Icon from './icons/Icon';
 import { MOTIVATIONAL_QUOTES, PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
-import { CalendarEvent, DayOfWeek, MotivationalQuote, Professor } from '../types';
+import { CalendarEvent, DayOfWeek, MotivationalQuote, Professor, DashboardLayoutId } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import BirthdayCelebration from './BirthdayCelebration';
 import FridayCelebration from './FridayCelebration';
 
 const ReactGridLayout = WidthProvider(Responsive);
 
-// --- Dashboard Widgets ---
+// --- Dashboard Widgets (re-used from previous version) ---
 
 const WelcomeWidget: React.FC = () => {
     const { state } = useContext(AppContext);
@@ -181,7 +181,6 @@ const QuickActionsWidget: React.FC = () => {
     );
 };
 
-
 const widgetMap: { [key: string]: React.FC } = {
     welcome: WelcomeWidget,
     stats: StatsWidget,
@@ -191,35 +190,101 @@ const widgetMap: { [key: string]: React.FC } = {
     actions: QuickActionsWidget,
 };
 
-const smLayout = [
-    { i: 'welcome', x: 0, y: 0, w: 1, h: 1, static: true },
-    { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
-    { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 },
-    { i: 'upcomingEvents', x: 0, y: 4, w: 1, h: 2 },
-    { i: 'quote', x: 0, y: 6, w: 1, h: 1 },
-    { i: 'actions', x: 0, y: 7, w: 1, h: 1 },
-];
+// --- Predefined Layouts ---
 
-const defaultLayouts = {
+const classicLayouts: Layouts = {
     lg: [
-        { i: 'welcome', x: 0, y: 0, w: 2, h: 1, static: true },
-        { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
-        { i: 'todaySchedule', x: 0, y: 1, w: 1, h: 2 },
-        { i: 'upcomingEvents', x: 1, y: 1, w: 1, h: 2 },
-        { i: 'quote', x: 2, y: 1, w: 1, h: 1 },
-        { i: 'actions', x: 2, y: 2, w: 1, h: 1 },
+        { i: 'welcome', x: 0, y: 0, w: 2, h: 1 }, { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
+        { i: 'todaySchedule', x: 0, y: 1, w: 1, h: 2 }, { i: 'upcomingEvents', x: 1, y: 1, w: 1, h: 2 },
+        { i: 'quote', x: 2, y: 1, w: 1, h: 1 }, { i: 'actions', x: 2, y: 2, w: 1, h: 1 },
     ],
     md: [
-        { i: 'welcome', x: 0, y: 0, w: 2, h: 1, static: true },
-        { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
-        { i: 'quote', x: 1, y: 1, w: 1, h: 1 },
-        { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 },
-        { i: 'upcomingEvents', x: 1, y: 2, w: 1, h: 2 },
-        { i: 'actions', x: 0, y: 4, w: 2, h: 1 },
+        { i: 'welcome', x: 0, y: 0, w: 2, h: 1 }, { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+        { i: 'quote', x: 1, y: 1, w: 1, h: 1 }, { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 },
+        { i: 'upcomingEvents', x: 1, y: 2, w: 1, h: 2 }, { i: 'actions', x: 0, y: 4, w: 2, h: 1 },
     ],
-    sm: smLayout,
-    xs: smLayout,
-    xxs: smLayout,
+};
+classicLayouts.sm = classicLayouts.xs = classicLayouts.xxs = [
+    { i: 'welcome', x: 0, y: 0, w: 1, h: 1 }, { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+    { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 }, { i: 'upcomingEvents', x: 0, y: 4, w: 1, h: 2 },
+    { i: 'quote', x: 0, y: 6, w: 1, h: 1 }, { i: 'actions', x: 0, y: 7, w: 1, h: 1 },
+];
+
+const todayFocusedLayouts: Layouts = {
+    lg: [
+        { i: 'todaySchedule', x: 0, y: 0, w: 2, h: 2 }, { i: 'welcome', x: 2, y: 0, w: 1, h: 1 },
+        { i: 'stats', x: 2, y: 1, w: 1, h: 1 }, { i: 'upcomingEvents', x: 0, y: 2, w: 2, h: 2 },
+        { i: 'actions', x: 2, y: 2, w: 1, h: 1 }, { i: 'quote', x: 2, y: 3, w: 1, h: 1 },
+    ],
+};
+todayFocusedLayouts.md = todayFocusedLayouts.lg;
+todayFocusedLayouts.sm = todayFocusedLayouts.xs = todayFocusedLayouts.xxs = [
+    { i: 'todaySchedule', x: 0, y: 0, w: 1, h: 2 }, { i: 'welcome', x: 0, y: 2, w: 1, h: 1 },
+    { i: 'stats', x: 0, y: 3, w: 1, h: 1 }, { i: 'upcomingEvents', x: 0, y: 4, w: 1, h: 2 },
+    { i: 'actions', x: 0, y: 6, w: 1, h: 1 }, { i: 'quote', x: 0, y: 7, w: 1, h: 1 },
+];
+
+const compactLayouts: Layouts = {
+    lg: [
+        { i: 'welcome', x: 0, y: 0, w: 3, h: 1 }, { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+        { i: 'actions', x: 1, y: 1, w: 1, h: 1 }, { i: 'quote', x: 2, y: 1, w: 1, h: 1 },
+        { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 }, { i: 'upcomingEvents', x: 1, y: 2, w: 2, h: 2 },
+    ],
+};
+compactLayouts.md = compactLayouts.lg;
+compactLayouts.sm = compactLayouts.xs = compactLayouts.xxs = classicLayouts.sm;
+
+const academicLayouts: Layouts = {
+    lg: [
+        { i: 'upcomingEvents', x: 1, y: 0, w: 2, h: 2 }, { i: 'welcome', x: 0, y: 0, w: 1, h: 1 },
+        { i: 'stats', x: 0, y: 1, w: 1, h: 1 }, { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 },
+        { i: 'actions', x: 1, y: 2, w: 1, h: 1 }, { i: 'quote', x: 2, y: 2, w: 1, h: 1 },
+    ],
+};
+academicLayouts.md = academicLayouts.lg;
+academicLayouts.sm = academicLayouts.xs = academicLayouts.xxs = [
+    { i: 'upcomingEvents', x: 0, y: 0, w: 1, h: 2 }, { i: 'welcome', x: 0, y: 2, w: 1, h: 1 },
+    { i: 'stats', x: 0, y: 3, w: 1, h: 1 }, { i: 'todaySchedule', x: 0, y: 4, w: 1, h: 2 },
+    { i: 'actions', x: 0, y: 6, w: 1, h: 1 }, { i: 'quote', x: 0, y: 7, w: 1, h: 1 },
+];
+
+const allLayouts: { [key in DashboardLayoutId]: Layouts } = {
+    classic: classicLayouts,
+    todayFocused: todayFocusedLayouts,
+    compact: compactLayouts,
+    academic: academicLayouts,
+};
+
+const LayoutSelector: React.FC<{
+    current: DashboardLayoutId;
+    onChange: (layout: DashboardLayoutId) => void;
+}> = ({ current, onChange }) => {
+    const layouts: { id: DashboardLayoutId; name: string; icon: string }[] = [
+        { id: 'classic', name: 'Clásico', icon: 'layout' },
+        { id: 'todayFocused', name: 'Enfocado en Hoy', icon: 'align-justify' },
+        { id: 'compact', name: 'Compacto', icon: 'grid' },
+        { id: 'academic', name: 'Académico', icon: 'book-marked' },
+    ];
+    return (
+        <div className="mb-4 bg-white dark:bg-slate-800 p-2 rounded-lg shadow flex items-center justify-center gap-2">
+            <span className="text-sm font-semibold mr-2 text-slate-600 dark:text-slate-300">Diseño:</span>
+            {layouts.map(({ id, name, icon }) => (
+                <button
+                    key={id}
+                    onClick={() => onChange(id)}
+                    title={name}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${
+                        current === id 
+                        ? 'bg-indigo-500 text-white font-semibold' 
+                        : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    }`}
+                >
+                    <Icon name={icon} className="w-4 h-4" />
+                    <span className="hidden sm:inline">{name}</span>
+                </button>
+            ))}
+        </div>
+    );
 };
 
 const Dashboard: React.FC = () => {
@@ -233,72 +298,37 @@ const Dashboard: React.FC = () => {
         const day = String(today.getDate()).padStart(2, '0');
         const todayMMDD = `${month}-${day}`;
         
-        const birthdayProf = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayMMDD || (process.env.NODE_ENV === 'development' && p.name === 'Prof. Test' && today.getDate() === 30));
+        const birthdayProf = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayMMDD);
         setBirthdayPerson(birthdayProf || null);
 
         setIsFriday(today.getDay() === 5);
     }, []);
 
-    const onLayoutChange = (_layout: Layout[], layouts: Layouts) => {
-        dispatch({ type: 'SAVE_DASHBOARD_LAYOUT', payload: layouts });
+    const handleLayoutChange = (layout: DashboardLayoutId) => {
+        dispatch({ type: 'SET_DASHBOARD_LAYOUT', payload: layout });
     };
-    
-    // This logic sanitizes the saved layout to prevent crashes.
-    // It removes stale widgets and adds new ones automatically.
-    const sanitizedLayouts = useMemo(() => {
-        const layouts = JSON.parse(JSON.stringify(defaultLayouts));
-        const savedLayouts = state.dashboardLayouts;
 
-        if (!savedLayouts || Object.keys(savedLayouts).length === 0) {
-            return layouts;
-        }
-
-        const availableWidgets = Object.keys(widgetMap);
-
-        for (const breakpoint of Object.keys(layouts)) {
-            const savedBreakpointLayout = savedLayouts[breakpoint];
-
-            if (savedBreakpointLayout && Array.isArray(savedBreakpointLayout)) {
-                let filteredLayout = savedBreakpointLayout.filter(item => 
-                    item && typeof item === 'object' && availableWidgets.includes(item.i)
-                );
-
-                const currentWidgetIds = new Set(filteredLayout.map(item => item.i));
-                const missingWidgets = availableWidgets.filter(id => !currentWidgetIds.has(id));
-
-                if (missingWidgets.length > 0) {
-                    const defaultBreakpointLayout = defaultLayouts[breakpoint as keyof typeof defaultLayouts] || [];
-                    missingWidgets.forEach(widgetId => {
-                        const defaultWidgetItem = defaultBreakpointLayout.find(item => item.i === widgetId);
-                        if (defaultWidgetItem) {
-                            filteredLayout.push(defaultWidgetItem);
-                        }
-                    });
-                }
-                
-                layouts[breakpoint] = filteredLayout;
-            }
-        }
-
-        return layouts;
-    }, [state.dashboardLayouts]);
+    const currentLayouts = useMemo(() => {
+        return allLayouts[state.dashboardLayout] || allLayouts.classic;
+    }, [state.dashboardLayout]);
 
 
     return (
         <div className="relative">
             <BirthdayCelebration name={birthdayPerson?.name || ''} show={!!birthdayPerson} />
             <FridayCelebration show={isFriday && !birthdayPerson} />
+            
+            <LayoutSelector current={state.dashboardLayout} onChange={handleLayoutChange} />
 
             <ReactGridLayout
-                layouts={sanitizedLayouts}
-                onLayoutChange={onLayoutChange}
+                layouts={currentLayouts}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                 cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
                 rowHeight={150}
                 margin={[16, 16]}
                 containerPadding={[0, 0]}
-                isDraggable
-                isResizable
+                isDraggable={false}
+                isResizable={false}
                 className="layout"
             >
                 {Object.keys(widgetMap).map(key => (
