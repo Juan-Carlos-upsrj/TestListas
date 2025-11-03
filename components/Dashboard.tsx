@@ -14,25 +14,25 @@ import { Responsive, WidthProvider } from 'react-grid-layout';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// Define default layouts for different breakpoints
+// Define default layouts with a more granular grid system (12 columns)
 const defaultLayouts: Layouts = {
   lg: [
-    { i: 'stat-groups', x: 0, y: 0, w: 1, h: 1 },
-    { i: 'stat-students', x: 1, y: 0, w: 1, h: 1 },
-    { i: 'stat-attendance', x: 2, y: 0, w: 2, h: 1 },
-    { i: 'upcoming-events', x: 0, y: 1, w: 2, h: 2 },
-    { i: 'quick-actions', x: 2, y: 1, w: 2, h: 1 },
-    { i: 'reminders', x: 2, y: 2, w: 2, h: 1 },
-    { i: 'daily-quote', x: 0, y: 3, w: 4, h: 1 },
+    { i: 'stat-groups', x: 0, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+    { i: 'stat-students', x: 3, y: 0, w: 3, h: 4, minW: 2, minH: 3 },
+    { i: 'stat-attendance', x: 6, y: 0, w: 6, h: 4, minW: 4, minH: 4 },
+    { i: 'upcoming-events', x: 0, y: 4, w: 6, h: 8, minW: 4, minH: 6 },
+    { i: 'quick-actions', x: 6, y: 4, w: 6, h: 4, minW: 3, minH: 4 },
+    { i: 'reminders', x: 6, y: 8, w: 6, h: 4, minW: 3, minH: 4 },
+    { i: 'daily-quote', x: 0, y: 12, w: 12, h: 3, minW: 4, minH: 3 },
   ],
-  md: [
-    { i: 'stat-groups', x: 0, y: 0, w: 1, h: 1 },
-    { i: 'stat-students', x: 1, y: 0, w: 1, h: 1 },
-    { i: 'stat-attendance', x: 0, y: 1, w: 2, h: 1 },
-    { i: 'upcoming-events', x: 0, y: 2, w: 2, h: 2 },
-    { i: 'quick-actions', x: 0, y: 4, w: 2, h: 1 },
-    { i: 'reminders', x: 0, y: 5, w: 2, h: 1 },
-    { i: 'daily-quote', x: 0, y: 6, w: 2, h: 1 },
+  md: [ // Layout for medium screens (10 columns)
+    { i: 'stat-groups', x: 0, y: 0, w: 5, h: 4, minW: 3, minH: 3 },
+    { i: 'stat-students', x: 5, y: 0, w: 5, h: 4, minW: 3, minH: 3 },
+    { i: 'stat-attendance', x: 0, y: 4, w: 10, h: 4, minW: 5, minH: 4 },
+    { i: 'upcoming-events', x: 0, y: 8, w: 10, h: 7, minW: 5, minH: 6 },
+    { i: 'quick-actions', x: 0, y: 15, w: 5, h: 4, minW: 4, minH: 4 },
+    { i: 'reminders', x: 5, y: 15, w: 5, h: 4, minW: 4, minH: 4 },
+    { i: 'daily-quote', x: 0, y: 19, w: 10, h: 3, minW: 5, minH: 3 },
   ],
 };
 
@@ -192,8 +192,8 @@ const Dashboard: React.FC = () => {
                 className="layout"
                 layouts={layouts}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 4, md: 2, sm: 1, xs: 1, xxs: 1 }}
-                rowHeight={120}
+                cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+                rowHeight={30}
                 onLayoutChange={onLayoutChange}
             >
                 {/* Stat Cards */}
