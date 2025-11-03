@@ -5,6 +5,9 @@ export type DayOfWeek = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes'
 
 // FIX: The original file had a circular dependency by importing from itself, causing numerous type errors.
 // All type definitions have been consolidated here and circular references removed to create a single source of truth for application types.
+import type { Layout } from 'react-grid-layout';
+export type { Layouts } from 'react-grid-layout';
+
 
 export interface CalendarEvent {
   id: string;
@@ -90,6 +93,7 @@ export interface AppState {
   activeView: ActiveView;
   selectedGroupId: string | null;
   toasts: Toast[];
+  dashboardLayouts: { [key: string]: Layout[] };
 }
 
 export type AppAction =
@@ -112,7 +116,8 @@ export type AppAction =
   | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'SAVE_EVENT'; payload: CalendarEvent }
-  | { type: 'DELETE_EVENT'; payload: string };
+  | { type: 'DELETE_EVENT'; payload: string }
+  | { type: 'SAVE_DASHBOARD_LAYOUT'; payload: { [key: string]: Layout[] } };
 
 export interface Professor {
     name: string;

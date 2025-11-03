@@ -18,18 +18,39 @@ const navItems: { view: View; label: string; icon: string }[] = [
 
 const Sidebar: React.FC = () => {
   const { state, dispatch } = useContext(AppContext);
+  const { groups, selectedGroupId } = state;
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleNavClick = (view: View) => {
     dispatch({ type: 'SET_VIEW', payload: view });
   };
+  
+  const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    dispatch({ type: 'SET_SELECTED_GROUP', payload: e.target.value });
+  };
 
   return (
     <>
       <aside className="w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col transition-colors duration-300">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700 flex items-center">
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <h1 className="text-xl font-bold text-slate-800 dark:text-white">Gestión Académica</h1>
         </div>
+        
+        {/* Global Group Selector */}
+        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+            <label htmlFor="globalGroupSelector" className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">Grupo Activo</label>
+            <select
+                id="globalGroupSelector"
+                value={selectedGroupId || ''}
+                onChange={handleGroupChange}
+                disabled={groups.length === 0}
+                className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+            >
+                <option value="" disabled>{groups.length > 0 ? 'Seleccionar Grupo...' : 'No hay grupos'}</option>
+                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+        </div>
+
         <nav className="flex-grow p-4">
           <ul>
             {navItems.map((item) => (

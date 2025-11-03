@@ -1,6 +1,7 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
 import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
+import { getState, saveState } from '../services/dbService';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -28,6 +29,7 @@ const defaultState: AppState = {
   activeView: 'dashboard',
   selectedGroupId: null,
   toasts: [],
+  dashboardLayouts: {},
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -60,7 +62,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             evaluations: migratedEvaluations,
             grades: loadedState.grades || defaultState.grades,
             calendarEvents: loadedState.calendarEvents || defaultState.calendarEvents,
-            toasts: loadedState.toasts || defaultState.toasts,
+            dashboardLayouts: loadedState.dashboardLayouts || defaultState.dashboardLayouts,
+            toasts: [], // Do not persist toasts
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),
@@ -259,6 +262,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'DELETE_EVENT': {
         return { ...state, calendarEvents: state.calendarEvents.filter(e => e.id !== action.payload) };
     }
+    case 'SAVE_DASHBOARD_LAYOUT':
+        return { ...state, dashboardLayouts: action.payload };
     default:
       return state;
   }
@@ -278,22 +283,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   
   const isElectron = !!window.electronAPI;
 
-  // Load data from file on startup
+  // Load data on startup with migration from localStorage/file to IndexedDB
   useEffect(() => {
     const loadData = async () => {
       try {
-        let data: AppState | null = null;
-        if (isElectron) {
-          console.log("Running in Electron, loading data from file...");
-          data = await window.electronAPI.getData();
-        } else {
-          console.log("Running in browser, loading data from localStorage...");
-          const savedData = localStorage.getItem('appState');
-          if (savedData) {
-            data = JSON.parse(savedData);
-          }
-        }
+        // 1. Try loading from IndexedDB first
+        let data = await getState();
         
+        // 2. If no data in IndexedDB, try migrating from old storage
+        if (!data || Object.keys(data).length === 0) {
+          console.log("No data in IndexedDB, attempting migration from old storage...");
+          let oldData: AppState | null = null;
+          if (isElectron) {
+            console.log("Running in Electron, loading data from file...");
+            oldData = await window.electronAPI.getData();
+          } else {
+            console.log("Running in browser, loading data from localStorage...");
+            const savedData = localStorage.getItem('appState');
+            if (savedData) {
+              oldData = JSON.parse(savedData);
+            }
+          }
+          
+          if (oldData && Object.keys(oldData).length > 0) {
+            console.log("Found old data, migrating to IndexedDB...");
+            dispatch({ type: 'SET_INITIAL_STATE', payload: oldData });
+            // The state update is async, so we save the `oldData` object directly
+            // to ensure the migrated data is what we just loaded.
+            await saveState(oldData as AppState);
+            console.log("Migration complete.");
+            if (!isElectron) {
+              localStorage.removeItem('appState'); // Clean up old storage
+              console.log("Removed old data from localStorage.");
+            }
+            data = oldData;
+          }
+        } else {
+           console.log("Successfully loaded data from IndexedDB.");
+        }
+
         if (data && Object.keys(data).length > 0) {
           dispatch({ type: 'SET_INITIAL_STATE', payload: data });
         }
@@ -306,22 +334,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadData();
   }, [isElectron]);
 
-  // Save data to file on state change
+  // Save data to IndexedDB on state change
   useEffect(() => {
     if (!isLoaded) {
       return; // Don't save until initial data is loaded
     }
-    
-    if (isElectron) {
-      window.electronAPI.saveData(state);
-    } else {
-       try {
-        localStorage.setItem('appState', JSON.stringify(state));
-      } catch (error) {
-        console.error("Failed to save data to localStorage:", error);
-      }
-    }
-  }, [state, isLoaded, isElectron]);
+    saveState(state);
+  }, [state, isLoaded]);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
