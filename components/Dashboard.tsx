@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
         setIsFriday(today.getDay() === 5);
     }, []);
 
-    const onLayoutChange = (layout: RGL.Layout[], layouts: RGL.Layouts) => {
+    const onLayoutChange = (_layout: RGL.Layout[], layouts: RGL.Layouts) => {
         dispatch({ type: 'SAVE_DASHBOARD_LAYOUT', payload: layouts });
     };
     
@@ -291,9 +291,9 @@ const Dashboard: React.FC = () => {
 
             <ReactGridLayout
                 layouts={sanitizedLayouts}
-                onLayoutChange={onLayoutChange}
+                onLayoutChange={onLayoutChange as any}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
+                cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 } as any}
                 rowHeight={150}
                 margin={[16, 16]}
                 containerPadding={[0, 0]}
