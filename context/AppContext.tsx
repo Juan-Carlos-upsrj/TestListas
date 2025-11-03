@@ -1,5 +1,4 @@
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
-// FIX: Removed `Partial` from import as it's a built-in TypeScript utility type.
 import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
 import { getState, saveState } from '../services/dbService';
@@ -41,35 +40,36 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         const loadedGroups: Group[] = loadedState.groups || [];
         const migratedGroups = loadedGroups.map((group, index) => ({
             ...group,
-            classDays: group.classDays || [], // Data migration: Ensure classDays exists to prevent crashes.
+            classDays: group.classDays || [],
             color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
         }));
 
-        // Data migration: Ensure all evaluations have a partial property.
         const loadedEvaluations = loadedState.evaluations || {};
         const migratedEvaluations: AppState['evaluations'] = {};
         Object.keys(loadedEvaluations).forEach(groupId => {
             migratedEvaluations[groupId] = (loadedEvaluations[groupId] || []).map((ev: Evaluation) => ({
                 ...ev,
-                partial: ev.partial || 1, // Default existing evals to partial 1
+                partial: ev.partial || 1,
             }));
         });
 
-        return {
-            ...defaultState,
-            ...loadedState,
+        // Construct the new state safely, property by property, to avoid corruption from old/invalid saved states.
+        const newState: AppState = {
             groups: migratedGroups,
-            attendance: loadedState.attendance || defaultState.attendance,
+            attendance: loadedState.attendance ?? defaultState.attendance,
             evaluations: migratedEvaluations,
-            grades: loadedState.grades || defaultState.grades,
-            calendarEvents: loadedState.calendarEvents || defaultState.calendarEvents,
-            dashboardLayouts: loadedState.dashboardLayouts || defaultState.dashboardLayouts,
-            toasts: [], // Do not persist toasts
+            grades: loadedState.grades ?? defaultState.grades,
+            calendarEvents: loadedState.calendarEvents ?? defaultState.calendarEvents,
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),
             },
+            activeView: 'dashboard', // Always start at dashboard for consistency
+            selectedGroupId: loadedState.selectedGroupId ?? null, // Explicitly handle selected group
+            toasts: [], // Always reset toasts on load
+            dashboardLayouts: loadedState.dashboardLayouts ?? defaultState.dashboardLayouts,
         };
+        return newState;
     }
     case 'SET_VIEW':
       return { ...state, activeView: action.payload };
