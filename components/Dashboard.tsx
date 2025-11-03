@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState, useEffect } from 'react';
-import { Responsive, WidthProvider, Layouts } from 'react-grid-layout';
+import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { AppContext } from '../context/AppContext';
@@ -192,6 +192,13 @@ const widgetMap: { [key: string]: React.FC } = {
 
 // --- Predefined Layouts ---
 
+// A single-column layout for small screens, used by all presets.
+const singleColumnLayout: Layout[] = [
+    { i: 'welcome', x: 0, y: 0, w: 1, h: 1 }, { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+    { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 }, { i: 'upcomingEvents', x: 0, y: 4, w: 1, h: 2 },
+    { i: 'quote', x: 0, y: 6, w: 1, h: 1 }, { i: 'actions', x: 0, y: 7, w: 1, h: 1 },
+];
+
 const classicLayouts: Layouts = {
     lg: [
         { i: 'welcome', x: 0, y: 0, w: 2, h: 1 }, { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
@@ -203,12 +210,11 @@ const classicLayouts: Layouts = {
         { i: 'quote', x: 1, y: 1, w: 1, h: 1 }, { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 },
         { i: 'upcomingEvents', x: 1, y: 2, w: 1, h: 2 }, { i: 'actions', x: 0, y: 4, w: 2, h: 1 },
     ],
+    sm: singleColumnLayout,
+    xs: singleColumnLayout,
+    xxs: singleColumnLayout,
 };
-classicLayouts.sm = classicLayouts.xs = classicLayouts.xxs = [
-    { i: 'welcome', x: 0, y: 0, w: 1, h: 1 }, { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
-    { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 }, { i: 'upcomingEvents', x: 0, y: 4, w: 1, h: 2 },
-    { i: 'quote', x: 0, y: 6, w: 1, h: 1 }, { i: 'actions', x: 0, y: 7, w: 1, h: 1 },
-];
+
 
 const todayFocusedLayouts: Layouts = {
     lg: [
@@ -216,13 +222,16 @@ const todayFocusedLayouts: Layouts = {
         { i: 'stats', x: 2, y: 1, w: 1, h: 1 }, { i: 'upcomingEvents', x: 0, y: 2, w: 2, h: 2 },
         { i: 'actions', x: 2, y: 2, w: 1, h: 1 }, { i: 'quote', x: 2, y: 3, w: 1, h: 1 },
     ],
+    md: [
+        { i: 'todaySchedule', x: 0, y: 0, w: 2, h: 2 },
+        { i: 'welcome', x: 0, y: 2, w: 1, h: 1 }, { i: 'stats', x: 1, y: 2, w: 1, h: 1 },
+        { i: 'upcomingEvents', x: 0, y: 3, w: 2, h: 2 },
+        { i: 'actions', x: 0, y: 5, w: 1, h: 1 }, { i: 'quote', x: 1, y: 5, w: 1, h: 1 },
+    ],
+    sm: singleColumnLayout,
+    xs: singleColumnLayout,
+    xxs: singleColumnLayout,
 };
-todayFocusedLayouts.md = todayFocusedLayouts.lg;
-todayFocusedLayouts.sm = todayFocusedLayouts.xs = todayFocusedLayouts.xxs = [
-    { i: 'todaySchedule', x: 0, y: 0, w: 1, h: 2 }, { i: 'welcome', x: 0, y: 2, w: 1, h: 1 },
-    { i: 'stats', x: 0, y: 3, w: 1, h: 1 }, { i: 'upcomingEvents', x: 0, y: 4, w: 1, h: 2 },
-    { i: 'actions', x: 0, y: 6, w: 1, h: 1 }, { i: 'quote', x: 0, y: 7, w: 1, h: 1 },
-];
 
 const compactLayouts: Layouts = {
     lg: [
@@ -230,9 +239,16 @@ const compactLayouts: Layouts = {
         { i: 'actions', x: 1, y: 1, w: 1, h: 1 }, { i: 'quote', x: 2, y: 1, w: 1, h: 1 },
         { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 }, { i: 'upcomingEvents', x: 1, y: 2, w: 2, h: 2 },
     ],
+    md: [
+        { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
+        { i: 'stats', x: 0, y: 1, w: 1, h: 1 }, { i: 'actions', x: 1, y: 1, w: 1, h: 1 },
+        { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 }, { i: 'upcomingEvents', x: 1, y: 2, w: 1, h: 2 },
+        { i: 'quote', x: 0, y: 4, w: 2, h: 1 },
+    ],
+    sm: singleColumnLayout,
+    xs: singleColumnLayout,
+    xxs: singleColumnLayout,
 };
-compactLayouts.md = compactLayouts.lg;
-compactLayouts.sm = compactLayouts.xs = compactLayouts.xxs = classicLayouts.sm;
 
 const academicLayouts: Layouts = {
     lg: [
@@ -240,13 +256,16 @@ const academicLayouts: Layouts = {
         { i: 'stats', x: 0, y: 1, w: 1, h: 1 }, { i: 'todaySchedule', x: 0, y: 2, w: 1, h: 2 },
         { i: 'actions', x: 1, y: 2, w: 1, h: 1 }, { i: 'quote', x: 2, y: 2, w: 1, h: 1 },
     ],
+    md: [
+        { i: 'upcomingEvents', x: 0, y: 0, w: 2, h: 2 },
+        { i: 'welcome', x: 0, y: 2, w: 1, h: 1 }, { i: 'stats', x: 1, y: 2, w: 1, h: 1 },
+        { i: 'todaySchedule', x: 0, y: 3, w: 1, h: 2 },
+        { i: 'actions', x: 1, y: 3, w: 1, h: 1 }, { i: 'quote', x: 1, y: 4, w: 1, h: 1 },
+    ],
+    sm: singleColumnLayout,
+    xs: singleColumnLayout,
+    xxs: singleColumnLayout,
 };
-academicLayouts.md = academicLayouts.lg;
-academicLayouts.sm = academicLayouts.xs = academicLayouts.xxs = [
-    { i: 'upcomingEvents', x: 0, y: 0, w: 1, h: 2 }, { i: 'welcome', x: 0, y: 2, w: 1, h: 1 },
-    { i: 'stats', x: 0, y: 3, w: 1, h: 1 }, { i: 'todaySchedule', x: 0, y: 4, w: 1, h: 2 },
-    { i: 'actions', x: 0, y: 6, w: 1, h: 1 }, { i: 'quote', x: 0, y: 7, w: 1, h: 1 },
-];
 
 const allLayouts: { [key in DashboardLayoutId]: Layouts } = {
     classic: classicLayouts,
