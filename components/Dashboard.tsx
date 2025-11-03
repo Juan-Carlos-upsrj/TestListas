@@ -1,5 +1,5 @@
 import React, { useContext, useMemo, useState, useEffect } from 'react';
-import RGL, { WidthProvider } from 'react-grid-layout';
+import { Responsive, WidthProvider, Layouts, Layout } from 'react-grid-layout';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import { AppContext } from '../context/AppContext';
@@ -10,7 +10,7 @@ import { getClassDates } from '../services/dateUtils';
 import BirthdayCelebration from './BirthdayCelebration';
 import FridayCelebration from './FridayCelebration';
 
-const ReactGridLayout = WidthProvider(RGL);
+const ReactGridLayout = WidthProvider(Responsive);
 
 // --- Dashboard Widgets ---
 
@@ -239,7 +239,7 @@ const Dashboard: React.FC = () => {
         setIsFriday(today.getDay() === 5);
     }, []);
 
-    const onLayoutChange = (_layout: RGL.Layout[], layouts: RGL.Layouts) => {
+    const onLayoutChange = (_layout: Layout[], layouts: Layouts) => {
         dispatch({ type: 'SAVE_DASHBOARD_LAYOUT', payload: layouts });
     };
     
@@ -291,9 +291,9 @@ const Dashboard: React.FC = () => {
 
             <ReactGridLayout
                 layouts={sanitizedLayouts}
-                onLayoutChange={onLayoutChange as any}
+                onLayoutChange={onLayoutChange}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-                cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 } as any}
+                cols={{ lg: 3, md: 2, sm: 1, xs: 1, xxs: 1 }}
                 rowHeight={150}
                 margin={[16, 16]}
                 containerPadding={[0, 0]}
