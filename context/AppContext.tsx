@@ -29,7 +29,6 @@ const defaultState: AppState = {
   activeView: 'dashboard',
   selectedGroupId: null,
   toasts: [],
-  dashboardLayout: 'classic',
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -67,7 +66,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             activeView: 'dashboard', // Always start at dashboard for consistency
             selectedGroupId: loadedState.selectedGroupId ?? null, // Explicitly handle selected group
             toasts: [], // Always reset toasts on load
-            dashboardLayout: loadedState.dashboardLayout ?? defaultState.dashboardLayout,
         };
         return newState;
     }
@@ -263,8 +261,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'DELETE_EVENT': {
         return { ...state, calendarEvents: state.calendarEvents.filter(e => e.id !== action.payload) };
     }
-    case 'SET_DASHBOARD_LAYOUT':
-        return { ...state, dashboardLayout: action.payload };
     default:
       return state;
   }

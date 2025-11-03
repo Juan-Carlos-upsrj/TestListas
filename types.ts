@@ -7,8 +7,6 @@ export type DayOfWeek = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes'
 // All type definitions have been consolidated here and circular references removed to create a single source of truth for application types.
 export type { Layouts, Layout } from 'react-grid-layout';
 
-export type DashboardLayoutId = 'classic' | 'todayFocused' | 'compact' | 'academic';
-
 export interface CalendarEvent {
   id: string;
   date: string; // YYYY-MM-DD
@@ -93,7 +91,6 @@ export interface AppState {
   activeView: ActiveView;
   selectedGroupId: string | null;
   toasts: Toast[];
-  dashboardLayout: DashboardLayoutId;
 }
 
 export type AppAction =
@@ -116,8 +113,7 @@ export type AppAction =
   | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'SAVE_EVENT'; payload: CalendarEvent }
-  | { type: 'DELETE_EVENT'; payload: string }
-  | { type: 'SET_DASHBOARD_LAYOUT'; payload: DashboardLayoutId };
+  | { type: 'DELETE_EVENT'; payload: string };
 
 export interface Professor {
     name: string;
