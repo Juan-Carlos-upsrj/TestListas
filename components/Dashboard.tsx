@@ -126,7 +126,7 @@ const UpcomingEventsWidget: React.FC = () => {
             return acc;
         }, [] as { id: string; title: string; startDate: string; endDate: string; }[]);
         
-        return grouped.slice(0, 5);
+        return grouped.slice(0, 3);
     }, [state.gcalEvents]);
     
     if (upcomingEvents.length === 0) {
