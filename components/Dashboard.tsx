@@ -10,7 +10,6 @@ import FridayCelebration from './FridayCelebration';
 import { MOTIVATIONAL_QUOTES, PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
 import Modal from './common/Modal';
 import AttendanceTaker from './AttendanceTaker';
-import Button from './common/Button';
 import { motion } from 'framer-motion';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
