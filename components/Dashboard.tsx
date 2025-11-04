@@ -1,5 +1,4 @@
 
-
 import React, { useContext, useMemo, useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { AppContext } from '../context/AppContext';
@@ -240,7 +239,7 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
     const sizeClasses = 'py-2 px-4 text-base';
 
     return (
-        <div className="grid grid-cols-2 gap-3 content-start">
+        <div className="flex flex-wrap gap-3">
             {todaysClasses.map(group => {
                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
                 return (
