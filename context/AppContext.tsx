@@ -36,17 +36,21 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_INITIAL_STATE': {
         const loadedState = action.payload || {};
         
-        const loadedGroups: Group[] = loadedState.groups || [];
+        // FIX: Filter out null/falsy values from arrays to prevent crashes on corrupted data.
+        const loadedGroups: Group[] = (Array.isArray(loadedState.groups) ? loadedState.groups : []).filter(Boolean);
         const migratedGroups = loadedGroups.map((group, index) => ({
             ...group,
             classDays: group.classDays || [],
             color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
         }));
-
-        const loadedEvaluations = loadedState.evaluations || {};
+        
+        // FIX: Ensure loadedEvaluations is a valid object and filter its content.
+        const loadedEvaluations = (typeof loadedState.evaluations === 'object' && loadedState.evaluations !== null) ? loadedState.evaluations : {};
         const migratedEvaluations: AppState['evaluations'] = {};
         Object.keys(loadedEvaluations).forEach(groupId => {
-            migratedEvaluations[groupId] = (loadedEvaluations[groupId] || []).map((ev: Evaluation) => ({
+             // FIX: Filter out null/falsy values from arrays to prevent crashes.
+            const evaluationsForGroup = (Array.isArray(loadedEvaluations[groupId]) ? loadedEvaluations[groupId] : []).filter(Boolean);
+            migratedEvaluations[groupId] = evaluationsForGroup.map((ev: Evaluation) => ({
                 ...ev,
                 partial: ev.partial || 1,
             }));
@@ -58,7 +62,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             attendance: loadedState.attendance ?? defaultState.attendance,
             evaluations: migratedEvaluations,
             grades: loadedState.grades ?? defaultState.grades,
-            calendarEvents: loadedState.calendarEvents ?? defaultState.calendarEvents,
+            calendarEvents: Array.isArray(loadedState.calendarEvents) ? loadedState.calendarEvents.filter(Boolean) : defaultState.calendarEvents,
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),

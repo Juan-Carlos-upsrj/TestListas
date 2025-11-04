@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AttendanceStatus, Student } from '../types';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
@@ -13,9 +14,6 @@ interface AttendanceTakerProps {
 }
 
 const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, groupAttendance, onStatusChange, onClose }) => {
-    // FIX: Replaced useState with useMemo. The previous implementation with useState caused a stale state issue
-    // where the list of pending students was not updated when props changed (e.g., after taking attendance for a student).
-    // This led to incorrect behavior and could cause the application to crash. useMemo ensures the list is always up-to-date.
     const pendingStudents = useMemo(() =>
         students.filter(s => {
             const status = groupAttendance[s.id]?.[date];
@@ -26,7 +24,13 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
 
     const [currentIndex, setCurrentIndex] = useState(0);
 
-    // Memoize callbacks to ensure they are stable and don't cause unnecessary re-renders or effect re-runs.
+    // This effect ensures currentIndex is valid if pendingStudents list shrinks.
+    useEffect(() => {
+        if (currentIndex > 0 && currentIndex >= pendingStudents.length) {
+            setCurrentIndex(pendingStudents.length - 1);
+        }
+    }, [pendingStudents, currentIndex]);
+
     const goToNext = useCallback(() => {
         if (currentIndex < pendingStudents.length - 1) {
             setCurrentIndex(currentIndex + 1);
@@ -35,19 +39,21 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         }
     }, [currentIndex, pendingStudents.length, onClose]);
 
+    // FIX: Removed goToNext() from this function to prevent a race condition.
+    // When a status is set, the student is removed from the pending list.
+    // We let the component re-render naturally, and the *next* pending student
+    // will now appear at the *current* index, or the component will show the "all done" screen.
     const handleSetStatus = useCallback((status: AttendanceStatus) => {
-        const currentStudent = pendingStudents[currentIndex];
-        if (currentStudent) {
-            onStatusChange(currentStudent.id, status);
+        const studentToUpdate = pendingStudents[currentIndex];
+        if (studentToUpdate) {
+            onStatusChange(studentToUpdate.id, status);
+        } else if (pendingStudents.length === 0) {
+            onClose();
         }
-        goToNext();
-    }, [currentIndex, pendingStudents, onStatusChange, goToNext]);
+    }, [currentIndex, pendingStudents, onStatusChange, onClose]);
     
-    // FIX: This useEffect hook is now placed before any conditional returns, adhering to the Rules of Hooks.
-    // It also uses memoized callbacks (useCallback) with a correct dependency array to prevent stale closures.
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            // Do not process keys if there are no students to take attendance for.
             if (pendingStudents.length === 0) return;
 
             const keyMap: { [key: string]: AttendanceStatus } = {
@@ -67,7 +73,6 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleSetStatus, goToNext, pendingStudents.length]);
 
-    // Conditional return for when all attendance is taken.
     if (pendingStudents.length === 0) {
         return (
             <div className="text-center p-4">
@@ -79,11 +84,8 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         );
     }
     
-    // FIX: Add a guard to prevent crashes if currentIndex becomes invalid (e.g., if the list shrinks).
     const currentStudent = pendingStudents[currentIndex];
     if (!currentStudent) {
-        // This can happen briefly if the list shrinks and the index is temporarily out of bounds.
-        // Returning null allows React to re-render with a corrected state.
         return null;
     }
 
