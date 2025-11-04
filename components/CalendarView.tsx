@@ -1,53 +1,20 @@
 
-import React, { useState, useMemo, useContext, useEffect } from 'react';
+
+import React, { useState, useMemo, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { CalendarEvent } from '../types';
 import { getClassDates } from '../services/dateUtils';
-import { fetchGoogleCalendarEvents } from '../services/calendarService';
 import { GROUP_COLORS } from '../constants';
 import Icon from './icons/Icon';
 import EventModal from './EventModal';
 
 const CalendarView: React.FC = () => {
-    const { state, dispatch } = useContext(AppContext);
-    const { groups, settings, calendarEvents } = state;
+    const { state } = useContext(AppContext);
+    const { groups, settings, calendarEvents, gcalEvents } = state;
 
     const [currentDate, setCurrentDate] = useState(new Date());
     const [isEventModalOpen, setEventModalOpen] = useState(false);
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-    const [gcalEvents, setGcalEvents] = useState<CalendarEvent[]>([]);
-    const [isLoadingGcal, setIsLoadingGcal] = useState(false);
-    const [errorGcal, setErrorGcal] = useState<string | null>(null);
-
-    // Fetch Google Calendar events
-    useEffect(() => {
-        const fetchEvents = async () => {
-            if (settings.googleCalendarUrl) {
-                setIsLoadingGcal(true);
-                setErrorGcal(null);
-                try {
-                    const gcalColorName = settings.googleCalendarColor || 'amber';
-                    const gcalColor = GROUP_COLORS.find(c => c.name === gcalColorName) || GROUP_COLORS.find(c => c.name === 'amber')!;
-                    
-                    const events = await fetchGoogleCalendarEvents(settings.googleCalendarUrl, gcalColor.calendar);
-                    setGcalEvents(events);
-                    if (events.length > 0) {
-                        dispatch({ type: 'ADD_TOAST', payload: { message: 'Calendario de Google sincronizado.', type: 'info' } });
-                    }
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : 'Error al sincronizar Google Calendar.';
-                    setErrorGcal(errorMessage);
-                    dispatch({ type: 'ADD_TOAST', payload: { message: errorMessage, type: 'error' } });
-                } finally {
-                    setIsLoadingGcal(false);
-                }
-            } else {
-                setGcalEvents([]);
-                setErrorGcal(null);
-            }
-        };
-        fetchEvents();
-    }, [settings.googleCalendarUrl, settings.googleCalendarColor, dispatch]);
 
     const allEventsByDate = useMemo(() => {
         const events: { [date: string]: CalendarEvent[] } = {};
@@ -175,12 +142,6 @@ const CalendarView: React.FC = () => {
                 </div>
             </div>
             
-            {(isLoadingGcal || errorGcal) && (
-                 <div className={`text-center p-3 mb-4 rounded-md text-sm ${errorGcal ? 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-200' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200'}`}>
-                    {isLoadingGcal ? 'Sincronizando con Google Calendar...' : errorGcal}
-                 </div>
-            )}
-
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="grid grid-cols-7">
                     {weekDays.map(day => (

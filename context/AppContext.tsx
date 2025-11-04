@@ -2,6 +2,7 @@ import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useSt
 import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
 import { getState, saveState } from '../services/dbService';
+import { fetchGoogleCalendarEvents } from '../services/calendarService';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -349,6 +350,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
     saveState(state);
   }, [state, isLoaded]);
+  
+  // Fetch Google Calendar events when settings change
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    const fetchEvents = async () => {
+        if (state.settings.googleCalendarUrl) {
+            try {
+                const gcalColorName = state.settings.googleCalendarColor || 'amber';
+                const gcalColor = GROUP_COLORS.find(c => c.name === gcalColorName) || GROUP_COLORS[0];
+                const events = await fetchGoogleCalendarEvents(state.settings.googleCalendarUrl, gcalColor.calendar);
+                dispatch({ type: 'SET_GCAL_EVENTS', payload: events });
+                if (events.length > 0) {
+                    dispatch({ type: 'ADD_TOAST', payload: { message: 'Calendario de Google sincronizado.', type: 'info' } });
+                }
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Error al sincronizar Google Calendar.';
+                dispatch({ type: 'ADD_TOAST', payload: { message: errorMessage, type: 'error' } });
+            }
+        } else {
+            dispatch({ type: 'SET_GCAL_EVENTS', payload: [] });
+        }
+    };
+    fetchEvents();
+  }, [state.settings.googleCalendarUrl, state.settings.googleCalendarColor, isLoaded, dispatch]);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

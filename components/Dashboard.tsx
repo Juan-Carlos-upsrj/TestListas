@@ -1,15 +1,17 @@
 
-import React, { useContext, useMemo, useState, useEffect } from 'react';
+
+import React, { useContext, useMemo, useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { AppContext } from '../context/AppContext';
 import { Group, AttendanceStatus } from '../types';
 import Icon from './icons/Icon';
 import BirthdayCelebration from './BirthdayCelebration';
 import FridayCelebration from './FridayCelebration';
-import { MOTIVATIONAL_QUOTES, PROFESSOR_BIRTHDAYS } from '../constants';
+import { MOTIVATIONAL_QUOTES, PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
 import Modal from './common/Modal';
 import AttendanceTaker from './AttendanceTaker';
 import Button from './common/Button';
+import { motion } from 'framer-motion';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -21,12 +23,12 @@ const WelcomeWidget: React.FC = () => {
     const [birthdayPerson, setBirthdayPerson] = useState<string | null>(null);
     const [isFriday, setIsFriday] = useState(false);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const timer = setInterval(() => setToday(new Date()), 60000); // Update every minute
         return () => clearInterval(timer);
     }, []);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const day = String(today.getDate()).padStart(2, '0');
         const month = String(today.getMonth() + 1).padStart(2, '0');
         const todayStr = `${month}-${day}`;
@@ -117,10 +119,9 @@ const UpcomingEventsWidget: React.FC = () => {
 };
 
 
-const AttendanceSummaryWidget: React.FC = () => {
+const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) => {
     const { state } = useContext(AppContext);
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
     const dayOfWeek = today.toLocaleDateString('es-ES', { weekday: 'long' });
 
     const { present, total } = useMemo(() => {
@@ -174,23 +175,35 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
         return <p className="text-slate-500 text-center flex items-center justify-center h-full">No hay grupos con clase hoy.</p>;
     }
     
+    const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-200 ease-in-out inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    const sizeClasses = 'py-2 px-4 text-base';
+
     return (
-        <div className="grid grid-cols-2 gap-3 h-full content-start">
-            {todaysClasses.map(group => (
-                <Button key={group.id} variant="secondary" onClick={() => onTakeAttendance(group)}>
-                    <Icon name="list-checks" className="w-4 h-4" />
-                    {group.name}
-                </Button>
-            ))}
+        <div className="grid grid-cols-2 gap-3 content-start">
+            {todaysClasses.map(group => {
+                const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
+                return (
+                     <motion.button
+                        key={group.id}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onTakeAttendance(group)}
+                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90`}
+                    >
+                        <Icon name="list-checks" className="w-4 h-4" />
+                        {group.name}
+                    </motion.button>
+                );
+            })}
         </div>
     );
 };
 
 
-const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode; autoHeight?: boolean; }> = ({ title, children, autoHeight = false }) => (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col h-full">
         <h3 className="font-bold mb-3 text-slate-600 dark:text-slate-300">{title}</h3>
-        <div className="flex-grow">
+        <div className={!autoHeight ? "flex-grow" : ""}>
             {children}
         </div>
     </div>
@@ -203,6 +216,10 @@ const Dashboard: React.FC = () => {
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [attendanceGroup, setAttendanceGroup] = useState<Group | null>(null);
 
+    // FIX: Use local date string consistently to avoid timezone bugs.
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
     const handleTakeAttendance = (group: Group) => {
         setAttendanceGroup(group);
         setTakerOpen(true);
@@ -210,7 +227,6 @@ const Dashboard: React.FC = () => {
 
     const handleTakerStatusChange = (studentId: string, status: AttendanceStatus) => {
         if (attendanceGroup) {
-            const todayStr = new Date().toISOString().split('T')[0];
             dispatch({
                 type: 'UPDATE_ATTENDANCE',
                 payload: { groupId: attendanceGroup.id, studentId, date: todayStr, status }
@@ -254,13 +270,13 @@ const Dashboard: React.FC = () => {
                      <WidgetWrapper title="Próximos Eventos (GCAL)"><UpcomingEventsWidget /></WidgetWrapper>
                 </div>
                 <div key="attendance-summary">
-                     <WidgetWrapper title="Asistencia de Hoy"><AttendanceSummaryWidget /></WidgetWrapper>
+                     <WidgetWrapper title="Asistencia de Hoy"><AttendanceSummaryWidget todayStr={todayStr} /></WidgetWrapper>
                 </div>
                 <div key="quote">
                      <WidgetWrapper title="Frase del Día"><QuoteWidget /></WidgetWrapper>
                 </div>
                 <div key="take-attendance">
-                     <WidgetWrapper title="Pase de Lista Hoy"><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
+                     <WidgetWrapper title="Pase de Lista Hoy" autoHeight><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
                 </div>
             </ResponsiveGridLayout>
             
@@ -268,7 +284,7 @@ const Dashboard: React.FC = () => {
                  <Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${attendanceGroup.name}`}>
                     <AttendanceTaker 
                         students={attendanceGroup.students} 
-                        date={new Date().toISOString().split('T')[0]} 
+                        date={todayStr} 
                         groupAttendance={state.attendance[attendanceGroup.id] || {}}
                         onStatusChange={handleTakerStatusChange}
                         onClose={() => setTakerOpen(false)}
