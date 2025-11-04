@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AttendanceStatus, Student } from '../types';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
 import Icon from './icons/Icon';
@@ -13,12 +13,15 @@ interface AttendanceTakerProps {
 }
 
 const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, groupAttendance, onStatusChange, onClose }) => {
-    // This state is initialized once and correctly captures the students needing attendance.
-    const [pendingStudents] = useState(() =>
+    // FIX: Replaced useState with useMemo. The previous implementation with useState caused a stale state issue
+    // where the list of pending students was not updated when props changed (e.g., after taking attendance for a student).
+    // This led to incorrect behavior and could cause the application to crash. useMemo ensures the list is always up-to-date.
+    const pendingStudents = useMemo(() =>
         students.filter(s => {
             const status = groupAttendance[s.id]?.[date];
             return !status || status === AttendanceStatus.Pending;
-        })
+        }),
+        [students, groupAttendance, date]
     );
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -76,8 +79,13 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         );
     }
     
+    // FIX: Add a guard to prevent crashes if currentIndex becomes invalid (e.g., if the list shrinks).
     const currentStudent = pendingStudents[currentIndex];
-    if (!currentStudent) return null; // Safety check, should not be reached.
+    if (!currentStudent) {
+        // This can happen briefly if the list shrinks and the index is temporarily out of bounds.
+        // Returning null allows React to re-render with a corrected state.
+        return null;
+    }
 
     const currentStatus = groupAttendance[currentStudent.id]?.[date] || AttendanceStatus.Pending;
 
