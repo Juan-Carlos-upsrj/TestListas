@@ -73,6 +73,7 @@ const createWindow = () => {
   // Gracefully show window when ready to avoid a white flash.
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
+    mainWindow.maximize();
   });
 };
 

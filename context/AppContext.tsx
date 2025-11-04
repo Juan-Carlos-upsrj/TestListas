@@ -15,6 +15,7 @@ const defaultState: AppState = {
   evaluations: {},
   grades: {},
   calendarEvents: [],
+  gcalEvents: [],
   settings: {
     semesterStart: today.toISOString().split('T')[0],
     firstPartialEnd: nextMonth.toISOString().split('T')[0],
@@ -63,6 +64,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             evaluations: migratedEvaluations,
             grades: loadedState.grades ?? defaultState.grades,
             calendarEvents: Array.isArray(loadedState.calendarEvents) ? loadedState.calendarEvents.filter(Boolean) : defaultState.calendarEvents,
+            gcalEvents: Array.isArray(loadedState.gcalEvents) ? loadedState.gcalEvents.filter(Boolean) : defaultState.gcalEvents,
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),
@@ -265,6 +267,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'DELETE_EVENT': {
         return { ...state, calendarEvents: state.calendarEvents.filter(e => e.id !== action.payload) };
     }
+    case 'SET_GCAL_EVENTS':
+      return { ...state, gcalEvents: action.payload };
     default:
       return state;
   }

@@ -87,6 +87,7 @@ export interface AppState {
     };
   };
   calendarEvents: CalendarEvent[];
+  gcalEvents: CalendarEvent[];
   settings: Settings;
   activeView: ActiveView;
   selectedGroupId: string | null;
@@ -113,7 +114,8 @@ export type AppAction =
   | { type: 'ADD_TOAST'; payload: Omit<Toast, 'id'> }
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'SAVE_EVENT'; payload: CalendarEvent }
-  | { type: 'DELETE_EVENT'; payload: string };
+  | { type: 'DELETE_EVENT'; payload: string }
+  | { type: 'SET_GCAL_EVENTS'; payload: CalendarEvent[] };
 
 export interface Professor {
     name: string;
