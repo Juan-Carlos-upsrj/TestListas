@@ -1,4 +1,5 @@
 
+
 import React, { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
@@ -130,6 +131,10 @@ const AttendanceView: React.FC = () => {
                                             <td key={date} className={`p-0 text-center ${date === todayStr ? 'bg-indigo-100 dark:bg-indigo-900/50' : ''}`}>
                                                 <button
                                                     onClick={() => handleStatusChange(student.id, date, getNextStatus(status))}
+                                                    onContextMenu={(e) => {
+                                                        e.preventDefault();
+                                                        handleStatusChange(student.id, date, AttendanceStatus.Pending);
+                                                    }}
                                                     className={`w-full h-10 text-xs font-bold transition-transform transform hover:scale-110 ${STATUS_STYLES[status].color}`}
                                                 >
                                                     {STATUS_STYLES[status].symbol}
