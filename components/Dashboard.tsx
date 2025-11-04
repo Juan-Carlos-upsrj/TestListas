@@ -93,12 +93,40 @@ const UpcomingEventsWidget: React.FC = () => {
     const { state } = useContext(AppContext);
     const upcomingEvents = useMemo(() => {
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Start of today
+        today.setHours(0, 0, 0, 0);
 
-        return state.gcalEvents
+        const sortedEvents = state.gcalEvents
             .filter(event => new Date(event.date + 'T00:00:00') >= today)
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-            .slice(0, 5);
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+        if (sortedEvents.length === 0) return [];
+
+        // Group consecutive events with the same title
+        const grouped = sortedEvents.reduce((acc, event) => {
+            const lastEvent = acc[acc.length - 1];
+            const eventDate = new Date(event.date + 'T00:00:00');
+            
+            if (lastEvent && lastEvent.title === event.title) {
+                const lastEndDate = new Date(lastEvent.endDate + 'T00:00:00');
+                const expectedNextDate = new Date(lastEndDate);
+                expectedNextDate.setDate(lastEndDate.getDate() + 1);
+                
+                if (eventDate.getTime() === expectedNextDate.getTime()) {
+                    lastEvent.endDate = event.date;
+                    return acc;
+                }
+            }
+            
+            acc.push({
+                id: event.id,
+                title: event.title,
+                startDate: event.date,
+                endDate: event.date,
+            });
+            return acc;
+        }, [] as { id: string; title: string; startDate: string; endDate: string; }[]);
+        
+        return grouped.slice(0, 5);
     }, [state.gcalEvents]);
     
     if (upcomingEvents.length === 0) {
@@ -107,12 +135,46 @@ const UpcomingEventsWidget: React.FC = () => {
 
     return (
         <ul className="space-y-2 overflow-y-auto h-full pr-2">
-            {upcomingEvents.map(event => (
-                <li key={event.id} className="text-sm p-2 bg-slate-100 dark:bg-slate-700/50 rounded-md">
-                    <p className="font-semibold truncate">{event.title}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(event.date + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}</p>
-                </li>
-            ))}
+            {upcomingEvents.map(event => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const startDate = new Date(event.startDate + 'T00:00:00');
+                const endDate = new Date(event.endDate + 'T00:00:00');
+
+                // Proximity and coloring logic
+                const diffInDays = (d1: Date, d2: Date) => Math.round((d1.getTime() - d2.getTime()) / (1000 * 60 * 60 * 24));
+                
+                const startDiff = diffInDays(startDate, today);
+                const endDiff = diffInDays(endDate, today);
+                const isOngoing = startDiff <= 0 && endDiff >= 0;
+
+                let colorClass = 'bg-slate-100 dark:bg-slate-700/50'; // Default
+                if (isOngoing && endDiff <= 2) {
+                    colorClass = 'bg-red-100 dark:bg-red-900/50 border-l-4 border-red-400'; // Ending soon
+                } else if (!isOngoing && startDiff <= 7) {
+                    colorClass = 'bg-amber-100 dark:bg-amber-900/50 border-l-4 border-amber-400'; // Approaching
+                }
+
+                // Date formatting logic
+                let dateString: string;
+                if (startDate.getTime() === endDate.getTime()) {
+                    dateString = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                } else {
+                    if (startDate.getMonth() === endDate.getMonth()) {
+                        dateString = `${startDate.getDate()} - ${endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`;
+                    } else {
+                        dateString = `${startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+                    }
+                }
+
+                return (
+                    <li key={event.id} className={`text-sm p-2 rounded-md transition-colors ${colorClass}`}>
+                        <p className="font-semibold truncate">{event.title}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{dateString}</p>
+                    </li>
+                );
+            })}
         </ul>
     );
 };
