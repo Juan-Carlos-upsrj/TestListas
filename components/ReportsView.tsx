@@ -81,7 +81,7 @@ const ReportsView: React.FC = () => {
                 let validAttendanceTaken = 0;
                 datesInMonth.forEach(date => {
                     const status = studentAttendance[date];
-                    if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified) {
+                    if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified || status === AttendanceStatus.Exchange) {
                         present++;
                         validAttendanceTaken++;
                     } else if (status === AttendanceStatus.Absent) {

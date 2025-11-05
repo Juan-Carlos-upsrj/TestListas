@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Settings } from '../types';
+import { Settings, Group, Student } from '../types';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import { GROUP_COLORS } from '../constants';
@@ -83,24 +83,26 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando datos...', type: 'info' } });
 
-        const payload = [];
+        const payload: any[] = [];
         const groupsMap = new Map(state.groups.map(g => [g.id, g]));
 
-        // FIX: Use Object.keys for safer type inference with nested objects.
-        // The original Object.entries was causing type inference issues where `group` and `student` were treated as `unknown`.
-        for (const groupId of Object.keys(state.attendance)) {
-            const group = groupsMap.get(groupId);
-            if (!group) continue;
+        // FIX: Replaced nested for...of loops with .forEach to resolve complex type inference issues.
+        // The original loops with Object.keys() were causing TypeScript to incorrectly infer 'group'
+        // and 'student' as 'unknown' within the nested scopes. The .forEach() approach creates
+        // clearer closures, helping the type checker correctly trace the types through the nested data structure.
+        Object.keys(state.attendance).forEach(groupId => {
+            const group: Group | undefined = groupsMap.get(groupId);
+            if (!group) return;
             
             const studentAttendances = state.attendance[groupId];
             const studentsMap = new Map(group.students.map(s => [s.id, s]));
             
-            for (const studentId of Object.keys(studentAttendances)) {
-                const student = studentsMap.get(studentId);
-                if (!student) continue;
+            Object.keys(studentAttendances).forEach(studentId => {
+                const student: Student | undefined = studentsMap.get(studentId);
+                if (!student) return;
 
                 const dateAttendances = studentAttendances[studentId];
-                for (const date of Object.keys(dateAttendances)) {
+                Object.keys(dateAttendances).forEach(date => {
                     const status = dateAttendances[date];
                     payload.push({
                         profesor_nombre: settings.professorName,
@@ -112,9 +114,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         fecha: date,
                         status: status,
                     });
-                }
-            }
-        }
+                });
+            });
+        });
 
         if (payload.length === 0) {
             dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos de asistencia para sincronizar.', type: 'info' } });

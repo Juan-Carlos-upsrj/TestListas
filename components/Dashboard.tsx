@@ -1,4 +1,5 @@
 
+
 import React, { useContext, useMemo, useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { AppContext } from '../context/AppContext';
@@ -193,7 +194,7 @@ const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) =
                 group.students.forEach(student => {
                     totalCount++;
                     const status = state.attendance[group.id]?.[student.id]?.[todayStr];
-                    if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified) {
+                    if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified || status === AttendanceStatus.Exchange) {
                         presentCount++;
                     }
                 });
