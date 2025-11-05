@@ -69,6 +69,88 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             fileInputRef.current.value = '';
         }
     };
+    
+    const handleSyncData = async () => {
+        const { apiUrl, apiKey, professorName } = settings;
+
+        if (!apiUrl || !apiKey || !professorName || professorName === 'Nombre del Profesor') {
+            dispatch({
+                type: 'ADD_TOAST',
+                payload: { message: 'Por favor, configura la URL, API Key y tu nombre de profesor antes de sincronizar.', type: 'error' }
+            });
+            return;
+        }
+
+        dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando datos...', type: 'info' } });
+
+        const payload = [];
+        const groupsMap = new Map(state.groups.map(g => [g.id, g]));
+
+        // FIX: Use Object.keys for safer type inference with nested objects.
+        // The original Object.entries was causing type inference issues where `group` and `student` were treated as `unknown`.
+        for (const groupId of Object.keys(state.attendance)) {
+            const group = groupsMap.get(groupId);
+            if (!group) continue;
+            
+            const studentAttendances = state.attendance[groupId];
+            const studentsMap = new Map(group.students.map(s => [s.id, s]));
+            
+            for (const studentId of Object.keys(studentAttendances)) {
+                const student = studentsMap.get(studentId);
+                if (!student) continue;
+
+                const dateAttendances = studentAttendances[studentId];
+                for (const date of Object.keys(dateAttendances)) {
+                    const status = dateAttendances[date];
+                    payload.push({
+                        profesor_nombre: settings.professorName,
+                        materia_nombre: group.subject,
+                        grupo_id: groupId,
+                        grupo_nombre: group.name,
+                        alumno_id: studentId,
+                        alumno_nombre: student.name,
+                        fecha: date,
+                        status: status,
+                    });
+                }
+            }
+        }
+
+        if (payload.length === 0) {
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos de asistencia para sincronizar.', type: 'info' } });
+            return;
+        }
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-API-KEY': apiKey,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                dispatch({
+                    type: 'ADD_TOAST',
+                    payload: { message: `Datos sincronizados. (${data.registros_procesados} registros)`, type: 'success' }
+                });
+            } else {
+                dispatch({
+                    type: 'ADD_TOAST',
+                    payload: { message: `Error del servidor: ${data.message || response.statusText}`, type: 'error' }
+                });
+            }
+        } catch (error) {
+            dispatch({
+                type: 'ADD_TOAST',
+                payload: { message: 'Error de red al sincronizar.', type: 'error' }
+            });
+        }
+    };
 
 
     return (
@@ -143,6 +225,36 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                 </fieldset>
 
                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                    <legend className="px-2 font-semibold">Sincronización con Servidor</legend>
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="apiUrl" className="block text-sm font-medium">URL del API de Sincronización</label>
+                            <input
+                                type="url"
+                                id="apiUrl"
+                                name="apiUrl"
+                                value={settings.apiUrl}
+                                onChange={handleChange}
+                                placeholder="https://api.ejemplo.com/asistencia"
+                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="apiKey" className="block text-sm font-medium">Clave de API Secreta</label>
+                            <input
+                                type="password"
+                                id="apiKey"
+                                name="apiKey"
+                                value={settings.apiKey}
+                                onChange={handleChange}
+                                placeholder="••••••••••••••••"
+                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                            />
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset className="border p-4 rounded-lg dark:border-slate-600">
                      <legend className="px-2 font-semibold">Visualización</legend>
                      <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -179,6 +291,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         </Button>
                         <Button variant="secondary" onClick={handleImportClick} className="w-full">
                             <Icon name="upload-cloud" /> Importar Datos
+                        </Button>
+                        <Button variant="secondary" onClick={handleSyncData} className="w-full">
+                            <Icon name="upload-cloud" /> Sincronizar Datos
                         </Button>
                         <input
                             type="file"

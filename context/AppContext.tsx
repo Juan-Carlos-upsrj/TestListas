@@ -27,6 +27,8 @@ const defaultState: AppState = {
     googleCalendarUrl: '',
     googleCalendarColor: 'amber',
     professorName: 'Nombre del Profesor',
+    apiUrl: '',
+    apiKey: '',
   },
   activeView: 'dashboard',
   selectedGroupId: null,

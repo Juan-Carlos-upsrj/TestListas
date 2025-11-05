@@ -57,6 +57,8 @@ export interface Settings {
   googleCalendarUrl: string;
   googleCalendarColor: string;
   professorName: string;
+  apiUrl: string;
+  apiKey: string;
 }
 
 export type ActiveView = 'dashboard' | 'groups' | 'attendance' | 'grades' | 'reports' | 'calendar';
