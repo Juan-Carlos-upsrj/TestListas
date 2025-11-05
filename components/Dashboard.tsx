@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useMemo, useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { AppContext } from '../context/AppContext';
@@ -16,37 +14,10 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // --- Widget Components ---
 
-const WelcomeWidget: React.FC = () => {
+const WelcomeWidget: React.FC<{ dateString: string }> = ({ dateString }) => {
     const { state } = useContext(AppContext);
-    const [today, setToday] = useState(new Date());
-    const [birthdayPerson, setBirthdayPerson] = useState<string | null>(null);
-    const [isFriday, setIsFriday] = useState(false);
-
-    React.useEffect(() => {
-        const timer = setInterval(() => setToday(new Date()), 60000); // Update every minute
-        return () => clearInterval(timer);
-    }, []);
-
-    React.useEffect(() => {
-        const day = String(today.getDate()).padStart(2, '0');
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const todayStr = `${month}-${day}`;
-        const birthday = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayStr);
-        setBirthdayPerson(birthday ? birthday.name : null);
-        setIsFriday(today.getDay() === 5);
-    }, [today]);
-
-    const dateString = today.toLocaleDateString('es-ES', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    });
-
     return (
         <>
-            <BirthdayCelebration name={birthdayPerson || ''} show={!!birthdayPerson} />
-            <FridayCelebration show={isFriday && !birthdayPerson} />
             <h3 className="font-bold text-xl mb-1">Bienvenido/a, {state.settings.professorName}!</h3>
             <p className="text-slate-500 dark:text-slate-400 capitalize">{dateString}</p>
         </>
@@ -277,8 +248,31 @@ const Dashboard: React.FC = () => {
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [attendanceGroup, setAttendanceGroup] = useState<Group | null>(null);
 
-    // FIX: Use local date string consistently to avoid timezone bugs.
-    const today = new Date();
+    const [today, setToday] = useState(new Date());
+    const [birthdayPerson, setBirthdayPerson] = useState<string | null>(null);
+    const [isFriday, setIsFriday] = useState(false);
+
+    React.useEffect(() => {
+        const timer = setInterval(() => setToday(new Date()), 60000); // Update every minute
+        return () => clearInterval(timer);
+    }, []);
+
+    React.useEffect(() => {
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const todayStr = `${month}-${day}`;
+        const birthday = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayStr);
+        setBirthdayPerson(birthday ? birthday.name : null);
+        setIsFriday(today.getDay() === 5);
+    }, [today]);
+
+    const dateString = today.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const handleTakeAttendance = (group: Group) => {
@@ -309,6 +303,9 @@ const Dashboard: React.FC = () => {
 
     return (
         <div>
+            <BirthdayCelebration name={birthdayPerson || ''} show={!!birthdayPerson} />
+            <FridayCelebration show={isFriday && !birthdayPerson} />
+            
             <ResponsiveGridLayout
                 layouts={layouts}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
@@ -319,7 +316,7 @@ const Dashboard: React.FC = () => {
                 margin={[16, 16]}
             >
                 <div key="welcome">
-                    <WidgetWrapper title=""><WelcomeWidget /></WidgetWrapper>
+                    <WidgetWrapper title=""><WelcomeWidget dateString={dateString} /></WidgetWrapper>
                 </div>
                 <div key="stats">
                      <WidgetWrapper title=""><StatsWidget /></WidgetWrapper>

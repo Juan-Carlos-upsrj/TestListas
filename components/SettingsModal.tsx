@@ -84,7 +84,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando datos...', type: 'info' } });
 
         const payload: any[] = [];
-        const groupsMap = new Map(state.groups.map(g => [g.id, g]));
+        // FIX: Filter groups to ensure they are valid objects with an 'id' before creating the map.
+        // This prevents type errors if the state contains corrupted data (e.g., an empty object `{}`).
+        const groupsMap = new Map(state.groups.filter(g => g && g.id).map(g => [g.id, g]));
 
         // FIX: Replaced nested for...of loops with .forEach to resolve complex type inference issues.
         // The original loops with Object.keys() were causing TypeScript to incorrectly infer 'group'
