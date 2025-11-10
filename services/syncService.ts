@@ -105,31 +105,46 @@ export const syncScheduleData = async (state: AppState, dispatch: Dispatch<AppAc
         let gruposCreados = 0;
         let gruposActualizados = 0;
 
-        const clasesPorGrupo: { [key: string]: string[] } = {};
+        // A teacher can teach multiple subjects to the same group.
+        // We need to create a unique group in the app for each combination of [group name + subject name].
+        const clasesPorGrupoUnico: { [uniqueName: string]: { subjectName: string; days: string[] } } = {};
+
         horario.forEach(clase => {
-            if (!clasesPorGrupo[clase.groupName]) {
-                clasesPorGrupo[clase.groupName] = [];
+            // The unique key for a class is its group name combined with the subject name.
+            const uniqueGroupName = `${clase.groupName} - ${clase.subjectName}`;
+
+            if (!clasesPorGrupoUnico[uniqueGroupName]) {
+                clasesPorGrupoUnico[uniqueGroupName] = {
+                    subjectName: clase.subjectName,
+                    days: [],
+                };
             }
-            if (!clasesPorGrupo[clase.groupName].includes(clase.day)) {
-                clasesPorGrupo[clase.groupName].push(clase.day);
+            // Add the day to this unique group if it's not already there.
+            if (!clasesPorGrupoUnico[uniqueGroupName].days.includes(clase.day)) {
+                clasesPorGrupoUnico[uniqueGroupName].days.push(clase.day);
             }
         });
-
-        for (const groupName of Object.keys(clasesPorGrupo)) {
-            const diasDeClase = clasesPorGrupo[groupName];
-            const grupoExistente = groups.find(g => g.name.toLowerCase() === groupName.toLowerCase());
+        
+        for (const uniqueGroupName of Object.keys(clasesPorGrupoUnico)) {
+            const info = clasesPorGrupoUnico[uniqueGroupName];
+            const diasDeClase = info.days;
+            
+            // Check if a group with this exact unique name already exists.
+            const grupoExistente = groups.find(g => g.name.toLowerCase() === uniqueGroupName.toLowerCase());
 
             if (grupoExistente) {
+                // If it exists, update its schedule.
                 dispatch({
                     type: 'SAVE_GROUP',
                     payload: { ...grupoExistente, classDays: diasDeClase as DayOfWeek[] }
                 });
                 gruposActualizados++;
             } else {
+                // If not, create a new group.
                 const nuevoGrupo: Group = {
                     id: uuidv4(),
-                    name: groupName,
-                    subject: horario.find(c => c.groupName === groupName)?.subjectName || 'Materia General',
+                    name: uniqueGroupName, // e.g., "6A - Cálculo"
+                    subject: info.subjectName,
                     classDays: diasDeClase as DayOfWeek[],
                     students: [],
                     color: GROUP_COLORS[(groups.length + gruposCreados) % GROUP_COLORS.length].name
