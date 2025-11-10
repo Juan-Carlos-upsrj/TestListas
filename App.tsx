@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useEffect } from 'react';
 import { AppContext } from './context/AppContext';
 import Sidebar from './components/Sidebar';

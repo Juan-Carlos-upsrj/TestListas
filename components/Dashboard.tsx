@@ -5,10 +5,12 @@ import { Group, AttendanceStatus } from '../types';
 import Icon from './icons/Icon';
 import BirthdayCelebration from './BirthdayCelebration';
 import FridayCelebration from './FridayCelebration';
-import { MOTIVATIONAL_QUOTES, PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
+import { PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
 import Modal from './common/Modal';
 import AttendanceTaker from './AttendanceTaker';
 import { motion } from 'framer-motion';
+import { syncAttendanceData, syncScheduleData } from '../services/syncService';
+import Button from './common/Button';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -187,15 +189,31 @@ const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) =
     );
 };
 
-const QuoteWidget: React.FC = () => {
-    const quote = useMemo(() => MOTIVATIONAL_QUOTES[Math.floor(Math.random() * MOTIVATIONAL_QUOTES.length)], []);
+const QuickActionsWidget: React.FC = () => {
+    const { state, dispatch } = useContext(AppContext);
+
+    const handleSyncAttendance = () => {
+        syncAttendanceData(state, dispatch);
+    };
+
+    const handleSyncSchedule = () => {
+        syncScheduleData(state, dispatch);
+    };
+
     return (
-        <div className="flex flex-col justify-center h-full">
-            <blockquote className="text-lg italic text-slate-700 dark:text-slate-300">"{quote.text}"</blockquote>
-            <cite className="text-right text-slate-500 mt-2">- {quote.author}</cite>
+        <div className="flex flex-col gap-3 h-full justify-center">
+            <Button onClick={handleSyncAttendance} variant="secondary" className="w-full">
+                <Icon name="upload-cloud" className="w-4 h-4" />
+                Sincronizar Asistencias (Subir)
+            </Button>
+            <Button onClick={handleSyncSchedule} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
+                <Icon name="download-cloud" className="w-4 h-4" />
+                Sincronizar Horario (Bajar)
+            </Button>
         </div>
     );
 };
+
 
 const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void }> = ({ onTakeAttendance }) => {
     const { state } = useContext(AppContext);
@@ -296,7 +314,7 @@ const Dashboard: React.FC = () => {
             { i: 'todays-classes', x: 0, y: 1, w: 1, h: 2 },
             { i: 'upcoming-events', x: 1, y: 1, w: 1, h: 2 },
             { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 2 },
-            { i: 'quote', x: 0, y: 3, w: 1, h: 1 },
+            { i: 'quick-actions', x: 0, y: 3, w: 1, h: 1 },
             { i: 'take-attendance', x: 1, y: 3, w: 2, h: 1 },
         ]
     };
@@ -330,8 +348,8 @@ const Dashboard: React.FC = () => {
                 <div key="attendance-summary">
                      <WidgetWrapper title="Asistencia de Hoy"><AttendanceSummaryWidget todayStr={todayStr} /></WidgetWrapper>
                 </div>
-                <div key="quote">
-                     <WidgetWrapper title="Frase del Día"><QuoteWidget /></WidgetWrapper>
+                <div key="quick-actions">
+                     <WidgetWrapper title="Acciones Rápidas"><QuickActionsWidget /></WidgetWrapper>
                 </div>
                 <div key="take-attendance">
                      <WidgetWrapper title="Pase de Lista Hoy" autoHeight><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>

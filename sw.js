@@ -37,6 +37,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+
 // Fetch event: Intercepts network requests and applies caching strategies.
 self.addEventListener('fetch', (event) => {
   // We only cache GET requests. Other requests (POST, etc.) should go to the network.

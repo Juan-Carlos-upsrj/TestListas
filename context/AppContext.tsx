@@ -40,8 +40,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_INITIAL_STATE': {
         const loadedState = action.payload || {};
         
-        // FIX: Filter out null/falsy values from arrays to prevent crashes on corrupted data.
-        const loadedGroups: Group[] = (Array.isArray(loadedState.groups) ? loadedState.groups : []).filter(Boolean);
+        // FIX: Filter out null/falsy values and incomplete group objects from arrays to prevent crashes on corrupted data.
+        // A valid group must at least have an id.
+        const loadedGroups: Group[] = (Array.isArray(loadedState.groups) ? loadedState.groups : []).filter(g => g && g.id);
         const migratedGroups = loadedGroups.map((group, index) => ({
             ...group,
             classDays: group.classDays || [],

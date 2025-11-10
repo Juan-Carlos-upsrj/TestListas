@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Settings, Group, Student, DayOfWeek } from '../types';
+import { Settings } from '../types';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import { GROUP_COLORS } from '../constants';
 import { exportBackup, importBackup } from '../services/backupService';
 import Icon from './icons/Icon';
-import { v4 as uuidv4 } from 'uuid';
-import { fetchHorarioCompleto } from '../services/horarioService';
+import { syncAttendanceData, syncScheduleData } from '../services/syncService';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -71,172 +70,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             fileInputRef.current.value = '';
         }
     };
-    
-    const handleSyncData = async () => {
-        const { apiUrl, apiKey, professorName } = settings;
-
-        if (!apiUrl || !apiKey || !professorName || professorName === 'Nombre del Profesor') {
-            dispatch({
-                type: 'ADD_TOAST',
-                payload: { message: 'Por favor, configura la URL, API Key y tu nombre de profesor antes de sincronizar.', type: 'error' }
-            });
-            return;
-        }
-
-        dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando datos...', type: 'info' } });
-
-        const payload: any[] = [];
-        // FIX: Filter groups to ensure they are valid objects with an 'id' before creating the map.
-        // This prevents type errors if the state contains corrupted data (e.g., an empty object `{}`).
-        const groupsMap = new Map(state.groups.filter(g => g && g.id).map(g => [g.id, g]));
-
-        // FIX: Replaced nested for...of loops with .forEach to resolve complex type inference issues.
-        // The original loops with Object.keys() were causing TypeScript to incorrectly infer 'group'
-        // and 'student' as 'unknown' within the nested scopes. The .forEach() approach creates
-        // clearer closures, helping the type checker correctly trace the types through the nested data structure.
-        Object.keys(state.attendance).forEach(groupId => {
-            const group: Group | undefined = groupsMap.get(groupId);
-            if (!group) return;
-            
-            const studentAttendances = state.attendance[groupId];
-            // FIX: Add a defensive check for group.students to prevent runtime errors with corrupted data,
-            // and filter out any invalid student entries. This can also help with type inference issues.
-            const studentsMap = new Map((group.students || []).filter(s => s && s.id).map(s => [s.id, s]));
-            
-            Object.keys(studentAttendances).forEach(studentId => {
-                const student: Student | undefined = studentsMap.get(studentId);
-                if (!student) return;
-
-                const dateAttendances = studentAttendances[studentId];
-                Object.keys(dateAttendances).forEach(date => {
-                    const status = dateAttendances[date];
-                    payload.push({
-                        profesor_nombre: settings.professorName,
-                        materia_nombre: group.subject,
-                        grupo_id: groupId,
-                        grupo_nombre: group.name,
-                        alumno_id: studentId,
-                        alumno_nombre: student.name,
-                        fecha: date,
-                        status: status,
-                    });
-                });
-            });
-        });
-
-        if (payload.length === 0) {
-            dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos de asistencia para sincronizar.', type: 'info' } });
-            return;
-        }
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-API-KEY': apiKey,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                dispatch({
-                    type: 'ADD_TOAST',
-                    payload: { message: `Datos sincronizados. (${data.registros_procesados} registros)`, type: 'success' }
-                });
-            } else {
-                dispatch({
-                    type: 'ADD_TOAST',
-                    payload: { message: `Error del servidor: ${data.message || response.statusText}`, type: 'error' }
-                });
-            }
-        } catch (error) {
-            dispatch({
-                type: 'ADD_TOAST',
-                payload: { message: 'Error de red al sincronizar.', type: 'error' }
-            });
-        }
-    };
-
-    /**
-     * Esta es la nueva función que se conectará a Firebase
-     * para descargar y crear los grupos automáticamente.
-     */
-    const handleSyncHorarios = async () => {
-        if (!settings.professorName || settings.professorName === 'Nombre del Profesor') {
-            dispatch({
-                type: 'ADD_TOAST',
-                payload: { message: 'Por favor, configura tu "Nombre del Profesor/a" antes de sincronizar.', type: 'error' }
-            });
-            return;
-        }
-
-        dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando horario desde Firebase...', type: 'info' } });
-        
-        try {
-            // 1. Llama a la función que creamos en horarioService.ts
-            const horario = await fetchHorarioCompleto(settings.professorName);
-            
-            if (horario.length === 0) {
-                dispatch({ type: 'ADD_TOAST', payload: { message: 'No se encontraron clases para este profesor.', type: 'info' } });
-                return;
-            }
-
-            let gruposCreados = 0;
-            let gruposActualizados = 0;
-
-            // 2. Agrupamos todas las clases por nombre de grupo
-            const clasesPorGrupo: { [key: string]: string[] } = {}; // Ej: { "IAEV-37": ["Lunes", "Martes", "Miércoles"] }
-            horario.forEach(clase => {
-                if (!clasesPorGrupo[clase.groupName]) {
-                    clasesPorGrupo[clase.groupName] = [];
-                }
-                // Añadimos el día solo si no estaba ya
-                if (!clasesPorGrupo[clase.groupName].includes(clase.day)) {
-                    clasesPorGrupo[clase.groupName].push(clase.day);
-                }
-            });
-
-            // 3. Creamos o actualizamos los grupos en la app TestListas
-            for (const groupName of Object.keys(clasesPorGrupo)) {
-                const diasDeClase = clasesPorGrupo[groupName]; // Ej: ["Lunes", "Martes", "Miércoles"]
-                
-                // Buscamos si el grupo ya existe
-                const grupoExistente = state.groups.find(g => g.name.toLowerCase() === groupName.toLowerCase());
-
-                if (grupoExistente) {
-                    // Si existe, actualizamos sus días de clase
-                    dispatch({
-                        type: 'SAVE_GROUP',
-                        payload: { ...grupoExistente, classDays: diasDeClase as DayOfWeek[] }
-                    });
-                    gruposActualizados++;
-                } else {
-                    // Si no existe, creamos un grupo nuevo
-                    const nuevoGrupo: Group = {
-                        id: uuidv4(),
-                        name: groupName,
-                        subject: horario.find(c => c.groupName === groupName)?.subjectName || 'Materia General',
-                        classDays: diasDeClase as DayOfWeek[], // Los días coinciden con el tipo DayOfWeek
-                        students: [],
-                        color: GROUP_COLORS[(state.groups.length + gruposCreados) % GROUP_COLORS.length].name
-                    };
-                    dispatch({ type: 'SAVE_GROUP', payload: nuevoGrupo });
-                    gruposCreados++;
-                }
-            }
-
-            dispatch({ type: 'ADD_TOAST', payload: { message: `¡Horario sincronizado! ${gruposCreados} grupos creados, ${gruposActualizados} actualizados.`, type: 'success' } });
-            onClose(); // Cierra el modal
-
-        } catch (error) {
-            const msg = error instanceof Error ? error.message : 'Error desconocido al sincronizar.';
-            dispatch({ type: 'ADD_TOAST', payload: { message: msg, type: 'error' } });
-        }
-    };
-
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Configuración" size="lg">
@@ -370,18 +203,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                  <fieldset className="border p-4 rounded-lg dark:border-slate-600">
                     <legend className="px-2 font-semibold">Datos y Sincronización</legend>
-                    <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <Button variant="secondary" onClick={handleExport} className="w-full">
-                            <Icon name="download-cloud" /> Exportar Datos
+                            <Icon name="download-cloud" /> Exportar Respaldo
                         </Button>
                         <Button variant="secondary" onClick={handleImportClick} className="w-full">
-                            <Icon name="upload-cloud" /> Importar Datos
+                            <Icon name="upload-cloud" /> Importar Respaldo
                         </Button>
-                        <Button variant="secondary" onClick={handleSyncData} className="w-full">
-                            <Icon name="upload-cloud" /> Sincronizar Datos (API)
+                        <Button variant="secondary" onClick={() => syncAttendanceData(state, dispatch)} className="w-full">
+                            <Icon name="upload-cloud" /> Sincronizar Asistencias (Subir)
                         </Button>
-                        <Button variant="secondary" onClick={handleSyncHorarios} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
-                            <Icon name="download-cloud" /> Sincronizar Horario (Firebase)
+                        <Button variant="secondary" onClick={() => syncScheduleData(state, dispatch)} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
+                            <Icon name="download-cloud" /> Sincronizar Horario (Bajar)
                         </Button>
                         <input
                             type="file"
@@ -392,7 +225,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         />
                     </div>
                     <p className="text-xs text-slate-500 mt-2">
-                        <strong className="dark:text-amber-300 text-amber-600">Importante:</strong> Importar datos reemplazará toda la información actual. Sincronizar horario agregará/actualizará grupos sin borrar los existentes.
+                        <strong className="dark:text-amber-300 text-amber-600">Importante:</strong> Importar un respaldo reemplazará toda la información actual. Sincronizar el horario agregará o actualizará grupos sin borrar los existentes.
                     </p>
                 </fieldset>
             </div>
