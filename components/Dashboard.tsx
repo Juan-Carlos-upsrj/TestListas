@@ -204,11 +204,11 @@ const QuickActionsWidget: React.FC = () => {
         <div className="flex flex-col gap-3 h-full justify-center">
             <Button onClick={handleSyncAttendance} variant="secondary" className="w-full">
                 <Icon name="upload-cloud" className="w-4 h-4" />
-                Sincronizar Asistencias (Subir)
+                Subir Asistencias
             </Button>
             <Button onClick={handleSyncSchedule} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
                 <Icon name="download-cloud" className="w-4 h-4" />
-                Sincronizar Horario (Bajar)
+                Actualizar Horario
             </Button>
         </div>
     );

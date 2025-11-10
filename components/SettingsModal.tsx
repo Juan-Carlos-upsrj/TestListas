@@ -211,10 +211,10 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             <Icon name="upload-cloud" /> Importar Respaldo
                         </Button>
                         <Button variant="secondary" onClick={() => syncAttendanceData(state, dispatch)} className="w-full">
-                            <Icon name="upload-cloud" /> Sincronizar Asistencias (Subir)
+                            <Icon name="upload-cloud" /> Subir Asistencias
                         </Button>
                         <Button variant="secondary" onClick={() => syncScheduleData(state, dispatch)} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
-                            <Icon name="download-cloud" /> Sincronizar Horario (Bajar)
+                            <Icon name="download-cloud" /> Actualizar Horario
                         </Button>
                         <input
                             type="file"
