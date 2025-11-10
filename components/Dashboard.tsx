@@ -316,7 +316,34 @@ const Dashboard: React.FC = () => {
             { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 2 },
             { i: 'quick-actions', x: 0, y: 3, w: 1, h: 1 },
             { i: 'take-attendance', x: 1, y: 3, w: 2, h: 1 },
-        ]
+        ],
+         md: [
+            { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
+            { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
+            { i: 'todays-classes', x: 0, y: 1, w: 1, h: 2 },
+            { i: 'upcoming-events', x: 1, y: 1, w: 1, h: 2 },
+            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 2 },
+            { i: 'quick-actions', x: 0, y: 3, w: 1, h: 1 },
+            { i: 'take-attendance', x: 1, y: 3, w: 2, h: 1 },
+        ],
+        sm: [
+            { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
+            { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+            { i: 'attendance-summary', x: 1, y: 1, w: 1, h: 1 },
+            { i: 'todays-classes', x: 0, y: 2, w: 1, h: 2 },
+            { i: 'upcoming-events', x: 1, y: 2, w: 1, h: 2 },
+            { i: 'quick-actions', x: 0, y: 4, w: 1, h: 1 },
+            { i: 'take-attendance', x: 1, y: 4, w: 1, h: 1 },
+        ],
+        xs: [
+            { i: 'welcome', x: 0, y: 0, w: 1, h: 1 },
+            { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+            { i: 'attendance-summary', x: 0, y: 2, w: 1, h: 1 },
+            { i: 'todays-classes', x: 0, y: 3, w: 1, h: 2 },
+            { i: 'upcoming-events', x: 0, y: 5, w: 1, h: 2 },
+            { i: 'take-attendance', x: 0, y: 7, w: 1, h: 2 },
+            { i: 'quick-actions', x: 0, y: 9, w: 1, h: 1 },
+        ],
     };
 
     return (

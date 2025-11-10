@@ -76,8 +76,8 @@ const AttendanceView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold">Registro de Asistencia</h1>
-                <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold hidden md:block">Registro de Asistencia</h1>
+                <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4">
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -86,7 +86,7 @@ const AttendanceView: React.FC = () => {
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
-                    <Button onClick={() => setTakerOpen(true)} disabled={!group}>
+                    <Button onClick={() => setTakerOpen(true)} disabled={!group} className="w-full sm:w-auto">
                         <Icon name="list-checks" /> Pase de Lista Hoy
                     </Button>
                 </div>

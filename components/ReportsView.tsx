@@ -134,7 +134,7 @@ const ReportsView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold">Reportes del Grupo</h1>
+                <h1 className="text-3xl font-bold hidden md:block">Reportes del Grupo</h1>
                 <select
                     value={selectedGroupId || ''}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -147,15 +147,15 @@ const ReportsView: React.FC = () => {
 
             {group ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                    <div className="flex flex-wrap justify-end gap-3 mb-4">
-                        <Button variant="secondary" onClick={handleExportPDF}>
+                    <div className="flex flex-wrap justify-start md:justify-end gap-3 mb-4">
+                        <Button variant="secondary" onClick={handleExportPDF} className="w-full sm:w-auto">
                             <Icon name="download-cloud" className="w-4 h-4" /> Exportar a PDF
                         </Button>
-                         <Button variant="secondary" onClick={handleExportAttendance}>
-                            <Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar Asistencia (CSV)
+                         <Button variant="secondary" onClick={handleExportAttendance} className="w-full sm:w-auto">
+                            <Icon name="file-spreadsheet" className="w-4 h-4" /> Asistencia (CSV)
                         </Button>
-                        <Button variant="secondary" onClick={handleExportGrades}>
-                           <Icon name="file-spreadsheet" className="w-4 h-4" /> Exportar Calificaciones (CSV)
+                        <Button variant="secondary" onClick={handleExportGrades} className="w-full sm:w-auto">
+                           <Icon name="file-spreadsheet" className="w-4 h-4" /> Calificaciones (CSV)
                         </Button>
                     </div>
 

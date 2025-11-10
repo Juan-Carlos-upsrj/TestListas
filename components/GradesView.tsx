@@ -123,8 +123,8 @@ const GradesView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold">Registro de Calificaciones</h1>
-                <div className="flex items-center gap-4">
+                <h1 className="text-3xl font-bold hidden md:block">Registro de Calificaciones</h1>
+                <div className="flex items-center gap-4 w-full sm:w-auto">
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -139,9 +139,9 @@ const GradesView: React.FC = () => {
             {group ? (
                 <>
                 <div className="mb-6 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
-                    <div className="flex justify-between items-center mb-3">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
                         <h2 className="text-xl font-bold">Evaluaciones</h2>
-                        <Button onClick={() => { setEditingEvaluation(undefined); setEvalModalOpen(true); }}>
+                        <Button onClick={() => { setEditingEvaluation(undefined); setEvalModalOpen(true); }} className="w-full sm:w-auto">
                             <Icon name="plus" /> Nueva Evaluación
                         </Button>
                     </div>

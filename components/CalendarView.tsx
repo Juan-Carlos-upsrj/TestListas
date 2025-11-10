@@ -105,7 +105,7 @@ const CalendarView: React.FC = () => {
             cells.push(
                 <div 
                     key={day} 
-                    className="relative border-r border-b dark:border-slate-700 p-2 min-h-[120px] flex flex-col cursor-pointer transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                    className="relative border-r border-b dark:border-slate-700 p-1 sm:p-2 min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/50"
                     onClick={() => handleDateClick(day)}
                 >
                     <span className={`text-sm font-semibold ${isToday ? 'bg-indigo-500 text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-slate-700 dark:text-slate-300'}`}>
@@ -113,12 +113,12 @@ const CalendarView: React.FC = () => {
                     </span>
                     <div className="mt-1 space-y-1 overflow-y-auto flex-grow">
                         {dayEvents.slice(0, 3).map(event => (
-                            <div key={event.id} className={`text-xs px-1.5 py-0.5 rounded-md ${event.color} truncate`}>
+                            <div key={event.id} className={`text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded ${event.color} truncate`}>
                                 {event.title}
                             </div>
                         ))}
                         {dayEvents.length > 3 && (
-                            <div className="text-xs text-slate-500 font-semibold mt-1">
+                            <div className="text-[10px] sm:text-xs text-slate-500 font-semibold mt-1">
                                 +{dayEvents.length - 3} más
                             </div>
                         )}
@@ -134,10 +134,10 @@ const CalendarView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold">Calendario Académico</h1>
-                <div className="flex items-center gap-2 sm:gap-4">
+                <h1 className="text-3xl font-bold hidden md:block">Calendario Académico</h1>
+                <div className="flex items-center justify-between sm:justify-end sm:gap-4 w-full">
                     <button onClick={handlePrevMonth} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"><Icon name="arrow-left" /></button>
-                    <h2 className="text-xl font-semibold w-48 text-center">{currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}</h2>
+                    <h2 className="text-xl font-semibold text-center">{currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}</h2>
                     <button onClick={handleNextMonth} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"><Icon name="arrow-right" /></button>
                 </div>
             </div>
@@ -145,7 +145,10 @@ const CalendarView: React.FC = () => {
             <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg overflow-hidden">
                 <div className="grid grid-cols-7">
                     {weekDays.map(day => (
-                        <div key={day} className="p-3 text-center font-bold border-b-2 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50">{day}</div>
+                        <div key={day} className="p-2 sm:p-3 text-center font-bold text-sm sm:text-base border-b-2 dark:border-slate-600 bg-slate-50 dark:bg-slate-900/50">
+                            <span className="hidden sm:inline">{day}</span>
+                            <span className="sm:hidden">{day.charAt(0)}</span>
+                        </div>
                     ))}
                 </div>
                 <div className="grid grid-cols-7 border-l dark:border-slate-700">

@@ -240,7 +240,7 @@ const GroupManagement: React.FC = () => {
     
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6">Gestión de Grupos</h1>
+            <h1 className="text-3xl font-bold mb-6 hidden md:block">Gestión de Grupos</h1>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Groups List */}
@@ -288,7 +288,7 @@ const GroupManagement: React.FC = () => {
                         <div>
                             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
                                 <h2 className="text-2xl font-bold">{selectedGroup.name} <span className="font-normal text-lg text-slate-500">({selectedGroup.students.length} alumnos)</span></h2>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 flex-wrap">
                                     <Button size="sm" variant="secondary" onClick={() => setBulkModalOpen(true)}>
                                         <Icon name="list-plus" className="w-4 h-4"/> Agregar Varios
                                     </Button>
