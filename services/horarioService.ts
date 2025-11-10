@@ -16,7 +16,7 @@ const firebaseConfig = {
 
 // Inicializamos la conexión de forma segura.
 // Le ponemos un nombre único ("horariosApp") para evitar conflictos.
-const app = getApps().find(app => app.name === 'horariosApp') || initializeApp(firebaseConfig, 'horariosApp');
+const app = getApps().find((app: any) => app.name === 'horariosApp') || initializeApp(firebaseConfig, 'horariosApp');
 const db = getFirestore(app);
 
 
@@ -61,11 +61,11 @@ export const fetchHorarioCompleto = async (profesorNombre: string): Promise<any[
     const subjectsSnap = await getDocs(subjectsCol);
     const groupsSnap = await getDocs(groupsCol);
     
-    const subjectsMap = new Map(subjectsSnap.docs.map(doc => [doc.id, doc.data()]));
-    const groupsMap = new Map(groupsSnap.docs.map(doc => [doc.id, doc.data()]));
+    const subjectsMap = new Map(subjectsSnap.docs.map((doc: any) => [doc.id, doc.data()]));
+    const groupsMap = new Map(groupsSnap.docs.map((doc: any) => [doc.id, doc.data()]));
 
     // 4. "Traducir" el horario a datos limpios
-    const horarioCompleto = scheduleSnapshot.docs.map(doc => {
+    const horarioCompleto = scheduleSnapshot.docs.map((doc: any) => {
         const clase = doc.data();
         const subject = subjectsMap.get(clase.subjectId);
         const group = groupsMap.get(clase.groupId);

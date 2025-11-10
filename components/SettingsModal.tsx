@@ -99,7 +99,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
             if (!group) return;
             
             const studentAttendances = state.attendance[groupId];
-            const studentsMap = new Map(group.students.map(s => [s.id, s]));
+            // FIX: Add a defensive check for group.students to prevent runtime errors with corrupted data,
+            // and filter out any invalid student entries. This can also help with type inference issues.
+            const studentsMap = new Map((group.students || []).filter(s => s && s.id).map(s => [s.id, s]));
             
             Object.keys(studentAttendances).forEach(studentId => {
                 const student: Student | undefined = studentsMap.get(studentId);
