@@ -1,9 +1,10 @@
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Group, AttendanceStatus } from '../types';
+import { Group, AttendanceStatus, Student } from '../types';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import Icon from './icons/Icon';
+import ConfirmationModal from './common/ConfirmationModal';
 
 interface AttendanceTextImporterProps {
     isOpen: boolean;
@@ -11,10 +12,27 @@ interface AttendanceTextImporterProps {
     group: Group;
 }
 
+interface ParsedRecord {
+    originalName: string;
+    date: string;
+    status: AttendanceStatus;
+    matchedStudent: Student | null;
+}
+
+const normalizeText = (text: string) => {
+    return text
+        .toLowerCase()
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
+
 const AttendanceTextImporter: React.FC<AttendanceTextImporterProps> = ({ isOpen, onClose, group }) => {
     const { dispatch } = useContext(AppContext);
+    const [step, setStep] = useState(1); // 1: paste, 2: verify
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
+    const [parsedRecords, setParsedRecords] = useState<ParsedRecord[]>([]);
 
     const promptText = `Actúa como un asistente experto en extracción de datos. Te proporcionaré una imagen de una lista de asistencia. Tu tarea es analizarla y devolver un objeto JSON con la siguiente estructura:
 {
@@ -33,7 +51,7 @@ Reglas de Mapeo de Estado:
 
 Analiza la imagen completa y extrae todos los registros de asistencia posibles. El formato de fecha debe ser YYYY-MM-DD. Asegúrate de que el resultado sea un JSON válido y no incluyas texto adicional fuera del bloque JSON.`;
 
-    const handleImport = () => {
+    const handleVerify = () => {
         setError('');
         if (!pastedText.trim()) {
             setError('El campo de texto está vacío.');
@@ -51,85 +69,171 @@ Analiza la imagen completa y extrae todos los registros de asistencia posibles. 
             return;
         }
 
-        const studentMap = new Map(group.students.map(s => [s.name.toLowerCase().trim(), s.id]));
-        const validRecords: { studentId: string; date: string; status: AttendanceStatus }[] = [];
-        let unmatchedNames = 0;
+        const studentMap = new Map(group.students.map(s => [normalizeText(s.name), s]));
         const validStatuses = Object.values(AttendanceStatus);
+        
+        const records: ParsedRecord[] = data.attendanceRecords
+            .filter((rec: any) => rec.studentName && rec.date && rec.status && validStatuses.includes(rec.status as AttendanceStatus))
+            .map((rec: any) => {
+                const normalizedName = normalizeText(rec.studentName);
+                const matchedStudent = studentMap.get(normalizedName) || null;
+                return {
+                    originalName: rec.studentName,
+                    date: rec.date,
+                    status: rec.status,
+                    matchedStudent
+                };
+            });
 
-        for (const record of data.attendanceRecords) {
-            const studentId = studentMap.get(record.studentName?.toLowerCase().trim());
-            if (studentId) {
-                if (record.date && record.status && validStatuses.includes(record.status as AttendanceStatus)) {
-                    validRecords.push({
-                        studentId,
-                        date: record.date,
-                        status: record.status as AttendanceStatus,
-                    });
-                }
-            } else {
-                unmatchedNames++;
-            }
-        }
-
-        if (validRecords.length === 0) {
-            setError(`No se encontraron registros válidos o los nombres no coinciden con los alumnos del grupo. Nombres no encontrados: ${unmatchedNames}.`);
+        if (records.length === 0) {
+            setError(`No se encontraron registros válidos en el JSON proporcionado.`);
             return;
         }
 
-        const confirmationMessage = `Se importarán ${validRecords.length} registros de asistencia. ${unmatchedNames > 0 ? `${unmatchedNames} nombres no coincidieron y serán ignorados.` : ''} ¿Deseas continuar?`;
-        
-        if (window.confirm(confirmationMessage)) {
-            dispatch({
+        setParsedRecords(records);
+        setStep(2);
+    };
+    
+    const handleRecordChange = (index: number, studentId: string) => {
+        const updatedRecords = [...parsedRecords];
+        const student = group.students.find(s => s.id === studentId) || null;
+        updatedRecords[index].matchedStudent = student;
+        setParsedRecords(updatedRecords);
+    };
+
+    const handleImport = () => {
+        const validRecords = parsedRecords
+            .filter(r => r.matchedStudent)
+            .map(r => ({
+                studentId: r.matchedStudent!.id,
+                date: r.date,
+                status: r.status,
+            }));
+
+        if (validRecords.length > 0) {
+             dispatch({
                 type: 'BULK_SET_ATTENDANCE',
                 payload: { groupId: group.id, records: validRecords }
             });
             dispatch({ type: 'ADD_TOAST', payload: { message: `${validRecords.length} registros importados.`, type: 'success' } });
             handleClose();
+        } else {
+            alert("No hay registros válidos para importar.");
         }
     };
 
     const handleClose = () => {
         setPastedText('');
         setError('');
+        setParsedRecords([]);
+        setStep(1);
         onClose();
+    };
+    
+    const renderStepOne = () => (
+        <>
+            <div>
+                <h3 className="font-semibold mb-2 text-lg">Paso 1: Genera los datos con IA</h3>
+                <p className="text-sm text-slate-500 mb-2">Copia el siguiente prompt, ve a Gemini (o tu IA preferida), sube la imagen de tu lista de asistencia y pega el prompt.</p>
+                <pre className="bg-slate-100 dark:bg-slate-900 p-3 rounded-md text-xs whitespace-pre-wrap font-mono ring-1 ring-slate-200 dark:ring-slate-700">
+                    {promptText}
+                </pre>
+                <Button size="sm" variant="secondary" className="mt-2" onClick={() => navigator.clipboard.writeText(promptText)}>
+                    <Icon name="edit-3" className="w-4 h-4"/> Copiar Prompt
+                </Button>
+            </div>
+            <div>
+                <h3 className="font-semibold mb-2 text-lg">Paso 2: Pega el resultado JSON aquí</h3>
+                <p className="text-sm text-slate-500 mb-2">Copia la respuesta JSON completa que te dio la IA y pégala en el siguiente cuadro de texto.</p>
+                <textarea
+                    value={pastedText}
+                    onChange={e => setPastedText(e.target.value)}
+                    rows={8}
+                    className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
+                    placeholder='Pega aquí el objeto JSON, ej: { "attendanceRecords": [...] }'
+                    aria-label="Pegar resultado JSON"
+                />
+            </div>
+            {error && (
+                <div className="p-3 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 text-sm rounded-md">
+                    {error}
+                </div>
+            )}
+        </>
+    );
+    
+    const renderStepTwo = () => {
+        const matchedCount = parsedRecords.filter(r => r.matchedStudent).length;
+        const unmatchedCount = parsedRecords.length - matchedCount;
+
+        return (
+             <div>
+                <h3 className="font-semibold mb-2 text-lg">Paso 3: Verifica los Datos</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                    Revisa los registros extraídos. Asigna un alumno a los nombres no reconocidos. Los registros sin un alumno asignado serán ignorados.
+                </p>
+                <div className="p-2 bg-slate-100 dark:bg-slate-700/50 rounded-md text-sm mb-4 flex justify-around">
+                    <span><Icon name="check-circle-2" className="inline w-4 h-4 mr-1 text-green-500"/>{matchedCount} Coincidencias</span>
+                    <span><Icon name="x-circle" className="inline w-4 h-4 mr-1 text-red-500"/>{unmatchedCount} Sin coincidencia</span>
+                </div>
+                <div className="max-h-[40vh] overflow-y-auto pr-2">
+                    <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-white dark:bg-slate-800">
+                            <tr className="border-b dark:border-slate-600">
+                                <th className="p-2 text-left">Nombre en Imagen</th>
+                                <th className="p-2 text-left">Alumno Asignado</th>
+                                <th className="p-2 text-center">Fecha</th>
+                                <th className="p-2 text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {parsedRecords.map((record, index) => (
+                                <tr key={index} className={`border-b dark:border-slate-700/50 ${!record.matchedStudent ? 'bg-red-50 dark:bg-red-900/30' : ''}`}>
+                                    <td className="p-2">{record.originalName}</td>
+                                    <td className="p-2">
+                                        <select 
+                                            value={record.matchedStudent?.id || ''} 
+                                            onChange={e => handleRecordChange(index, e.target.value)}
+                                            className="w-full p-1 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-xs"
+                                        >
+                                            <option value="" disabled>Seleccionar alumno...</option>
+                                            {group.students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                    </td>
+                                    <td className="p-2 text-center whitespace-nowrap">{record.date}</td>
+                                    <td className="p-2 text-center">{record.status}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
     };
 
     return (
         <Modal isOpen={isOpen} onClose={handleClose} title="Importar Asistencia desde Texto" size="xl">
             <div className="space-y-4">
-                <div>
-                    <h3 className="font-semibold mb-2 text-lg">Paso 1: Genera los datos con IA</h3>
-                    <p className="text-sm text-slate-500 mb-2">Copia el siguiente prompt, ve a Gemini (o tu IA preferida), sube la imagen de tu lista de asistencia y pega el prompt.</p>
-                    <pre className="bg-slate-100 dark:bg-slate-900 p-3 rounded-md text-xs whitespace-pre-wrap font-mono ring-1 ring-slate-200 dark:ring-slate-700">
-                        {promptText}
-                    </pre>
-                    <Button size="sm" variant="secondary" className="mt-2" onClick={() => navigator.clipboard.writeText(promptText)}>
-                        <Icon name="edit-3" className="w-4 h-4"/> Copiar Prompt
-                    </Button>
-                </div>
-                <div>
-                    <h3 className="font-semibold mb-2 text-lg">Paso 2: Pega el resultado JSON aquí</h3>
-                    <p className="text-sm text-slate-500 mb-2">Copia la respuesta JSON completa que te dio la IA y pégala en el siguiente cuadro de texto.</p>
-                    <textarea
-                        value={pastedText}
-                        onChange={e => setPastedText(e.target.value)}
-                        rows={10}
-                        className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 font-mono text-sm"
-                        placeholder='Pega aquí el objeto JSON, ej: { "attendanceRecords": [...] }'
-                        aria-label="Pegar resultado JSON"
-                    />
-                </div>
-                {error && (
-                    <div className="p-3 bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 text-sm rounded-md">
-                        {error}
-                    </div>
-                )}
+                {step === 1 ? renderStepOne() : renderStepTwo()}
             </div>
-            <div className="flex justify-end gap-3 mt-6">
-                <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
-                <Button onClick={handleImport} disabled={!pastedText}>
-                    <Icon name="upload-cloud" className="w-4 h-4"/> Verificar e Importar
-                </Button>
+            <div className="flex justify-between items-center mt-6">
+                 {step === 2 && (
+                    <Button variant="secondary" onClick={() => { setStep(1); setError(''); }}>
+                        <Icon name="arrow-left" className="w-4 h-4" /> Volver
+                    </Button>
+                )}
+                 <div className={`flex gap-3 ${step === 2 ? '' : 'w-full justify-end'}`}>
+                    <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
+                    {step === 1 ? (
+                        <Button onClick={handleVerify} disabled={!pastedText}>
+                            Verificar Datos <Icon name="arrow-right" className="w-4 h-4"/>
+                        </Button>
+                    ) : (
+                         <Button onClick={handleImport} disabled={parsedRecords.filter(r => r.matchedStudent).length === 0}>
+                            <Icon name="upload-cloud" className="w-4 h-4"/> Confirmar e Importar
+                        </Button>
+                    )}
+                </div>
             </div>
         </Modal>
     );
