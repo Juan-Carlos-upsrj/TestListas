@@ -8,12 +8,14 @@ import Modal from './common/Modal';
 import Button from './common/Button';
 import AttendanceTaker from './AttendanceTaker';
 import BulkAttendanceModal from './BulkAttendanceModal';
+import AttendanceTextImporter from './AttendanceTextImporter';
 
 const AttendanceView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const { groups, attendance, settings, selectedGroupId } = state;
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [isBulkFillOpen, setBulkFillOpen] = useState(false);
+    const [isTextImporterOpen, setTextImporterOpen] = useState(false);
     
     // Fix for timezone bug: Use local date methods instead of UTC-based toISOString()
     const today = new Date();
@@ -85,6 +87,9 @@ const AttendanceView: React.FC = () => {
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
+                    <Button onClick={() => setTextImporterOpen(true)} disabled={!group} variant="secondary" className="w-full sm:w-auto">
+                        <Icon name="upload-cloud" /> Importar desde Texto
+                    </Button>
                     <Button onClick={() => setBulkFillOpen(true)} disabled={!group} variant="secondary" className="w-full sm:w-auto">
                         <Icon name="grid" /> Relleno Rápido
                     </Button>
@@ -171,6 +176,13 @@ const AttendanceView: React.FC = () => {
                 <BulkAttendanceModal
                     isOpen={isBulkFillOpen}
                     onClose={() => setBulkFillOpen(false)}
+                    group={group}
+                />
+             )}
+             {group && (
+                <AttendanceTextImporter
+                    isOpen={isTextImporterOpen}
+                    onClose={() => setTextImporterOpen(false)}
                     group={group}
                 />
              )}

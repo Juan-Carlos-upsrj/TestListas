@@ -229,77 +229,101 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
 
         return { ...state, attendance: newAttendance };
     }
+    case 'BULK_SET_ATTENDANCE': {
+        const { groupId, records } = action.payload;
+        const newAttendance = JSON.parse(JSON.stringify(state.attendance));
+        if (!newAttendance[groupId]) {
+            newAttendance[groupId] = {};
+        }
+        records.forEach(record => {
+            if (!newAttendance[groupId][record.studentId]) {
+                newAttendance[groupId][record.studentId] = {};
+            }
+            newAttendance[groupId][record.studentId][record.date] = record.status;
+        });
+        return { ...state, attendance: newAttendance };
+    }
     case 'SAVE_EVALUATION': {
         const { groupId, evaluation } = action.payload;
         const groupEvaluations = state.evaluations[groupId] || [];
         const evalExists = groupEvaluations.some(e => e.id === evaluation.id);
-        const newEvaluations = evalExists
-            ? groupEvaluations.map(e => e.id === evaluation.id ? evaluation : e)
-            : [...groupEvaluations, evaluation];
-        
+        if (evalExists) {
+            return {
+                ...state,
+                evaluations: {
+                    ...state.evaluations,
+                    [groupId]: groupEvaluations.map(e => e.id === evaluation.id ? evaluation : e),
+                },
+            };
+        }
         return {
             ...state,
             evaluations: {
                 ...state.evaluations,
-                [groupId]: newEvaluations,
+                [groupId]: [...groupEvaluations, evaluation],
             },
         };
     }
     case 'DELETE_EVALUATION': {
         const { groupId, evaluationId } = action.payload;
-        const newGroupEvaluations = (state.evaluations[groupId] || []).filter(e => e.id !== evaluationId);
-        
-        const newGrades = JSON.parse(JSON.stringify(state.grades));
-        if (newGrades[groupId]) {
+        const newGrades = {...state.grades};
+        if(newGrades[groupId]) {
             Object.keys(newGrades[groupId]).forEach(studentId => {
-                if(newGrades[groupId][studentId][evaluationId] !== undefined) {
-                    delete newGrades[groupId][studentId][evaluationId];
-                }
+                 delete newGrades[groupId][studentId][evaluationId];
             });
         }
-
         return {
             ...state,
+            grades: newGrades,
             evaluations: {
                 ...state.evaluations,
-                [groupId]: newGroupEvaluations
+                [groupId]: (state.evaluations[groupId] || []).filter(e => e.id !== evaluationId),
             },
-            grades: newGrades,
         };
     }
     case 'UPDATE_GRADE': {
         const { groupId, studentId, evaluationId, score } = action.payload;
-        const newGrades = JSON.parse(JSON.stringify(state.grades));
-        
-        if (!newGrades[groupId]) newGrades[groupId] = {};
-        if (!newGrades[groupId][studentId]) newGrades[groupId][studentId] = {};
-        
-        if (score === null || score === undefined || isNaN(score)) {
-            delete newGrades[groupId][studentId][evaluationId];
-        } else {
-            newGrades[groupId][studentId][evaluationId] = score;
-        }
-
-        return { ...state, grades: newGrades };
+        const groupGrades = state.grades[groupId] || {};
+        const studentGrades = groupGrades[studentId] || {};
+        return {
+            ...state,
+            grades: {
+                ...state.grades,
+                [groupId]: {
+                    ...groupGrades,
+                    [studentId]: {
+                        ...studentGrades,
+                        [evaluationId]: score,
+                    },
+                },
+            },
+        };
     }
-    case 'UPDATE_SETTINGS':
-        return { ...state, settings: { ...state.settings, ...action.payload } };
+    case 'UPDATE_SETTINGS': {
+        const newSettings = { ...state.settings, ...action.payload };
+        return { ...state, settings: newSettings };
+    }
     case 'ADD_TOAST':
-      return { ...state, toasts: [...state.toasts, { ...action.payload, id: Date.now() }] };
+      return {
+        ...state,
+        toasts: [...state.toasts, { ...action.payload, id: Date.now() }],
+      };
     case 'REMOVE_TOAST':
-      return { ...state, toasts: state.toasts.filter(t => t.id !== action.payload) };
+      return {
+        ...state,
+        toasts: state.toasts.filter(t => t.id !== action.payload),
+      };
     case 'SAVE_EVENT': {
         const eventExists = state.calendarEvents.some(e => e.id === action.payload.id);
-        const newEvents = eventExists
-            ? state.calendarEvents.map(e => e.id === action.payload.id ? action.payload : e)
-            : [...state.calendarEvents, action.payload];
-        return { ...state, calendarEvents: newEvents };
+        if (eventExists) {
+            return { ...state, calendarEvents: state.calendarEvents.map(e => e.id === action.payload.id ? action.payload : e) };
+        }
+        return { ...state, calendarEvents: [...state.calendarEvents, action.payload] };
     }
-    case 'DELETE_EVENT': {
+    case 'DELETE_EVENT':
         return { ...state, calendarEvents: state.calendarEvents.filter(e => e.id !== action.payload) };
-    }
     case 'SET_GCAL_EVENTS':
-      return { ...state, gcalEvents: action.payload };
+        return { ...state, gcalEvents: action.payload };
     default:
       return state;
   }
@@ -315,96 +339,56 @@ export const AppContext = createContext<{
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, defaultState);
-  const [isLoaded, setIsLoaded] = useState(false);
-  
-  const isElectron = !!window.electronAPI;
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load data on startup with migration from localStorage/file to IndexedDB
+  // Load state from DB on initial mount
   useEffect(() => {
-    const loadData = async () => {
+    const loadState = async () => {
       try {
-        let dataToLoad: Partial<AppState> | undefined = await getState();
-        let migrated = false;
-
-        if (!dataToLoad || Object.keys(dataToLoad).length === 0) {
-          console.log("No data in IndexedDB, attempting migration from old storage...");
-          let oldData: Partial<AppState> | null = null;
-          if (isElectron) {
-            console.log("Running in Electron, loading data from file...");
-            oldData = await window.electronAPI.getData();
-          } else {
-            console.log("Running in browser, loading data from localStorage...");
-            const savedData = localStorage.getItem('appState');
-            if (savedData) {
-              try {
-                oldData = JSON.parse(savedData);
-              } catch (e) {
-                console.error("Failed to parse localStorage data, removing it.", e);
-                localStorage.removeItem('appState');
-              }
-            }
-          }
-
-          if (oldData && Object.keys(oldData).length > 0) {
-            console.log("Found old data. It will be migrated.");
-            dataToLoad = oldData;
-            migrated = true;
-          }
-        } else {
-          console.log("Successfully loaded data from IndexedDB.");
+        const savedState = await getState();
+        if (savedState) {
+          dispatch({ type: 'SET_INITIAL_STATE', payload: savedState });
         }
-
-        if (dataToLoad && Object.keys(dataToLoad).length > 0) {
-          dispatch({ type: 'SET_INITIAL_STATE', payload: dataToLoad });
-        }
-
-        if (migrated && !isElectron) {
-          localStorage.removeItem('appState');
-          console.log("Removed old data from localStorage.");
-        }
-
       } catch (error) {
-        console.error("Failed to load data:", error);
-        dispatch({ type: 'ADD_TOAST', payload: { message: 'Error al cargar los datos.', type: 'error' } });
+        console.error("Failed to load state from DB:", error);
       } finally {
-        setIsLoaded(true);
+        setIsInitialized(true);
       }
     };
-    loadData();
-  }, [isElectron, dispatch]);
-
-  // Save data to IndexedDB on state change
-  useEffect(() => {
-    if (!isLoaded) {
-      return; // Don't save until initial data is loaded
-    }
-    saveState(state);
-  }, [state, isLoaded]);
+    loadState();
+  }, []);
   
-  // Fetch Google Calendar events when settings change
+   // Save state to DB whenever it changes, after initialization
   useEffect(() => {
-    if (!isLoaded) return;
-
-    const fetchEvents = async () => {
-        if (state.settings.googleCalendarUrl) {
-            try {
-                const gcalColorName = state.settings.googleCalendarColor || 'amber';
-                const gcalColor = GROUP_COLORS.find(c => c.name === gcalColorName) || GROUP_COLORS[0];
-                const events = await fetchGoogleCalendarEvents(state.settings.googleCalendarUrl, gcalColor.calendar);
-                dispatch({ type: 'SET_GCAL_EVENTS', payload: events });
-                if (events.length > 0) {
-                    dispatch({ type: 'ADD_TOAST', payload: { message: 'Calendario de Google sincronizado.', type: 'info' } });
-                }
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Error al sincronizar Google Calendar.';
-                dispatch({ type: 'ADD_TOAST', payload: { message: errorMessage, type: 'error' } });
-            }
-        } else {
+    if (isInitialized) {
+      saveState(state);
+    }
+  }, [state, isInitialized]);
+  
+  // Fetch Google Calendar events when URL or color changes
+  useEffect(() => {
+    if (isInitialized && state.settings.googleCalendarUrl) {
+      const gcalColor = GROUP_COLORS.find(c => c.name === state.settings.googleCalendarColor)?.calendar || GROUP_COLORS[0].calendar;
+      fetchGoogleCalendarEvents(state.settings.googleCalendarUrl, gcalColor)
+        .then(events => {
+            dispatch({ type: 'SET_GCAL_EVENTS', payload: events });
+        })
+        .catch(error => {
+            console.error("Failed to fetch GCal events:", error);
+            dispatch({ type: 'ADD_TOAST', payload: { message: error.message, type: 'error' } });
             dispatch({ type: 'SET_GCAL_EVENTS', payload: [] });
-        }
-    };
-    fetchEvents();
-  }, [state.settings.googleCalendarUrl, state.settings.googleCalendarColor, isLoaded, dispatch]);
+        });
+    } else if (isInitialized) {
+        // Clear events if URL is removed
+        dispatch({ type: 'SET_GCAL_EVENTS', payload: [] });
+    }
+  }, [isInitialized, state.settings.googleCalendarUrl, state.settings.googleCalendarColor]);
+
+
+  if (!isInitialized) {
+    // You can return a loading spinner or a blank screen here
+    return null; 
+  }
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>
