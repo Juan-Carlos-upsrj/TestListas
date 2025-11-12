@@ -134,8 +134,7 @@ const CalendarView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold hidden md:block">Calendario Académico</h1>
-                <div className="flex items-center justify-between sm:justify-end sm:gap-4 w-full">
+                <div className="flex items-center justify-between sm:justify-end sm:gap-4 w-full ml-auto">
                     <button onClick={handlePrevMonth} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"><Icon name="arrow-left" /></button>
                     <h2 className="text-xl font-semibold text-center">{currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}</h2>
                     <button onClick={handleNextMonth} className="p-2 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"><Icon name="arrow-right" /></button>

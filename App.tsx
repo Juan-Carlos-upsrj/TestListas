@@ -1,5 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useContext, useEffect } from 'react';
 import { AppContext } from './context/AppContext';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -9,11 +8,9 @@ import ReportsView from './components/ReportsView';
 import GradesView from './components/GradesView';
 import ToastContainer from './components/ToastContainer';
 import CalendarView from './components/CalendarView';
-import Icon from './components/icons/Icon';
 
 const App: React.FC = () => {
   const { state } = useContext(AppContext);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (state.settings.theme === 'dark') {
@@ -54,31 +51,12 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-sans">
-      <AnimatePresence>
-        {isSidebarOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/60 z-30 md:hidden"
-            aria-hidden="true"
-          />
-        )}
-      </AnimatePresence>
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile Header */}
-        <header className="md:hidden flex items-center p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-1 rounded-md text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700"
-            aria-label="Abrir menú"
-          >
-            <Icon name="align-justify" className="w-6 h-6" />
-          </button>
-          <h1 className="text-lg font-bold ml-4">
+        {/* Desktop Header */}
+        <header className="flex items-center p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm flex-shrink-0">
+          <h1 className="text-2xl font-bold">
             {viewTitles[state.activeView]}
           </h1>
         </header>

@@ -134,11 +134,10 @@ const ReportsView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold hidden md:block">Reportes del Grupo</h1>
                 <select
                     value={selectedGroupId || ''}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
-                    className="w-full sm:w-64 p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                    className="w-full sm:w-64 p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 ml-auto"
                 >
                     <option value="" disabled>Selecciona un grupo</option>
                     {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}

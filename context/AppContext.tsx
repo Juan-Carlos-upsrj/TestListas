@@ -3,6 +3,7 @@ import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../typ
 import { GROUP_COLORS } from '../constants';
 import { getState, saveState } from '../services/dbService';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
+import { getClassDates } from '../services/dateUtils';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -201,6 +202,32 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
                 [groupId]: updatedAttendance
             }
         };
+    }
+    case 'BULK_UPDATE_ATTENDANCE': {
+        const { groupId, startDate, endDate, status, overwrite } = action.payload;
+        const group = state.groups.find(g => g.id === groupId);
+        if (!group) return state;
+
+        const datesToUpdate = getClassDates(startDate, endDate, group.classDays);
+        const newAttendance = JSON.parse(JSON.stringify(state.attendance));
+
+        if (!newAttendance[groupId]) {
+            newAttendance[groupId] = {};
+        }
+
+        group.students.forEach(student => {
+            if (!newAttendance[groupId][student.id]) {
+                newAttendance[groupId][student.id] = {};
+            }
+            datesToUpdate.forEach(date => {
+                const currentStatus = newAttendance[groupId][student.id][date];
+                if (overwrite || !currentStatus || currentStatus === AttendanceStatus.Pending) {
+                    newAttendance[groupId][student.id][date] = status;
+                }
+            });
+        });
+
+        return { ...state, attendance: newAttendance };
     }
     case 'SAVE_EVALUATION': {
         const { groupId, evaluation } = action.payload;

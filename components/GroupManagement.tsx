@@ -140,8 +140,7 @@ const StudentForm: React.FC<{
 const BulkStudentForm: React.FC<{ onSave: (students: Student[]) => void; onCancel: () => void; }> = ({ onSave, onCancel }) => {
     const [studentData, setStudentData] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
+    const performSave = () => {
         const lines = studentData.split('\n').filter(line => line.trim() !== '');
         const newStudents: Student[] = lines.map(line => {
             const parts = line.split(/[,;\t]/).map(p => p.trim());
@@ -159,16 +158,30 @@ const BulkStudentForm: React.FC<{ onSave: (students: Student[]) => void; onCance
         }
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        performSave();
+    };
+    
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            performSave();
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit}>
             <p className="mb-2 text-sm text-slate-500">Pega la lista de alumnos. Separa el nombre y la matrícula con coma, punto y coma o tabulación. Un alumno por línea.</p>
             <textarea
                 value={studentData}
                 onChange={e => setStudentData(e.target.value)}
+                onKeyDown={handleKeyDown}
                 rows={10}
                 className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
                 placeholder="Ejemplo:&#10;Juan Pérez, 12345&#10;Maria García; 67890"
             />
+            <p className="text-xs text-slate-500 mt-2">Consejo: Presiona Ctrl+Enter (o ⌘+Enter en Mac) para agregar.</p>
              <div className="flex justify-end gap-3 mt-4">
                 <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>
                 <Button type="submit">Agregar Alumnos</Button>
@@ -240,7 +253,6 @@ const GroupManagement: React.FC = () => {
     
     return (
         <div>
-            <h1 className="text-3xl font-bold mb-6 hidden md:block">Gestión de Grupos</h1>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Groups List */}
@@ -332,27 +344,28 @@ const GroupManagement: React.FC = () => {
                                         </AnimatePresence>
                                     </tbody>
                                 </table>
-                                {selectedGroup.students.length === 0 && <p className="text-center py-12 text-slate-500">No hay alumnos en este grupo.</p>}
+                                {selectedGroup.students.length === 0 && (
+                                    <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo.</p>
+                                )}
                             </div>
                         </div>
                    ) : (
-                       <div className="flex flex-col items-center justify-center h-full text-center">
-                           <Icon name="users" className="w-20 h-20 text-slate-300 dark:text-slate-600"/>
-                           <p className="mt-4 text-slate-500">Selecciona un grupo para ver a sus alumnos.</p>
+                       <div className="text-center py-20 flex flex-col items-center justify-center h-full">
+                           <Icon name="users" className="w-20 h-20 mx-auto text-slate-300 dark:text-slate-600"/>
+                           <p className="mt-4 text-slate-500">Selecciona un grupo para ver sus alumnos.</p>
+                           {groups.length === 0 && <p className="mt-1 text-sm text-slate-400">O crea un nuevo grupo para empezar.</p>}
                        </div>
                    )}
                 </div>
             </div>
 
-            {/* Modals */}
-            <Modal isOpen={isGroupModalOpen} onClose={() => setGroupModalOpen(false)} title={editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'}>
-                <GroupForm group={editingGroup} onSave={handleSaveGroup} onCancel={() => setGroupModalOpen(false)} />
+            <Modal isOpen={isGroupModalOpen} onClose={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} title={editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'}>
+                <GroupForm group={editingGroup} onSave={handleSaveGroup} onCancel={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} />
             </Modal>
-
-            <Modal isOpen={isStudentModalOpen} onClose={() => setStudentModalOpen(false)} title={editingStudent ? 'Editar Alumno' : 'Nuevo Alumno'}>
-                <StudentForm student={editingStudent} onSave={handleSaveStudent} onCancel={() => setStudentModalOpen(false)} />
+            <Modal isOpen={isStudentModalOpen} onClose={() => { setStudentModalOpen(false); setEditingStudent(undefined); }} title={editingStudent ? 'Editar Alumno' : 'Nuevo Alumno'}>
+                <StudentForm student={editingStudent} onSave={handleSaveStudent} onCancel={() => { setStudentModalOpen(false); setEditingStudent(undefined); }} />
             </Modal>
-             <Modal isOpen={isBulkModalOpen} onClose={() => setBulkModalOpen(false)} title="Agregar Alumnos en Lote">
+            <Modal isOpen={isBulkModalOpen} onClose={() => setBulkModalOpen(false)} title="Agregar Alumnos en Lote">
                 <BulkStudentForm onSave={handleBulkSaveStudents} onCancel={() => setBulkModalOpen(false)} />
             </Modal>
         </div>

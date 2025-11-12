@@ -7,11 +7,6 @@ import { ActiveView } from '../types';
 
 type View = ActiveView;
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
 const navItems: { view: View; label: string; icon: string }[] = [
   { view: 'dashboard', label: 'Inicio', icon: 'home' },
   { view: 'groups', label: 'Grupos', icon: 'users' },
@@ -21,14 +16,13 @@ const navItems: { view: View; label: string; icon: string }[] = [
   { view: 'reports', label: 'Reportes', icon: 'bar-chart-3' },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: React.FC = () => {
   const { state, dispatch } = useContext(AppContext);
   const { groups, selectedGroupId } = state;
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const handleNavClick = (view: View) => {
     dispatch({ type: 'SET_VIEW', payload: view });
-    onClose();
   };
   
   const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -37,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full'}`} aria-label="Barra lateral principal">
+      <aside className="w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col flex-shrink-0" aria-label="Barra lateral principal">
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
           <h1 className="text-xl font-bold text-slate-800 dark:text-white">Gestión Académica</h1>
         </div>

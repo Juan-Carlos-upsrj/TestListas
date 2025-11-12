@@ -1,5 +1,3 @@
-
-
 import React, { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus } from '../types';
@@ -9,11 +7,13 @@ import Icon from './icons/Icon';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import AttendanceTaker from './AttendanceTaker';
+import BulkAttendanceModal from './BulkAttendanceModal';
 
 const AttendanceView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const { groups, attendance, settings, selectedGroupId } = state;
     const [isTakerOpen, setTakerOpen] = useState(false);
+    const [isBulkFillOpen, setBulkFillOpen] = useState(false);
     
     // Fix for timezone bug: Use local date methods instead of UTC-based toISOString()
     const today = new Date();
@@ -76,8 +76,7 @@ const AttendanceView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold hidden md:block">Registro de Asistencia</h1>
-                <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4">
+                <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4 sm:ml-auto">
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
@@ -86,6 +85,9 @@ const AttendanceView: React.FC = () => {
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                     </select>
+                    <Button onClick={() => setBulkFillOpen(true)} disabled={!group} variant="secondary" className="w-full sm:w-auto">
+                        <Icon name="grid" /> Relleno Rápido
+                    </Button>
                     <Button onClick={() => setTakerOpen(true)} disabled={!group} className="w-full sm:w-auto">
                         <Icon name="list-checks" /> Pase de Lista Hoy
                     </Button>
@@ -164,6 +166,13 @@ const AttendanceView: React.FC = () => {
                         onClose={() => setTakerOpen(false)}
                     />
                 </Modal>
+             )}
+             {group && (
+                <BulkAttendanceModal
+                    isOpen={isBulkFillOpen}
+                    onClose={() => setBulkFillOpen(false)}
+                    group={group}
+                />
              )}
         </div>
     );

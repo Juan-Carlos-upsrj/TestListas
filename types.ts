@@ -109,6 +109,7 @@ export type AppAction =
   | { type: 'DELETE_STUDENT'; payload: { groupId: string; studentId: string } }
   | { type: 'UPDATE_ATTENDANCE'; payload: { groupId: string; studentId: string; date: string; status: AttendanceStatus } }
   | { type: 'QUICK_ATTENDANCE'; payload: { groupId: string; date: string } }
+  | { type: 'BULK_UPDATE_ATTENDANCE'; payload: { groupId: string; startDate: string; endDate: string; status: AttendanceStatus; overwrite: boolean } }
   | { type: 'SAVE_EVALUATION'; payload: { groupId: string; evaluation: Evaluation } }
   | { type: 'DELETE_EVALUATION'; payload: { groupId: string; evaluationId: string } }
   | { type: 'UPDATE_GRADE'; payload: { groupId: string; studentId: string; evaluationId: string; score: number | null } }

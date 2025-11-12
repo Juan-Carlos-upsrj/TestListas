@@ -123,8 +123,7 @@ const GradesView: React.FC = () => {
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
-                <h1 className="text-3xl font-bold hidden md:block">Registro de Calificaciones</h1>
-                <div className="flex items-center gap-4 w-full sm:w-auto">
+                <div className="flex items-center gap-4 w-full sm:w-auto ml-auto">
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
