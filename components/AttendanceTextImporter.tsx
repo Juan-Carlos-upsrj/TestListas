@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Group, AttendanceStatus, Student } from '../types';
 import Modal from './common/Modal';
@@ -28,29 +28,66 @@ const normalizeText = (text: string) => {
 };
 
 const AttendanceTextImporter: React.FC<AttendanceTextImporterProps> = ({ isOpen, onClose, group }) => {
-    const { dispatch } = useContext(AppContext);
+    const { state, dispatch } = useContext(AppContext);
+    const { settings } = state;
     const [step, setStep] = useState(1); // 1: paste, 2: verify
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [parsedRecords, setParsedRecords] = useState<ParsedRecord[]>([]);
     const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
 
-    const promptText = `Actúa como un asistente experto en extracción de datos. Te proporcionaré una imagen de una lista de asistencia. Tu tarea es analizarla y devolver un objeto JSON con la siguiente estructura:
+    const promptText = useMemo(() => {
+        const startDate = new Date(settings.semesterStart + 'T00:00:00');
+        const endDate = new Date(settings.semesterEnd + 'T00:00:00');
+
+        const startYear = startDate.getFullYear();
+        const endYear = endDate.getFullYear();
+        
+        let yearInstruction = `Para las fechas, asume que el año es ${startYear}.`;
+        
+        if (startYear !== endYear) {
+            const year1Months = new Set<string>();
+            const year2Months = new Set<string>();
+            
+            let currentDate = new Date(startDate);
+            while(currentDate <= endDate) {
+                const currentYear = currentDate.getFullYear();
+                const currentMonth = currentDate.toLocaleString('es-ES', { month: 'long' });
+                if (currentYear === startYear) {
+                    year1Months.add(currentMonth);
+                } else if (currentYear === endYear) {
+                    year2Months.add(currentMonth);
+                }
+                // Move to the next month safely
+                currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+            }
+            
+            yearInstruction = `El semestre abarca dos años. Para los meses de ${Array.from(year1Months).join(', ')}, usa el año ${startYear}. Para los meses de ${Array.from(year2Months).join(', ')}, usa el año ${endYear}.`;
+        }
+
+        return `Actúa como un asistente experto en extracción de datos. Te proporcionaré una imagen de una lista de asistencia. Tu tarea es analizarla y devolver **únicamente un objeto JSON** con la siguiente estructura:
+
 {
   "attendanceRecords": [
-    { "studentName": "Nombre del Alumno", "date": "YYYY-MM-DD", "status": "Estado" }
+    { "studentName": "Nombre Completo del Alumno", "date": "YYYY-MM-DD", "status": "Estado" }
   ]
 }
 
-Reglas de Mapeo de Estado:
-- Si ves 'P', una palomita (✓), o está presente, usa "Presente".
-- Si ves 'A', 'F', una cruz (X), o está ausente, usa "Ausente".
-- Si ves 'R' o 'T', usa "Retardo".
-- Si ves 'J', usa "Justificado".
-- Si ves 'I', usa "Intercambio".
-- Si una celda está vacía o no es clara, omite ese registro.
+Por favor, sigue estas reglas estrictamente:
 
-Analiza la imagen completa y extrae todos los registros de asistencia posibles. El formato de fecha debe ser YYYY-MM-DD. Asegúrate de que el resultado sea un JSON válido y no incluyas texto adicional fuera del bloque JSON.`;
+1.  **Fechas:** ${yearInstruction} Combina el mes (ej. Septiembre) con el día y el año correspondiente para formar la fecha en formato \`YYYY-MM-DD\`.
+2.  **Mapeo de Estado:**
+    - Palomita (✓), 'P': "Presente"
+    - Cuadro vacío (□), 'A', 'F', 'X': "Ausente"
+    - Diagonal (/), Asterisco (*), 'J': "Justificado"
+    - 'R', 'T': "Retardo"
+    - 'I': "Intercambio"
+    - Si una celda está vacía o no es clara, omite ese registro.
+
+Analiza la tabla completa y genera un registro para cada alumno y cada fecha que contenga un símbolo válido. Tu respuesta debe contener **solamente el bloque de código JSON** sin texto adicional.`;
+
+    }, [settings.semesterStart, settings.semesterEnd]);
+
 
     const handleVerify = () => {
         setError('');
