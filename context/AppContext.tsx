@@ -231,17 +231,31 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     }
     case 'BULK_SET_ATTENDANCE': {
         const { groupId, records } = action.payload;
-        const newAttendance = JSON.parse(JSON.stringify(state.attendance));
-        if (!newAttendance[groupId]) {
-            newAttendance[groupId] = {};
-        }
+        
+        // Create a copy of the attendance state
+        const updatedAttendance = { ...state.attendance };
+
+        // Create a copy of the specific group's attendance, or an empty object if it doesn't exist
+        const updatedGroupAttendance = { ...(updatedAttendance[groupId] || {}) };
+
+        // Iterate over the records and update the group's attendance immutably
         records.forEach(record => {
-            if (!newAttendance[groupId][record.studentId]) {
-                newAttendance[groupId][record.studentId] = {};
-            }
-            newAttendance[groupId][record.studentId][record.date] = record.status;
+            // Create a copy of the specific student's attendance, or an empty object
+            const updatedStudentAttendance = { ...(updatedGroupAttendance[record.studentId] || {}) };
+            // Set the new status for the date
+            updatedStudentAttendance[record.date] = record.status;
+            // Assign the updated student attendance back to the group's attendance
+            updatedGroupAttendance[record.studentId] = updatedStudentAttendance;
         });
-        return { ...state, attendance: newAttendance };
+
+        // Assign the updated group attendance back to the main attendance object
+        updatedAttendance[groupId] = updatedGroupAttendance;
+
+        // Return the new state
+        return {
+            ...state,
+            attendance: updatedAttendance,
+        };
     }
     case 'SAVE_EVALUATION': {
         const { groupId, evaluation } = action.payload;
