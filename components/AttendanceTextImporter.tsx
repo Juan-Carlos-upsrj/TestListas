@@ -33,6 +33,7 @@ const AttendanceTextImporter: React.FC<AttendanceTextImporterProps> = ({ isOpen,
     const [pastedText, setPastedText] = useState('');
     const [error, setError] = useState('');
     const [parsedRecords, setParsedRecords] = useState<ParsedRecord[]>([]);
+    const [isConfirmModalOpen, setConfirmModalOpen] = useState(false);
 
     const promptText = `Actúa como un asistente experto en extracción de datos. Te proporcionaré una imagen de una lista de asistencia. Tu tarea es analizarla y devolver un objeto JSON con la siguiente estructura:
 {
@@ -101,7 +102,16 @@ Analiza la imagen completa y extrae todos los registros de asistencia posibles. 
         setParsedRecords(updatedRecords);
     };
 
-    const handleImport = () => {
+    const handleImportClick = () => {
+        const validRecordsCount = parsedRecords.filter(r => r.matchedStudent).length;
+        if (validRecordsCount > 0) {
+            setConfirmModalOpen(true);
+        } else {
+             dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay registros válidos para importar.', type: 'error' } });
+        }
+    };
+    
+    const executeImport = () => {
         const validRecords = parsedRecords
             .filter(r => r.matchedStudent)
             .map(r => ({
@@ -110,16 +120,13 @@ Analiza la imagen completa y extrae todos los registros de asistencia posibles. 
                 status: r.status,
             }));
 
-        if (validRecords.length > 0) {
-             dispatch({
-                type: 'BULK_SET_ATTENDANCE',
-                payload: { groupId: group.id, records: validRecords }
-            });
-            dispatch({ type: 'ADD_TOAST', payload: { message: `${validRecords.length} registros importados.`, type: 'success' } });
-            handleClose();
-        } else {
-            alert("No hay registros válidos para importar.");
-        }
+         dispatch({
+            type: 'BULK_SET_ATTENDANCE',
+            payload: { groupId: group.id, records: validRecords }
+        });
+        dispatch({ type: 'ADD_TOAST', payload: { message: `${validRecords.length} registros importados.`, type: 'success' } });
+        setConfirmModalOpen(false);
+        handleClose();
     };
 
     const handleClose = () => {
@@ -210,32 +217,52 @@ Analiza la imagen completa y extrae todos los registros de asistencia posibles. 
             </div>
         );
     };
+    
+    const matchedCount = parsedRecords.filter(r => r.matchedStudent).length;
+    const unmatchedCount = parsedRecords.length - matchedCount;
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Importar Asistencia desde Texto" size="xl">
-            <div className="space-y-4">
-                {step === 1 ? renderStepOne() : renderStepTwo()}
-            </div>
-            <div className="flex justify-between items-center mt-6">
-                 {step === 2 && (
-                    <Button variant="secondary" onClick={() => { setStep(1); setError(''); }}>
-                        <Icon name="arrow-left" className="w-4 h-4" /> Volver
-                    </Button>
-                )}
-                 <div className={`flex gap-3 ${step === 2 ? '' : 'w-full justify-end'}`}>
-                    <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
-                    {step === 1 ? (
-                        <Button onClick={handleVerify} disabled={!pastedText}>
-                            Verificar Datos <Icon name="arrow-right" className="w-4 h-4"/>
-                        </Button>
-                    ) : (
-                         <Button onClick={handleImport} disabled={parsedRecords.filter(r => r.matchedStudent).length === 0}>
-                            <Icon name="upload-cloud" className="w-4 h-4"/> Confirmar e Importar
+        <>
+            <Modal isOpen={isOpen} onClose={handleClose} title="Importar Asistencia desde Texto" size="xl">
+                <div className="space-y-4">
+                    {step === 1 ? renderStepOne() : renderStepTwo()}
+                </div>
+                <div className="flex justify-between items-center mt-6">
+                     {step === 2 && (
+                        <Button variant="secondary" onClick={() => { setStep(1); setError(''); }}>
+                            <Icon name="arrow-left" className="w-4 h-4" /> Volver
                         </Button>
                     )}
+                     <div className={`flex gap-3 ${step === 2 ? '' : 'w-full justify-end'}`}>
+                        <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
+                        {step === 1 ? (
+                            <Button onClick={handleVerify} disabled={!pastedText}>
+                                Verificar Datos <Icon name="arrow-right" className="w-4 h-4"/>
+                            </Button>
+                        ) : (
+                             <Button onClick={handleImportClick} disabled={matchedCount === 0}>
+                                <Icon name="upload-cloud" className="w-4 h-4"/> Confirmar e Importar
+                            </Button>
+                        )}
+                    </div>
                 </div>
-            </div>
-        </Modal>
+            </Modal>
+            <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                onClose={() => setConfirmModalOpen(false)}
+                onConfirm={executeImport}
+                title="Confirmar Importación"
+                confirmText="Importar"
+            >
+                <p>
+                    Se importarán <strong>{matchedCount}</strong> registros de asistencia.
+                </p>
+                <p>
+                    <strong>{unmatchedCount}</strong> registros sin coincidencia serán ignorados.
+                </p>
+                <p className="mt-2">¿Deseas continuar?</p>
+            </ConfirmationModal>
+        </>
     );
 };
 
