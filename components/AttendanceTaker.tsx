@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AttendanceStatus, Student } from '../types';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
@@ -95,8 +96,10 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         <div className="text-center p-4">
             <p className="text-sm text-slate-500">Pase de lista para: {new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { dateStyle: 'long' })}</p>
             <p className="text-slate-400 text-sm">Alumno {currentIndex + 1} de {pendingStudents.length}</p>
-            <h3 className="text-3xl font-bold my-4">{currentStudent.name}</h3>
-            <p className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-6 ${STATUS_STYLES[currentStatus].color}`}>
+            <h3 className="text-3xl font-bold my-2">{currentStudent.name}</h3>
+            {currentStudent.nickname && <p className="text-xl text-slate-500 mb-4">"{currentStudent.nickname}"</p>}
+            
+            <p className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 ${STATUS_STYLES[currentStatus].color}`}>
                 Estado actual: {currentStatus}
             </p>
             

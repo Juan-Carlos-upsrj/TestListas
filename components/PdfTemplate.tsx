@@ -119,7 +119,9 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                       {group.students.map((student, index) => (
                           <tr key={student.id} className="border-b border-slate-200">
                               <td className="p-1 text-center border-r border-slate-200">{index + 1}</td>
-                              <td className="p-1 font-semibold text-[9px] max-w-[150px]">{student.name}</td>
+                              <td className="p-1 text-[9px] max-w-[150px]">
+                                  <span className="font-semibold">{student.name}</span>
+                              </td>
                               {classDates.map(date => {
                                   const status = groupAttendance[student.id]?.[date] || AttendanceStatus.Pending;
                                   const simpleColor = {

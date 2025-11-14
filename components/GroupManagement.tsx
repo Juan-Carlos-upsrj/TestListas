@@ -102,6 +102,7 @@ const StudentForm: React.FC<{
 }> = ({ student, onSave, onCancel }) => {
     const [name, setName] = useState(student?.name || '');
     const [matricula, setMatricula] = useState(student?.matricula || '');
+    const [nickname, setNickname] = useState(student?.nickname || '');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -112,7 +113,8 @@ const StudentForm: React.FC<{
         onSave({
             id: student?.id || uuidv4(),
             name,
-            matricula
+            matricula,
+            nickname
         });
     };
 
@@ -126,6 +128,10 @@ const StudentForm: React.FC<{
                 <div>
                     <label htmlFor="matricula" className="block text-sm font-medium">Matrícula (Opcional)</label>
                     <input type="text" id="matricula" value={matricula} onChange={e => setMatricula(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <div>
+                    <label htmlFor="nickname" className="block text-sm font-medium">Apodo (Opcional)</label>
+                    <input type="text" id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
                 </div>
             </div>
              <div className="flex justify-end gap-3 mt-6">
@@ -148,6 +154,7 @@ const BulkStudentForm: React.FC<{ onSave: (students: Student[]) => void; onCance
                 id: uuidv4(),
                 name: parts[0] || '',
                 matricula: parts[1] || '',
+                nickname: parts[2] || '',
             };
         }).filter(s => s.name);
         
@@ -172,14 +179,14 @@ const BulkStudentForm: React.FC<{ onSave: (students: Student[]) => void; onCance
 
     return (
         <form onSubmit={handleSubmit}>
-            <p className="mb-2 text-sm text-slate-500">Pega la lista de alumnos. Separa el nombre y la matrícula con coma, punto y coma o tabulación. Un alumno por línea.</p>
+            <p className="mb-2 text-sm text-slate-500">Pega la lista de alumnos. Separa el nombre, la matrícula y el apodo (opcional) con coma, punto y coma o tabulación. Un alumno por línea.</p>
             <textarea
                 value={studentData}
                 onChange={e => setStudentData(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={10}
                 className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
-                placeholder="Ejemplo:&#10;Juan Pérez, 12345&#10;Maria García; 67890"
+                placeholder="Ejemplo:&#10;Juan Pérez, 12345, Juani&#10;Maria García; 67890"
             />
             <p className="text-xs text-slate-500 mt-2">Consejo: Presiona Ctrl+Enter (o ⌘+Enter en Mac) para agregar.</p>
              <div className="flex justify-end gap-3 mt-4">
@@ -332,7 +339,7 @@ const GroupManagement: React.FC = () => {
                                             >
                                                 <td className="p-2 text-slate-500">{index + 1}</td>
                                                 {settings.showMatricula && <td className="p-2">{student.matricula || '-'}</td>}
-                                                <td className="p-2 font-medium">{student.name}</td>
+                                                <td className="p-2 font-medium">{student.name} {student.nickname && <span className="font-normal text-slate-500 dark:text-slate-400">({student.nickname})</span>}</td>
                                                 <td className="p-2 text-right">
                                                     <div className="inline-flex gap-2">
                                                          <button onClick={() => { setEditingStudent(student); setStudentModalOpen(true); }} className="p-1 text-slate-500 hover:text-blue-500"><Icon name="edit-3" className="w-4 h-4"/></button>

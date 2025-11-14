@@ -225,8 +225,8 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
         return <p className="text-slate-500 text-center flex items-center justify-center h-full">No hay grupos con clase hoy.</p>;
     }
     
-    const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-200 ease-in-out inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
-    const sizeClasses = 'py-2 px-4 text-base';
+    const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-200 ease-in-out inline-flex items-center justify-start gap-3 text-left disabled:opacity-50 disabled:cursor-not-allowed';
+    const sizeClasses = 'p-3 text-base';
 
     return (
         <div className="flex flex-wrap gap-3">
@@ -240,8 +240,11 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
                         onClick={() => onTakeAttendance(group)}
                         className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90`}
                     >
-                        <Icon name="list-checks" className="w-4 h-4" />
-                        {group.name}
+                        <Icon name="list-checks" className="w-5 h-5 flex-shrink-0" />
+                        <div>
+                            <p className="font-semibold text-sm leading-tight">{group.name}</p>
+                            <p className="text-xs opacity-80 font-normal leading-tight">{group.subject}</p>
+                        </div>
                     </motion.button>
                 );
             })}

@@ -20,6 +20,7 @@ export interface Student {
   id: string;
   name: string;
   matricula: string;
+  nickname?: string;
 }
 
 export interface Group {

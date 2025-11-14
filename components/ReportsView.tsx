@@ -219,7 +219,7 @@ const ReportsView: React.FC = () => {
                                 <tbody>
                                     {group.students.map(student => (
                                         <tr key={student.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="sticky left-0 bg-white dark:bg-slate-800 p-2 font-medium z-10 whitespace-nowrap">{student.name}</td>
+                                            <td className="sticky left-0 bg-white dark:bg-slate-800 p-2 font-medium z-10 whitespace-nowrap">{student.name} {student.nickname && <span className="font-normal text-slate-500 dark:text-slate-400">({student.nickname})</span>}</td>
                                             {classDates.map(date => {
                                                 const status = attendance[group.id]?.[student.id]?.[date] || AttendanceStatus.Pending;
                                                 return (
