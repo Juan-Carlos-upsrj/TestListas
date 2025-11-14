@@ -1,5 +1,5 @@
 {
-  "name": "Gestión Académica IAEV",
-  "description": "Una aplicación web completa para la gestión de grupos, alumnos y asistencia académica. Incluye generación de reportes, exportación de datos y un dashboard personalizable para facilitar el seguimiento del progreso académico.",
+  "name": "Gestion Academica IAEV",
+  "description": "Una aplicacion web completa para la gestion de grupos, alumnos y asistencia academica. Incluye generacion de reportes, exportacion de datos y un dashboard personalizable para facilitar el seguimiento del progreso academico.",
   "requestFramePermissions": []
 }

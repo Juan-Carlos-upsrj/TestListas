@@ -33,7 +33,7 @@ const Sidebar: React.FC = () => {
     <>
       <aside className="w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col flex-shrink-0" aria-label="Barra lateral principal">
         <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Gestión Académica</h1>
+          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Gestion Academica</h1>
         </div>
         
         {/* Global Group Selector */}

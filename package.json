@@ -1,7 +1,7 @@
 {
   "name": "gestion-academica-iaev",
   "version": "1.0.0",
-  "description": "Aplicación de escritorio para gestión académica.",
+  "description": "Aplicacion de escritorio para gestion academica.",
   "author": "Kakit",
   "main": "dist-electron/main.js",
   "scripts": {
@@ -39,7 +39,7 @@
   },
   "build": {
     "appId": "com.iaev.gestionacademica",
-    "productName": "Gestión Académica IAEV",
+    "productName": "Gestion Academica IAEV",
     "files": [
       "dist/**/*",
       "dist-electron/**/*"
