@@ -1,7 +1,6 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
-import { AppContext } from '../context/AppContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -11,7 +10,6 @@ interface ReportChartProps {
 }
 
 const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '300px' }) => {
-  const { state } = useContext(AppContext);
 
   const chartData = useMemo(() => {
     const sortedMonths = Object.keys(monthlyAttendance).sort((a, b) => {
