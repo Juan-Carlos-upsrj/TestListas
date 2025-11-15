@@ -1,20 +1,26 @@
-import { AppState, AppAction, Group, DayOfWeek } from '../types';
+import { AppState, AppAction, Group, DayOfWeek, Settings } from '../types';
 import { Dispatch } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { fetchHorarioCompleto } from './horarioService';
 import { GROUP_COLORS } from '../constants';
 
-export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<AppAction>) => {
-    const { settings, attendance, groups } = state;
+const checkSettings = (settings: AppState['settings'], dispatch: Dispatch<AppAction>): boolean => {
     const { apiUrl, apiKey, professorName } = settings;
-
     if (!apiUrl || !apiKey || !professorName || professorName === 'Nombre del Profesor') {
         dispatch({
             type: 'ADD_TOAST',
             payload: { message: 'Por favor, configura la URL, API Key y tu nombre de profesor en Configuración.', type: 'error' }
         });
-        return;
+        return false;
     }
+    return true;
+};
+
+export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<AppAction>) => {
+    if (!checkSettings(state.settings, dispatch)) return;
+    
+    const { settings, attendance, groups } = state;
+    const { apiUrl, apiKey, professorName } = settings;
 
     dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando asistencias...', type: 'info' } });
 
@@ -159,5 +165,78 @@ export const syncScheduleData = async (state: AppState, dispatch: Dispatch<AppAc
     } catch (error) {
         const msg = error instanceof Error ? error.message : 'Error desconocido al sincronizar.';
         dispatch({ type: 'ADD_TOAST', payload: { message: msg, type: 'error' } });
+    }
+};
+
+
+// --- Funciones para Sincronización Personalizada ---
+
+export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<AppAction>) => {
+    if (!checkSettings(state.settings, dispatch)) return;
+    
+    const { settings } = state;
+    const { apiUrl, apiKey, professorName } = settings;
+
+    dispatch({ type: 'ADD_TOAST', payload: { message: 'Subiendo copia de seguridad a la nube...', type: 'info' } });
+
+    const stateToSave = { ...state, toasts: [] };
+    const payload = {
+        profesor_nombre: professorName,
+        estado: stateToSave
+    };
+
+    try {
+        const response = await fetch(`${apiUrl}/backup-estado`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': apiKey,
+            },
+            body: JSON.stringify(payload),
+        });
+        
+        const data = await response.json();
+
+        if (response.ok) {
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'Copia de seguridad subida con éxito.', type: 'success' } });
+        } else {
+            throw new Error(data.message || `Error del servidor: ${response.statusText}`);
+        }
+    } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Error de red al subir la copia.';
+        dispatch({ type: 'ADD_TOAST', payload: { message: msg, type: 'error' } });
+    }
+};
+
+export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<AppState> | null> => {
+    const { apiUrl, apiKey, professorName } = settings;
+    if (!apiUrl || !apiKey || !professorName || professorName === 'Nombre del Profesor') {
+        throw new Error('La configuración de API y profesor es necesaria.');
+    }
+
+    try {
+        const url = new URL(`${apiUrl}/backup-estado`);
+        url.searchParams.append('profesor_nombre', professorName);
+        
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'X-API-KEY': apiKey,
+            },
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (data && data.estado) {
+                return data.estado as Partial<AppState>;
+            }
+            throw new Error('No se encontraron datos en la nube para este usuario.');
+        } else {
+            throw new Error(data.message || `Error del servidor: ${response.statusText}`);
+        }
+    } catch (error) {
+        const msg = error instanceof Error ? error.message : 'Error de red al descargar la copia.';
+        throw new Error(msg);
     }
 };
