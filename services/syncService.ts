@@ -18,73 +18,102 @@ const checkSettings = (settings: AppState['settings'], dispatch: Dispatch<AppAct
 
 export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<AppAction>) => {
     if (!checkSettings(state.settings, dispatch)) return;
-    
+
     const { settings, attendance, groups } = state;
     const { apiUrl, apiKey, professorName } = settings;
 
-    dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando asistencias...', type: 'info' } });
-
-    const payload: any[] = [];
-    const groupsMap = new Map(groups.filter(g => g && g.id).map(g => [g.id, g]));
-
-    for (const [groupId, studentAttendances] of Object.entries(attendance)) {
-        const group = groupsMap.get(groupId);
-        if (!group) continue;
-
-        const studentsMap = new Map((group.students || []).filter(s => s && s.id).map(s => [s.id, s]));
-
-        for (const [studentId, dateAttendances] of Object.entries(studentAttendances)) {
-            const student = studentsMap.get(studentId);
-            if (!student) continue;
-
-            for (const [date, status] of Object.entries(dateAttendances)) {
-                payload.push({
-                    profesor_nombre: professorName,
-                    materia_nombre: group.subject,
-                    grupo_id: groupId,
-                    grupo_nombre: group.name,
-                    alumno_id: studentId,
-                    alumno_nombre: student.name,
-                    fecha: date,
-                    status: status,
-                });
-            }
-        }
-    }
-
-    if (payload.length === 0) {
-        dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos de asistencia para sincronizar.', type: 'info' } });
-        return;
-    }
+    dispatch({ type: 'ADD_TOAST', payload: { message: 'Comparando datos con el servidor...', type: 'info' } });
 
     try {
-        const response = await fetch(apiUrl, {
+        // 1. Obtener los registros existentes del servidor
+        const fetchUrl = new URL(apiUrl);
+        fetchUrl.searchParams.append('profesor_nombre', professorName);
+
+        const serverResponse = await fetch(fetchUrl.toString(), {
+            method: 'GET',
+            headers: { 'X-API-KEY': apiKey },
+        });
+
+        if (!serverResponse.ok) {
+            const errorData = await serverResponse.json().catch(() => ({ message: serverResponse.statusText }));
+            throw new Error(`Error al obtener datos del servidor: ${errorData.message}`);
+        }
+        
+        const serverRecords: any[] = await serverResponse.json();
+        
+        // 2. Crear un mapa para una búsqueda eficiente
+        const serverRecordsMap = new Map<string, string>(); // Key: 'alumno_id-fecha', Value: 'status'
+        serverRecords.forEach(rec => {
+            if (rec.alumno_id && rec.fecha) {
+                serverRecordsMap.set(`${rec.alumno_id}-${rec.fecha}`, rec.status);
+            }
+        });
+
+        // 3. Comparar y encontrar diferencias
+        const recordsToSync: any[] = [];
+        const groupsMap = new Map(groups.map(g => [g.id, g]));
+
+        for (const [groupId, studentAttendances] of Object.entries(attendance)) {
+            const group = groupsMap.get(groupId);
+            if (!group) continue;
+            const studentsMap = new Map(group.students.map(s => [s.id, s]));
+
+            for (const [studentId, dateAttendances] of Object.entries(studentAttendances)) {
+                const student = studentsMap.get(studentId);
+                if (!student) continue;
+
+                for (const [date, localStatus] of Object.entries(dateAttendances)) {
+                    const key = `${studentId}-${date}`;
+                    const serverStatus = serverRecordsMap.get(key);
+
+                    // Sincronizar si el registro es nuevo O si el estado ha cambiado
+                    if (!serverStatus || serverStatus !== localStatus) {
+                        recordsToSync.push({
+                            profesor_nombre: professorName,
+                            materia_nombre: group.subject,
+                            grupo_id: groupId,
+                            grupo_nombre: group.name,
+                            alumno_id: studentId,
+                            alumno_nombre: student.name,
+                            fecha: date,
+                            status: localStatus,
+                        });
+                    }
+                }
+            }
+        }
+
+        // 4. Enviar solo las diferencias
+        if (recordsToSync.length === 0) {
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'Tus datos ya están actualizados.', type: 'info' } });
+            return;
+        }
+
+        dispatch({ type: 'ADD_TOAST', payload: { message: `Subiendo ${recordsToSync.length} registros nuevos o modificados...`, type: 'info' } });
+
+        const syncResponse = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(recordsToSync),
         });
+        
+        const responseData = await syncResponse.json();
 
-        const data = await response.json();
-
-        if (response.ok) {
+        if (syncResponse.ok) {
             dispatch({
                 type: 'ADD_TOAST',
-                payload: { message: `Asistencias sincronizadas. (${data.registros_procesados} registros)`, type: 'success' }
+                payload: { message: `Sincronización completa. (${responseData.registros_procesados} registros)`, type: 'success' }
             });
         } else {
-            dispatch({
-                type: 'ADD_TOAST',
-                payload: { message: `Error del servidor: ${data.message || response.statusText}`, type: 'error' }
-            });
+             throw new Error(responseData.message || `Error del servidor: ${syncResponse.statusText}`);
         }
+
     } catch (error) {
-        dispatch({
-            type: 'ADD_TOAST',
-            payload: { message: 'Error de red al sincronizar.', type: 'error' }
-        });
+        const msg = error instanceof Error ? error.message : 'Error de red al sincronizar.';
+        dispatch({ type: 'ADD_TOAST', payload: { message: msg, type: 'error' } });
     }
 };
 
