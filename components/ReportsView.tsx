@@ -137,7 +137,7 @@ const ReportsView: React.FC = () => {
                 <select
                     value={selectedGroupId || ''}
                     onChange={(e) => setSelectedGroupId(e.target.value)}
-                    className="w-full sm:w-64 p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 ml-auto"
+                    className="w-full sm:w-64 p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue ml-auto"
                 >
                     <option value="" disabled>Selecciona un grupo</option>
                     {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -159,50 +159,50 @@ const ReportsView: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                        <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
-                            <h3 className="text-xl font-bold mb-4">Asistencia Mensual del Grupo</h3>
+                        <div className="lg:col-span-2 bg-iaev-surface p-6 rounded-xl shadow-sm border border-slate-900/10">
+                            <h3 className="text-xl font-bold mb-4 text-iaev-text-primary">Asistencia Mensual del Grupo</h3>
                             {groupSummaryData && Object.keys(groupSummaryData.monthlyAttendance).length > 0 ? (
                                 <ReportChart monthlyAttendance={groupSummaryData.monthlyAttendance} />
                             ) : (
-                                <p className="text-center text-slate-500 py-8">No hay suficientes datos de asistencia para mostrar el gráfico.</p>
+                                <p className="text-center text-iaev-text-secondary py-8">No hay suficientes datos de asistencia para mostrar el gráfico.</p>
                             )}
                         </div>
-                        <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg flex flex-col justify-center">
-                            <h3 className="text-xl font-bold mb-4">Resumen General</h3>
+                        <div className="lg:col-span-1 bg-iaev-surface p-6 rounded-xl shadow-sm border border-slate-900/10 flex flex-col justify-center">
+                            <h3 className="text-xl font-bold mb-4 text-iaev-text-primary">Resumen General</h3>
                             <div className="space-y-4">
                                <div className="flex justify-between items-center">
-                                    <span className="font-medium text-slate-500 dark:text-slate-400">Total de Alumnos</span>
-                                    <span className="font-bold text-2xl text-indigo-500">{group.students.length}</span>
+                                    <span className="font-medium text-iaev-text-secondary">Total de Alumnos</span>
+                                    <span className="font-bold text-2xl text-iaev-blue-dark">{group.students.length}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="font-medium text-slate-500 dark:text-slate-400">Evaluaciones Creadas</span>
-                                    <span className="font-bold text-2xl text-indigo-500">{groupEvaluations.length}</span>
+                                    <span className="font-medium text-iaev-text-secondary">Evaluaciones Creadas</span>
+                                    <span className="font-bold text-2xl text-iaev-blue-dark">{groupEvaluations.length}</span>
                                 </div>
                                  <div className="flex justify-between items-center">
-                                    <span className="font-medium text-slate-500 dark:text-slate-400">Días de Clase</span>
-                                    <span className="font-bold text-2xl text-indigo-500">{classDates.length}</span>
+                                    <span className="font-medium text-iaev-text-secondary">Días de Clase</span>
+                                    <span className="font-bold text-2xl text-iaev-blue-dark">{classDates.length}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg overflow-x-auto">
-                        <h3 className="text-xl font-bold mb-4">Registro Detallado de Asistencia</h3>
+                    <div className="bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10 overflow-x-auto">
+                        <h3 className="text-xl font-bold mb-4 text-iaev-text-primary">Registro Detallado de Asistencia</h3>
                         {group.students.length > 0 ? (
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr>
-                                        <th rowSpan={3} className="sticky left-0 bg-white dark:bg-slate-800 p-2 text-left font-semibold z-10 border-b-2 dark:border-slate-600">Alumno</th>
+                                        <th rowSpan={3} className="sticky left-0 bg-iaev-surface p-2 text-left font-semibold z-10 border-b-2 border-slate-300">Alumno</th>
                                         {attendanceHeaders && Object.entries(attendanceHeaders).map(([partialName, months]) => {
                                             const colspan = Object.values(months).reduce((sum, dates) => sum + dates.length, 0);
-                                            return <th key={partialName} colSpan={colspan} className="p-2 font-semibold text-center text-lg border-b-2 dark:border-slate-600">{partialName}</th>
+                                            return <th key={partialName} colSpan={colspan} className="p-2 font-semibold text-center text-lg border-b-2 border-slate-300">{partialName}</th>
                                         })}
                                     </tr>
                                     <tr>
                                         {attendanceHeaders && Object.entries(attendanceHeaders).flatMap(([partialName, months]) => 
                                             Object.entries(months).map(([monthName, dates], index) => 
                                                 <th key={`${partialName}-${monthName}`} colSpan={dates.length} 
-                                                className={`p-2 font-semibold text-center border-b dark:border-slate-700 ${index % 2 === 0 ? 'bg-slate-50 dark:bg-slate-700/50' : 'bg-slate-100 dark:bg-slate-700'}`}>
+                                                className={`p-2 font-semibold text-center border-b border-slate-200 ${index % 2 === 0 ? 'bg-slate-100/70' : 'bg-slate-200/50'}`}>
                                                     {monthName}
                                                 </th>
                                             )
@@ -210,7 +210,7 @@ const ReportsView: React.FC = () => {
                                     </tr>
                                     <tr>
                                         {classDates.map(date => (
-                                            <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b dark:border-slate-700`}>
+                                            <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b border-slate-200`}>
                                                 {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit' })}
                                             </th>
                                         ))}
@@ -218,14 +218,14 @@ const ReportsView: React.FC = () => {
                                 </thead>
                                 <tbody>
                                     {group.students.map(student => (
-                                        <tr key={student.id} className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                                            <td className="sticky left-0 bg-white dark:bg-slate-800 p-2 font-medium z-10 whitespace-nowrap">{student.name} {student.nickname && <span className="font-normal text-slate-500 dark:text-slate-400">({student.nickname})</span>}</td>
+                                        <tr key={student.id} className="border-b border-slate-200/70 hover:bg-slate-200/40">
+                                            <td className="sticky left-0 bg-iaev-surface p-2 font-medium z-10 whitespace-nowrap">{student.name} {student.nickname && <span className="font-normal text-iaev-text-secondary">({student.nickname})</span>}</td>
                                             {classDates.map(date => {
                                                 const status = attendance[group.id]?.[student.id]?.[date] || AttendanceStatus.Pending;
                                                 return (
                                                     <td key={date} className="p-0 text-center">
                                                         <div
-                                                            className={`w-full h-10 flex items-center justify-center text-xs font-bold ${STATUS_STYLES[status].color}`}
+                                                            className={`w-full h-10 flex items-center justify-center text-xs ${STATUS_STYLES[status].color}`}
                                                         >
                                                             {STATUS_STYLES[status].symbol}
                                                         </div>
@@ -237,14 +237,14 @@ const ReportsView: React.FC = () => {
                                 </tbody>
                             </table>
                         ) : (
-                            <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo para generar un reporte.</p>
+                            <p className="text-center text-iaev-text-secondary py-8">No hay alumnos en este grupo para generar un reporte.</p>
                         )}
                     </div>
                 </motion.div>
             ) : (
-                <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
-                    <Icon name="bar-chart-3" className="w-20 h-20 mx-auto text-slate-300 dark:text-slate-600"/>
-                    <p className="mt-4 text-slate-500">Por favor, selecciona un grupo para ver sus reportes.</p>
+                <div className="text-center py-20 bg-iaev-surface rounded-xl shadow-sm border border-slate-900/10">
+                    <Icon name="bar-chart-3" className="w-20 h-20 mx-auto text-slate-300"/>
+                    <p className="mt-4 text-iaev-text-secondary">Por favor, selecciona un grupo para ver sus reportes.</p>
                     {groups.length === 0 && <p className="text-slate-400">Primero necesitas crear un grupo en la sección 'Grupos'.</p>}
                 </div>
             )}

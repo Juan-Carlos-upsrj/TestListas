@@ -11,12 +11,12 @@ export const ATTENDANCE_STATUSES: AttendanceStatus[] = [
 ];
 
 export const STATUS_STYLES: { [key in AttendanceStatus]: { symbol: string; color: string; key: string; } } = {
-    [AttendanceStatus.Pending]: { symbol: '-', color: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300', key: ' ' },
-    [AttendanceStatus.Present]: { symbol: 'P', color: 'bg-green-500 text-white', key: 'p' },
-    [AttendanceStatus.Absent]: { symbol: 'A', color: 'bg-red-500 text-white', key: 'a' },
-    [AttendanceStatus.Late]: { symbol: 'R', color: 'bg-yellow-500 text-white', key: 'r' },
-    [AttendanceStatus.Justified]: { symbol: 'J', color: 'bg-blue-500 text-white', key: 'j' },
-    [AttendanceStatus.Exchange]: { symbol: 'I', color: 'bg-purple-500 text-white', key: 'i' },
+    [AttendanceStatus.Pending]: { symbol: '-', color: 'bg-slate-200/60 text-slate-500', key: ' ' },
+    [AttendanceStatus.Present]: { symbol: 'P', color: 'bg-iaev-green-light text-iaev-green-dark font-bold', key: 'p' },
+    [AttendanceStatus.Absent]: { symbol: 'A', color: 'bg-iaev-red-light text-iaev-red-dark font-bold', key: 'a' },
+    [AttendanceStatus.Late]: { symbol: 'R', color: 'bg-iaev-yellow-light text-iaev-yellow-dark font-bold', key: 'r' },
+    [AttendanceStatus.Justified]: { symbol: 'J', color: 'bg-iaev-blue-light text-iaev-blue-darker font-bold', key: 'j' },
+    [AttendanceStatus.Exchange]: { symbol: 'I', color: 'bg-iaev-teal-light text-iaev-teal-dark font-bold', key: 'i' },
 };
 
 export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
@@ -43,13 +43,13 @@ export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
 ];
 
 export const GROUP_COLORS = [
-    { name: 'indigo', bg: 'bg-indigo-500', text: 'text-white', calendar: 'bg-indigo-200 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200' },
-    { name: 'sky', bg: 'bg-sky-500', text: 'text-white', calendar: 'bg-sky-200 dark:bg-sky-900/50 text-sky-800 dark:text-sky-200' },
-    { name: 'teal', bg: 'bg-teal-500', text: 'text-white', calendar: 'bg-teal-200 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
-    { name: 'emerald', bg: 'bg-emerald-500', text: 'text-white', calendar: 'bg-emerald-200 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200' },
-    { name: 'amber', bg: 'bg-amber-500', text: 'text-white', calendar: 'bg-amber-200 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
-    { name: 'rose', bg: 'bg-rose-500', text: 'text-white', calendar: 'bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
+    { name: 'iaev-blue', bg: 'bg-iaev-blue', text: 'text-white', calendar: 'bg-iaev-blue-light text-iaev-blue-darker' },
+    { name: 'iaev-teal', bg: 'bg-iaev-teal', text: 'text-white', calendar: 'bg-iaev-teal-light text-iaev-teal-dark' },
+    { name: 'iaev-yellow', bg: 'bg-iaev-yellow', text: 'text-black', calendar: 'bg-iaev-yellow-light text-iaev-yellow-dark' },
+    { name: 'iaev-red', bg: 'bg-iaev-red', text: 'text-white', calendar: 'bg-iaev-red-light text-iaev-red-dark' },
+    { name: 'iaev-green', bg: 'bg-iaev-green', text: 'text-white', calendar: 'bg-iaev-green-light text-iaev-green-dark' },
     { name: 'fuchsia', bg: 'bg-fuchsia-500', text: 'text-white', calendar: 'bg-fuchsia-200 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
+    { name: 'rose', bg: 'bg-rose-500', text: 'text-white', calendar: 'bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
     { name: 'slate', bg: 'bg-slate-500', text: 'text-white', calendar: 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-100' },
 ];
 

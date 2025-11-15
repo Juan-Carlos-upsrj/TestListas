@@ -1,4 +1,3 @@
-
 import React, { useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { CalendarEvent } from '../types';
@@ -29,7 +28,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
             date: dateStr,
             title: "Sé feliz y descansa",
             type: 'custom',
-            color: 'bg-purple-200 dark:bg-purple-900/50 text-purple-800 dark:text-purple-200'
+            color: 'bg-purple-200 text-purple-800'
         };
         if (!displayEvents.some(e => e.id === weekendEvent.id)) {
             displayEvents.unshift(weekendEvent);
@@ -67,13 +66,13 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                 {displayEvents.length > 0 ? (
                     <ul className="space-y-2">
                         {displayEvents.map(event => (
-                            <li key={event.id} className={`flex items-center justify-between p-2 rounded-lg text-slate-800 ${event.color}`}>
+                            <li key={event.id} className={`flex items-center justify-between p-2 rounded-lg ${event.color}`}>
                                 <div className="flex items-center gap-2">
-                                    {event.type === 'gcal' && <Icon name="google" className="w-4 h-4 text-slate-600" />}
+                                    {event.type === 'gcal' && <Icon name="google" className="w-4 h-4" />}
                                     <span>{event.title}</span>
                                 </div>
                                 {event.type === 'custom' && !event.id.startsWith('weekend-rest-') && (
-                                    <button onClick={() => handleDeleteEvent(event.id)} className="p-1 text-slate-600 hover:text-red-500">
+                                    <button onClick={() => handleDeleteEvent(event.id)} className="p-1 hover:text-iaev-red-dark">
                                         <Icon name="trash-2" className="w-4 h-4" />
                                     </button>
                                 )}
@@ -81,10 +80,10 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-slate-500">No hay eventos para este día.</p>
+                    <p className="text-iaev-text-secondary">No hay eventos para este día.</p>
                 )}
 
-                <hr className="dark:border-slate-600"/>
+                <hr className="border-slate-200"/>
 
                 <div>
                     <h4 className="font-semibold mb-2">Agregar Nuevo Evento</h4>
@@ -94,7 +93,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                             value={newEventTitle}
                             onChange={(e) => setNewEventTitle(e.target.value)}
                             placeholder="Título del evento"
-                            className="flex-grow p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                            className="flex-grow p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                         />
                         <Button type="submit">
                             <Icon name="plus" className="w-4 h-4" /> Agregar

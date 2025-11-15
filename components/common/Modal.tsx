@@ -1,5 +1,3 @@
-
-
 import React, { ReactNode, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,29 +38,29 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
-            className={`relative z-10 w-full ${sizeClasses[size]} bg-white dark:bg-slate-800 rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
+            className={`relative z-10 w-full ${sizeClasses[size]} bg-iaev-surface rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
           >
-            <header className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-              <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{title}</h2>
+            <header className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-xl font-bold text-iaev-text-primary">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-full text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="p-1 rounded-full text-iaev-text-secondary hover:bg-slate-200/70 focus:outline-none focus:ring-2 focus:ring-iaev-blue"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </header>
             <div className="p-6 overflow-y-auto flex-grow">
               {children}
             </div>
             {footer && (
-              <footer className="flex justify-end p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-b-xl">
+              <footer className="flex justify-end p-4 border-t border-slate-200 bg-slate-100/50 rounded-b-xl">
                 {footer}
               </footer>
             )}

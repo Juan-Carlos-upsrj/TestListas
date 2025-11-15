@@ -46,11 +46,11 @@ const GroupForm: React.FC<{
             <div className="space-y-4">
                 <div>
                     <label htmlFor="groupName" className="block text-sm font-medium">Nombre del Grupo</label>
-                    <input type="text" id="groupName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" id="groupName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                 </div>
                 <div>
                     <label htmlFor="subject" className="block text-sm font-medium">Materia</label>
-                    <input type="text" id="subject" value={subject} onChange={e => setSubject(e.target.value)} required className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" id="subject" value={subject} onChange={e => setSubject(e.target.value)} required className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                 </div>
                 <div>
                     <label className="block text-sm font-medium mb-2">Días de Clase</label>
@@ -62,8 +62,8 @@ const GroupForm: React.FC<{
                                 onClick={() => handleDayToggle(day)}
                                 className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
                                     classDays.includes(day)
-                                        ? 'bg-indigo-600 text-white'
-                                        : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600'
+                                        ? 'bg-iaev-blue-dark text-white'
+                                        : 'bg-slate-200/70 hover:bg-slate-300/70'
                                 }`}
                             >
                                 {day}
@@ -80,7 +80,7 @@ const GroupForm: React.FC<{
                                 key={c.name}
                                 onClick={() => setColor(c.name)}
                                 title={c.name}
-                                className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${color === c.name ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-800' : ''}`}
+                                className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${color === c.name ? 'ring-2 ring-offset-2 ring-iaev-blue ring-offset-iaev-surface' : ''}`}
                             />
                         ))}
                     </div>
@@ -123,15 +123,15 @@ const StudentForm: React.FC<{
             <div className="space-y-4">
                 <div>
                     <label htmlFor="studentName" className="block text-sm font-medium">Nombre Completo</label>
-                    <input type="text" id="studentName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" id="studentName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                 </div>
                 <div>
                     <label htmlFor="matricula" className="block text-sm font-medium">Matrícula (Opcional)</label>
-                    <input type="text" id="matricula" value={matricula} onChange={e => setMatricula(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" id="matricula" value={matricula} onChange={e => setMatricula(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                 </div>
                 <div>
                     <label htmlFor="nickname" className="block text-sm font-medium">Apodo (Opcional)</label>
-                    <input type="text" id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                    <input type="text" id="nickname" value={nickname} onChange={e => setNickname(e.target.value)} className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                 </div>
             </div>
              <div className="flex justify-end gap-3 mt-6">
@@ -179,16 +179,16 @@ const BulkStudentForm: React.FC<{ onSave: (students: Student[]) => void; onCance
 
     return (
         <form onSubmit={handleSubmit}>
-            <p className="mb-2 text-sm text-slate-500">Pega la lista de alumnos. Separa el nombre, la matrícula y el apodo (opcional) con coma, punto y coma o tabulación. Un alumno por línea.</p>
+            <p className="mb-2 text-sm text-iaev-text-secondary">Pega la lista de alumnos. Separa el nombre, la matrícula y el apodo (opcional) con coma, punto y coma o tabulación. Un alumno por línea.</p>
             <textarea
                 value={studentData}
                 onChange={e => setStudentData(e.target.value)}
                 onKeyDown={handleKeyDown}
                 rows={10}
-                className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                className="w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                 placeholder="Ejemplo:&#10;Juan Pérez, 12345, Juani&#10;Maria García; 67890"
             />
-            <p className="text-xs text-slate-500 mt-2">Consejo: Presiona Ctrl+Enter (o ⌘+Enter en Mac) para agregar.</p>
+            <p className="text-xs text-iaev-text-secondary mt-2">Consejo: Presiona Ctrl+Enter (o ⌘+Enter en Mac) para agregar.</p>
              <div className="flex justify-end gap-3 mt-4">
                 <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>
                 <Button type="submit">Agregar Alumnos</Button>
@@ -263,9 +263,9 @@ const GroupManagement: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Groups List */}
-                <div className="lg:col-span-1 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
+                <div className="lg:col-span-1 bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold">Mis Grupos</h2>
+                        <h2 className="text-xl font-bold text-iaev-text-primary">Mis Grupos</h2>
                         <Button size="sm" onClick={() => { setEditingGroup(undefined); setGroupModalOpen(true); }}>
                             <Icon name="plus" className="w-4 h-4" /> Nuevo
                         </Button>
@@ -276,20 +276,19 @@ const GroupManagement: React.FC = () => {
                                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
                                 return (
                                 <li key={group.id} onClick={() => handleSelectGroup(group.id)}
-                                    className={`p-3 rounded-lg cursor-pointer transition-colors border-l-4 ${selectedGroupId === group.id ? `${groupColor.bg} text-white` : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 border-transparent'}`}
+                                    className={`p-3 rounded-lg cursor-pointer transition-all border-l-4 ${selectedGroupId === group.id ? `${groupColor.bg} text-white shadow-md ${groupColor.bg.replace('bg-','shadow-')}/40` : 'bg-slate-200/50 hover:bg-slate-200/90 border-transparent'}`}
                                     style={{ borderColor: selectedGroupId === group.id ? '' : (GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0]).bg.replace('bg-', '#') }}
                                 >
                                    <div className="flex justify-between items-start">
                                        <div className="flex items-start gap-3">
-                                            <span className={`w-2 h-2 ${groupColor.bg} rounded-full mt-2 flex-shrink-0`}></span>
                                             <div>
                                                <p className="font-semibold">{group.name}</p>
-                                               <p className={`text-sm ${selectedGroupId === group.id ? 'text-indigo-200' : 'text-slate-500 dark:text-slate-400'}`}>{group.subject}</p>
+                                               <p className={`text-sm ${selectedGroupId === group.id ? 'opacity-80' : 'text-iaev-text-secondary'}`}>{group.subject}</p>
                                            </div>
                                        </div>
                                        <div className="flex gap-2 items-center flex-shrink-0">
-                                            <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setGroupModalOpen(true); }} className="p-1 hover:text-blue-400"><Icon name="edit-3" className="w-4 h-4"/></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }} className="p-1 hover:text-red-400"><Icon name="trash-2" className="w-4 h-4"/></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setGroupModalOpen(true); }} className="p-1 hover:text-iaev-blue"><Icon name="edit-3" className="w-4 h-4"/></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }} className="p-1 hover:text-iaev-red"><Icon name="trash-2" className="w-4 h-4"/></button>
                                        </div>
                                    </div>
                                </li>
@@ -297,16 +296,16 @@ const GroupManagement: React.FC = () => {
                             })}
                         </ul>
                     ) : (
-                        <p className="text-center py-8 text-slate-500">No has creado ningún grupo todavía.</p>
+                        <p className="text-center py-8 text-iaev-text-secondary">No has creado ningún grupo todavía.</p>
                     )}
                 </div>
 
                 {/* Students List */}
-                <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg">
+                <div className="lg:col-span-2 bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10">
                    {selectedGroup ? (
                         <div>
                             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                                <h2 className="text-2xl font-bold">{selectedGroup.name} <span className="font-normal text-lg text-slate-500">({selectedGroup.students.length} alumnos)</span></h2>
+                                <h2 className="text-2xl font-bold text-iaev-text-primary">{selectedGroup.name} <span className="font-normal text-lg text-iaev-text-secondary">({selectedGroup.students.length} alumnos)</span></h2>
                                 <div className="flex gap-2 flex-wrap">
                                     <Button size="sm" variant="secondary" onClick={() => setBulkModalOpen(true)}>
                                         <Icon name="list-plus" className="w-4 h-4"/> Agregar Varios
@@ -319,7 +318,7 @@ const GroupManagement: React.FC = () => {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
-                                        <tr className="border-b dark:border-slate-700">
+                                        <tr className="border-b border-slate-200">
                                             <th className="p-2">#</th>
                                             {settings.showMatricula && <th className="p-2">Matrícula</th>}
                                             <th className="p-2">Nombre</th>
@@ -335,15 +334,15 @@ const GroupManagement: React.FC = () => {
                                                 initial={{ opacity: 0 }}
                                                 animate={{ opacity: 1 }}
                                                 exit={{ opacity: 0, x: -50 }}
-                                                className="border-b dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                                                className="border-b border-slate-200/70 hover:bg-slate-200/40"
                                             >
-                                                <td className="p-2 text-slate-500">{index + 1}</td>
+                                                <td className="p-2 text-iaev-text-secondary">{index + 1}</td>
                                                 {settings.showMatricula && <td className="p-2">{student.matricula || '-'}</td>}
-                                                <td className="p-2 font-medium">{student.name} {student.nickname && <span className="font-normal text-slate-500 dark:text-slate-400">({student.nickname})</span>}</td>
+                                                <td className="p-2 font-medium">{student.name} {student.nickname && <span className="font-normal text-iaev-text-secondary">({student.nickname})</span>}</td>
                                                 <td className="p-2 text-right">
                                                     <div className="inline-flex gap-2">
-                                                         <button onClick={() => { setEditingStudent(student); setStudentModalOpen(true); }} className="p-1 text-slate-500 hover:text-blue-500"><Icon name="edit-3" className="w-4 h-4"/></button>
-                                                         <button onClick={() => handleDeleteStudent(student.id)} className="p-1 text-slate-500 hover:text-red-500"><Icon name="trash-2" className="w-4 h-4"/></button>
+                                                         <button onClick={() => { setEditingStudent(student); setStudentModalOpen(true); }} className="p-1 text-slate-500 hover:text-iaev-blue"><Icon name="edit-3" className="w-4 h-4"/></button>
+                                                         <button onClick={() => handleDeleteStudent(student.id)} className="p-1 text-slate-500 hover:text-iaev-red"><Icon name="trash-2" className="w-4 h-4"/></button>
                                                     </div>
                                                 </td>
                                             </motion.tr>
@@ -352,14 +351,14 @@ const GroupManagement: React.FC = () => {
                                     </tbody>
                                 </table>
                                 {selectedGroup.students.length === 0 && (
-                                    <p className="text-center text-slate-500 py-8">No hay alumnos en este grupo.</p>
+                                    <p className="text-center text-iaev-text-secondary py-8">No hay alumnos en este grupo.</p>
                                 )}
                             </div>
                         </div>
                    ) : (
                        <div className="text-center py-20 flex flex-col items-center justify-center h-full">
-                           <Icon name="users" className="w-20 h-20 mx-auto text-slate-300 dark:text-slate-600"/>
-                           <p className="mt-4 text-slate-500">Selecciona un grupo para ver sus alumnos.</p>
+                           <Icon name="users" className="w-20 h-20 mx-auto text-slate-300"/>
+                           <p className="mt-4 text-iaev-text-secondary">Selecciona un grupo para ver sus alumnos.</p>
                            {groups.length === 0 && <p className="mt-1 text-sm text-slate-400">O crea un nuevo grupo para empezar.</p>}
                        </div>
                    )}

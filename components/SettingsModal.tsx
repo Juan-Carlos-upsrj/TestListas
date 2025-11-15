@@ -74,25 +74,25 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Configuración" size="lg">
             <div className="space-y-6">
-                <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                <fieldset className="border p-4 rounded-lg border-slate-200">
                     <legend className="px-2 font-semibold">Periodo del Semestre</legend>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="block text-sm font-medium">Inicio del Semestre</label>
-                            <input type="date" name="semesterStart" value={settings.semesterStart} onChange={handleChange} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                            <input type="date" name="semesterStart" value={settings.semesterStart} onChange={handleChange} className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium">Fin del Primer Parcial</label>
-                            <input type="date" name="firstPartialEnd" value={settings.firstPartialEnd} onChange={handleChange} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                            <input type="date" name="firstPartialEnd" value={settings.firstPartialEnd} onChange={handleChange} className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                         </div>
                         <div>
                             <label className="block text-sm font-medium">Fin del Semestre</label>
-                            <input type="date" name="semesterEnd" value={settings.semesterEnd} onChange={handleChange} className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
+                            <input type="date" name="semesterEnd" value={settings.semesterEnd} onChange={handleChange} className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
                         </div>
                     </div>
                 </fieldset>
                 
-                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                 <fieldset className="border p-4 rounded-lg border-slate-200">
                     <legend className="px-2 font-semibold">Información del Docente</legend>
                     <div>
                         <label htmlFor="professorName" className="block text-sm font-medium">Nombre del Profesor/a</label>
@@ -103,13 +103,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             value={settings.professorName}
                             onChange={handleChange}
                             placeholder="Ej. Prof. Juan Pérez"
-                            className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                            className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                         />
-                        <p className="text-xs text-slate-500 mt-1">Este nombre aparecerá en los reportes generados y se usará para la sincronización de horarios.</p>
+                        <p className="text-xs text-iaev-text-secondary mt-1">Este nombre aparecerá en los reportes generados y se usará para la sincronización de horarios.</p>
                     </div>
                 </fieldset>
 
-                <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                <fieldset className="border p-4 rounded-lg border-slate-200">
                     <legend className="px-2 font-semibold">Integración de Calendario</legend>
                     <div className="space-y-4">
                         <div>
@@ -121,9 +121,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 value={settings.googleCalendarUrl}
                                 onChange={handleChange}
                                 placeholder="Pega aquí la dirección pública en formato iCal"
-                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                             />
-                            <p className="text-xs text-slate-500 mt-1">Esto permitirá mostrar los eventos de tu calendario de Google directamente en la aplicación.</p>
+                            <p className="text-xs text-iaev-text-secondary mt-1">Esto permitirá mostrar los eventos de tu calendario de Google directamente en la aplicación.</p>
                         </div>
                          <div>
                             <label className="block text-sm font-medium mb-2">Color para Eventos de Google Calendar</label>
@@ -134,7 +134,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                         key={c.name}
                                         onClick={() => setSettings(s => ({ ...s, googleCalendarColor: c.name }))}
                                         title={c.name}
-                                        className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${settings.googleCalendarColor === c.name ? 'ring-2 ring-offset-2 ring-indigo-500 dark:ring-offset-slate-800' : ''}`}
+                                        className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${settings.googleCalendarColor === c.name ? 'ring-2 ring-offset-2 ring-iaev-blue ring-offset-iaev-surface' : ''}`}
                                     />
                                 ))}
                             </div>
@@ -142,7 +142,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     </div>
                 </fieldset>
 
-                <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                <fieldset className="border p-4 rounded-lg border-slate-200">
                     <legend className="px-2 font-semibold">Sincronización con Servidor</legend>
                     <div className="space-y-4">
                         <div>
@@ -154,7 +154,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 value={settings.apiUrl}
                                 onChange={handleChange}
                                 placeholder="https://api.ejemplo.com/asistencia"
-                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                             />
                         </div>
                         <div>
@@ -166,42 +166,32 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 value={settings.apiKey}
                                 onChange={handleChange}
                                 placeholder="••••••••••••••••"
-                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                             />
                         </div>
                     </div>
                 </fieldset>
 
-                <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                <fieldset className="border p-4 rounded-lg border-slate-200">
                      <legend className="px-2 font-semibold">Visualización</legend>
                      <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <label htmlFor="theme" className="font-medium">Tema de la Interfaz</label>
-                             <div className="flex items-center gap-2">
-                                 <span>Claro</span>
-                                 <div onClick={() => setSettings(s => ({...s, theme: s.theme === 'light' ? 'dark' : 'light'}))} className={`relative inline-flex items-center h-6 rounded-full w-11 cursor-pointer transition-colors ${settings.theme === 'dark' ? 'bg-indigo-600' : 'bg-slate-300'}`}>
-                                     <span className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${settings.theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
-                                 </div>
-                                  <span>Oscuro</span>
-                             </div>
-                        </div>
-                        <div className="flex items-center justify-between">
                             <label htmlFor="showMatricula" className="font-medium">Mostrar Columna de Matrícula</label>
-                            <input type="checkbox" id="showMatricula" name="showMatricula" checked={settings.showMatricula} onChange={handleChange} className="h-5 w-5 rounded text-indigo-600 focus:ring-indigo-500" />
+                            <input type="checkbox" id="showMatricula" name="showMatricula" checked={settings.showMatricula} onChange={handleChange} className="h-5 w-5 rounded text-iaev-blue focus:ring-iaev-blue" />
                         </div>
                      </div>
                 </fieldset>
 
-                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                 <fieldset className="border p-4 rounded-lg border-slate-200">
                      <legend className="px-2 font-semibold">Alertas</legend>
                       <div>
                             <label htmlFor="lowAttendanceThreshold" className="block text-sm font-medium">Umbral de Asistencia Baja (%)</label>
-                            <input type="number" id="lowAttendanceThreshold" name="lowAttendanceThreshold" value={settings.lowAttendanceThreshold} onChange={handleChange} min="0" max="100" className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500" />
-                            <p className="text-xs text-slate-500 mt-1">Se marcarán en reportes los alumnos con asistencia por debajo de este porcentaje.</p>
+                            <input type="number" id="lowAttendanceThreshold" name="lowAttendanceThreshold" value={settings.lowAttendanceThreshold} onChange={handleChange} min="0" max="100" className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
+                            <p className="text-xs text-iaev-text-secondary mt-1">Se marcarán en reportes los alumnos con asistencia por debajo de este porcentaje.</p>
                       </div>
                  </fieldset>
 
-                 <fieldset className="border p-4 rounded-lg dark:border-slate-600">
+                 <fieldset className="border p-4 rounded-lg border-slate-200">
                     <legend className="px-2 font-semibold">Datos y Sincronización</legend>
                     <div className="grid grid-cols-2 gap-4">
                         <Button variant="secondary" onClick={handleExport} className="w-full">
@@ -213,7 +203,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         <Button variant="secondary" onClick={() => syncAttendanceData(state, dispatch)} className="w-full">
                             <Icon name="upload-cloud" /> Subir Asistencias
                         </Button>
-                        <Button variant="secondary" onClick={() => syncScheduleData(state, dispatch)} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
+                        <Button variant="secondary" onClick={() => syncScheduleData(state, dispatch)} className="w-full !bg-iaev-blue hover:!bg-iaev-blue-dark text-white">
                             <Icon name="download-cloud" /> Actualizar Horario
                         </Button>
                         <input
@@ -224,8 +214,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             className="hidden"
                         />
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">
-                        <strong className="dark:text-amber-300 text-amber-600">Importante:</strong> Importar un respaldo reemplazará toda la información actual. Sincronizar el horario agregará o actualizará grupos sin borrar los existentes.
+                    <p className="text-xs text-iaev-text-secondary mt-2">
+                        <strong className="text-iaev-yellow-dark">Importante:</strong> Importar un respaldo reemplazará toda la información actual. Sincronizar el horario agregará o actualizará grupos sin borrar los existentes.
                     </p>
                 </fieldset>
             </div>

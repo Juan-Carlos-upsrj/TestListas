@@ -31,20 +31,21 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="w-64 bg-white dark:bg-slate-800 shadow-lg flex flex-col flex-shrink-0" aria-label="Barra lateral principal">
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-white">Gestion Academica</h1>
+      <aside className="w-64 bg-iaev-surface flex flex-col flex-shrink-0 z-20 border-r border-slate-900/10" aria-label="Barra lateral principal">
+        <div className="p-4 border-b border-slate-900/10 flex items-center gap-2">
+            <img src="/logo.png" alt="IAEV Logo" className="w-10 h-10"/>
+            <h1 className="text-xl font-bold text-iaev-text-primary">Gestión IAEV</h1>
         </div>
         
         {/* Global Group Selector */}
-        <div className="p-4 border-b border-slate-200 dark:border-slate-700">
-            <label htmlFor="globalGroupSelector" className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1 block">Grupo Activo</label>
+        <div className="p-4 border-b border-slate-900/10">
+            <label htmlFor="globalGroupSelector" className="text-sm font-medium text-iaev-text-secondary mb-1 block">Grupo Activo</label>
             <select
                 id="globalGroupSelector"
                 value={selectedGroupId || ''}
                 onChange={handleGroupChange}
                 disabled={groups.length === 0}
-                className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+                className="w-full p-2 border border-slate-300/70 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue disabled:opacity-50"
             >
                 <option value="" disabled>{groups.length > 0 ? 'Seleccionar Grupo...' : 'No hay grupos'}</option>
                 {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -61,28 +62,28 @@ const Sidebar: React.FC = () => {
                     e.preventDefault();
                     handleNavClick(item.view);
                   }}
-                  className={`flex items-center gap-3 px-4 py-2.5 my-1 rounded-lg text-lg font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-4 py-2.5 my-1 rounded-lg text-base font-semibold transition-all duration-200 relative overflow-hidden ${
                     state.activeView === item.view
-                      ? 'bg-indigo-500 text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                      ? 'bg-iaev-blue-dark text-white shadow-lg shadow-iaev-blue/30'
+                      : 'text-iaev-text-primary hover:bg-slate-200/60'
                   }`}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Icon name={item.icon} className="w-6 h-6" />
+                  <Icon name={item.icon} className="w-5 h-5" />
                   <span>{item.label}</span>
                 </motion.a>
               </li>
             ))}
           </ul>
         </nav>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-700">
+        <div className="p-4 border-t border-slate-900/10">
           <button
             onClick={() => setIsSettingsOpen(true)}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200"
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-iaev-text-primary hover:bg-slate-200/60 transition-colors duration-200"
           >
-            <Icon name="settings" className="w-6 h-6" />
-            <span className="text-lg font-medium">Configuración</span>
+            <Icon name="settings" className="w-5 h-5" />
+            <span className="text-base font-semibold">Configuración</span>
           </button>
         </div>
       </aside>

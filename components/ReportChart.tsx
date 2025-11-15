@@ -12,7 +12,6 @@ interface ReportChartProps {
 
 const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '300px' }) => {
   const { state } = useContext(AppContext);
-  const isDarkMode = state.settings.theme === 'dark';
 
   const chartData = useMemo(() => {
     const sortedMonths = Object.keys(monthlyAttendance).sort((a, b) => {
@@ -33,14 +32,14 @@ const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '
         {
           label: 'Asistencia Promedio (%)',
           data: data,
-          backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.6)' : 'rgba(99, 102, 241, 0.8)', // Indigo-500
-          borderColor: isDarkMode ? 'rgba(129, 140, 248, 1)' : 'rgba(79, 70, 229, 1)', // Indigo-400 / Indigo-600
+          backgroundColor: 'rgba(48, 63, 159, 0.8)', // iaev-blue-dark
+          borderColor: 'rgba(26, 35, 126, 1)', // iaev-blue-darker
           borderWidth: 1,
           borderRadius: 4,
         },
       ],
     };
-  }, [monthlyAttendance, isDarkMode]);
+  }, [monthlyAttendance]);
 
   const options = {
     responsive: true,
@@ -73,18 +72,18 @@ const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '
             max: 100,
             ticks: {
                 stepSize: 20,
-                color: isDarkMode ? '#94a3b8' : '#475569',
+                color: '#78909C', // iaev-text-secondary
                 callback: function(value: string | number) {
                     return value + '%';
                 }
             },
             grid: {
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                color: 'rgba(0, 0, 0, 0.05)',
             }
         },
         x: {
              ticks: {
-                color: isDarkMode ? '#94a3b8' : '#475569',
+                color: '#78909C', // iaev-text-secondary
             },
              grid: {
                 display: false,

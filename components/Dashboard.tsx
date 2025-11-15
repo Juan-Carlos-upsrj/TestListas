@@ -20,8 +20,8 @@ const WelcomeWidget: React.FC<{ dateString: string }> = ({ dateString }) => {
     const { state } = useContext(AppContext);
     return (
         <>
-            <h3 className="font-bold text-xl mb-1">Bienvenido/a, {state.settings.professorName}!</h3>
-            <p className="text-slate-500 dark:text-slate-400 capitalize">{dateString}</p>
+            <h3 className="font-bold text-xl mb-1 text-iaev-text-primary">Bienvenido/a, {state.settings.professorName}!</h3>
+            <p className="text-iaev-text-secondary capitalize">{dateString}</p>
         </>
     );
 };
@@ -32,12 +32,12 @@ const StatsWidget: React.FC = () => {
     return (
         <div className="grid grid-cols-2 gap-4 text-center h-full">
             <div className="flex flex-col justify-center">
-                <p className="text-3xl font-bold text-indigo-500">{state.groups.length}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Grupos</p>
+                <p className="text-3xl font-bold text-iaev-blue-dark">{state.groups.length}</p>
+                <p className="text-sm text-iaev-text-secondary">Grupos</p>
             </div>
             <div className="flex flex-col justify-center">
-                <p className="text-3xl font-bold text-indigo-500">{totalStudents}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Alumnos</p>
+                <p className="text-3xl font-bold text-iaev-blue-dark">{totalStudents}</p>
+                <p className="text-sm text-iaev-text-secondary">Alumnos</p>
             </div>
         </div>
     );
@@ -50,13 +50,13 @@ const TodaysClassesWidget: React.FC = () => {
     const todaysClasses = state.groups.filter(g => g.classDays.some(d => d.toLowerCase() === dayOfWeek.toLowerCase()));
 
     if (todaysClasses.length === 0) {
-        return <p className="text-slate-500 text-center flex items-center justify-center h-full">No hay clases programadas para hoy.</p>;
+        return <p className="text-iaev-text-secondary text-center flex items-center justify-center h-full">No hay clases programadas para hoy.</p>;
     }
 
     return (
         <ul className="space-y-2 overflow-y-auto h-full pr-2">
             {todaysClasses.map(g => (
-                <li key={g.id} className="text-sm p-2 bg-slate-100 dark:bg-slate-700/50 rounded-md truncate">{g.name}</li>
+                <li key={g.id} className="text-sm p-2 bg-slate-200/50 rounded-md truncate">{g.name}</li>
             ))}
         </ul>
     );
@@ -103,7 +103,7 @@ const UpcomingEventsWidget: React.FC = () => {
     }, [state.gcalEvents]);
     
     if (upcomingEvents.length === 0) {
-        return <p className="text-slate-500 text-center flex items-center justify-center h-full">No hay próximos eventos de Google Calendar.</p>;
+        return <p className="text-iaev-text-secondary text-center flex items-center justify-center h-full">No hay próximos eventos de Google Calendar.</p>;
     }
 
     return (
@@ -122,11 +122,11 @@ const UpcomingEventsWidget: React.FC = () => {
                 const endDiff = diffInDays(endDate, today);
                 const isOngoing = startDiff <= 0 && endDiff >= 0;
 
-                let colorClass = 'bg-slate-100 dark:bg-slate-700/50'; // Default
+                let colorClass = 'bg-slate-200/50'; // Default
                 if (isOngoing && endDiff <= 2) {
-                    colorClass = 'bg-red-100 dark:bg-red-900/50 border-l-4 border-red-400'; // Ending soon
+                    colorClass = 'bg-iaev-red-light border-l-4 border-iaev-red'; // Ending soon
                 } else if (!isOngoing && startDiff <= 7) {
-                    colorClass = 'bg-amber-100 dark:bg-amber-900/50 border-l-4 border-amber-400'; // Approaching
+                    colorClass = 'bg-iaev-yellow-light border-l-4 border-iaev-yellow'; // Approaching
                 }
 
                 // Date formatting logic
@@ -143,8 +143,8 @@ const UpcomingEventsWidget: React.FC = () => {
 
                 return (
                     <li key={event.id} className={`text-sm p-2 rounded-md transition-colors ${colorClass}`}>
-                        <p className="font-semibold truncate">{event.title}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{dateString}</p>
+                        <p className="font-semibold truncate text-iaev-text-primary">{event.title}</p>
+                        <p className="text-xs text-iaev-text-secondary capitalize">{dateString}</p>
                     </li>
                 );
             })}
@@ -176,15 +176,15 @@ const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) =
     }, [state.groups, state.attendance, todayStr, dayOfWeek]);
 
     if (total === 0) {
-        return <p className="text-slate-500 text-center flex items-center justify-center h-full">No hay alumnos en clases hoy.</p>;
+        return <p className="text-iaev-text-secondary text-center flex items-center justify-center h-full">No hay alumnos en clases hoy.</p>;
     }
 
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-4xl font-bold text-indigo-500">
+            <p className="text-4xl font-bold text-iaev-blue-dark">
                 {present} <span className="text-2xl text-slate-400">/ {total}</span>
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Alumnos Presentes Hoy</p>
+            <p className="text-sm text-iaev-text-secondary mt-1">Alumnos Presentes Hoy</p>
         </div>
     );
 };
@@ -206,7 +206,7 @@ const QuickActionsWidget: React.FC = () => {
                 <Icon name="upload-cloud" className="w-4 h-4" />
                 Subir Asistencias
             </Button>
-            <Button onClick={handleSyncSchedule} className="w-full !bg-blue-600 hover:!bg-blue-700 text-white">
+            <Button onClick={handleSyncSchedule} className="w-full !bg-iaev-blue hover:!bg-iaev-blue-dark text-white">
                 <Icon name="download-cloud" className="w-4 h-4" />
                 Actualizar Horario
             </Button>
@@ -222,10 +222,10 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
     const todaysClasses = state.groups.filter(g => g.classDays.some(d => d.toLowerCase() === dayOfWeek.toLowerCase()));
 
     if (todaysClasses.length === 0) {
-        return <p className="text-slate-500 text-center flex items-center justify-center h-full">No hay grupos con clase hoy.</p>;
+        return <p className="text-iaev-text-secondary text-center flex items-center justify-center h-full">No hay grupos con clase hoy.</p>;
     }
     
-    const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-all duration-200 ease-in-out inline-flex items-center justify-start gap-3 text-left disabled:opacity-50 disabled:cursor-not-allowed';
+    const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-iaev-surface transition-all duration-200 ease-in-out inline-flex items-center justify-start gap-3 text-left disabled:opacity-50 disabled:cursor-not-allowed';
     const sizeClasses = 'p-3 text-base';
 
     return (
@@ -254,8 +254,8 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
 
 
 const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode; autoHeight?: boolean; }> = ({ title, children, autoHeight = false }) => (
-    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col h-full">
-        <h3 className="font-bold mb-3 text-slate-600 dark:text-slate-300">{title}</h3>
+    <div className="bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10 flex flex-col h-full">
+        <h3 className="font-bold mb-3 text-iaev-text-secondary">{title}</h3>
         <div className={!autoHeight ? "flex-grow" : ""}>
             {children}
         </div>

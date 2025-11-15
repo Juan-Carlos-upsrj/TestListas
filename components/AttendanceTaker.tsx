@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AttendanceStatus, Student } from '../types';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
@@ -77,9 +75,9 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
     if (pendingStudents.length === 0) {
         return (
             <div className="text-center p-4">
-                <Icon name="check-circle-2" className="w-16 h-16 text-green-500 mx-auto mb-4" />
+                <Icon name="check-circle-2" className="w-16 h-16 text-iaev-green-dark mx-auto mb-4" />
                 <h3 className="text-2xl font-bold my-4">¡Todo listo!</h3>
-                <p className="text-slate-500 mb-6">Todos los alumnos ya tienen un estado de asistencia para hoy.</p>
+                <p className="text-iaev-text-secondary mb-6">Todos los alumnos ya tienen un estado de asistencia para hoy.</p>
                 <Button onClick={onClose}>Cerrar</Button>
             </div>
         );
@@ -94,10 +92,10 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
 
     return (
         <div className="text-center p-4">
-            <p className="text-sm text-slate-500">Pase de lista para: {new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { dateStyle: 'long' })}</p>
+            <p className="text-sm text-iaev-text-secondary">Pase de lista para: {new Date(date + 'T00:00:00').toLocaleDateString('es-ES', { dateStyle: 'long' })}</p>
             <p className="text-slate-400 text-sm">Alumno {currentIndex + 1} de {pendingStudents.length}</p>
             <h3 className="text-3xl font-bold my-2">{currentStudent.name}</h3>
-            {currentStudent.nickname && <p className="text-xl text-slate-500 mb-4">"{currentStudent.nickname}"</p>}
+            {currentStudent.nickname && <p className="text-xl text-iaev-text-secondary mb-4">"{currentStudent.nickname}"</p>}
             
             <p className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 ${STATUS_STYLES[currentStatus].color}`}>
                 Estado actual: {currentStatus}
@@ -105,7 +103,7 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
                 {ATTENDANCE_STATUSES.map(status => (
-                    <Button key={status} onClick={() => handleSetStatus(status)} className={`${STATUS_STYLES[status].color} !py-3 !text-base`}>
+                    <Button key={status} onClick={() => handleSetStatus(status)} className={`${STATUS_STYLES[status].color.replace('text-','!text-')} !py-3 !text-base !bg-opacity-80 hover:!bg-opacity-100`}>
                         ({STATUS_STYLES[status].key}) {status}
                     </Button>
                 ))}

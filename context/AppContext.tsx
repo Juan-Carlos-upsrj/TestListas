@@ -23,10 +23,10 @@ const defaultState: AppState = {
     firstPartialEnd: nextMonth.toISOString().split('T')[0],
     semesterEnd: fourMonthsLater.toISOString().split('T')[0],
     showMatricula: true,
-    theme: 'light',
+    theme: 'light', // Theme is now fixed to light
     lowAttendanceThreshold: 80,
     googleCalendarUrl: '',
-    googleCalendarColor: 'amber',
+    googleCalendarColor: 'iaev-yellow',
     professorName: 'Nombre del Profesor',
     apiUrl: '',
     apiKey: '',
@@ -73,6 +73,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),
+                theme: 'light', // Force light theme on load
             },
             activeView: 'dashboard', // Always start at dashboard for consistency
             selectedGroupId: loadedState.selectedGroupId ?? null, // Explicitly handle selected group
@@ -314,7 +315,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         };
     }
     case 'UPDATE_SETTINGS': {
-        const newSettings = { ...state.settings, ...action.payload };
+        const newSettings = { ...state.settings, ...action.payload, theme: 'light' as 'light' | 'dark' };
         return { ...state, settings: newSettings };
     }
     case 'ADD_TOAST':

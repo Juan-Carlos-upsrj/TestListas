@@ -10,7 +10,45 @@ module.exports = {
   ],
   darkMode: 'class',
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+      },
+      colors: {
+        'iaev-background': '#F8F6F1',
+        'iaev-surface': '#FFFFFF',
+        'iaev-blue': {
+            light: '#A5C9FF',
+            DEFAULT: '#448AFF',
+            dark: '#303F9F',
+            darker: '#1A237E'
+        },
+        'iaev-yellow': {
+            light: '#FFF59D',
+            DEFAULT: '#FBC02D',
+            dark: '#F9A825'
+        },
+        'iaev-red': {
+            light: '#FFCDD2',
+            DEFAULT: '#E57373',
+            dark: '#D32F2F'
+        },
+        'iaev-green': {
+            light: '#DCEDC8',
+            DEFAULT: '#AED581',
+            dark: '#689F38'
+        },
+        'iaev-teal': {
+            light: '#B2DFDB',
+            DEFAULT: '#80CBC4',
+            dark: '#00796B'
+        },
+        'iaev-text': {
+            primary: '#2C3E50',
+            secondary: '#78909C'
+        },
+      }
+    },
   },
   plugins: [],
 }

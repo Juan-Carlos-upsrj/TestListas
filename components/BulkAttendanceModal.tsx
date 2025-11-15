@@ -47,7 +47,7 @@ const BulkAttendanceModal: React.FC<BulkAttendanceModalProps> = ({ isOpen, onClo
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`Relleno Rápido de Asistencia: ${group.name}`}>
             <form onSubmit={handleSubmit}>
-                <p className="mb-4 text-slate-500 dark:text-slate-400 text-sm">
+                <p className="mb-4 text-iaev-text-secondary text-sm">
                     Esta herramienta rellenará todos los días de clase sin asistencia dentro del rango seleccionado.
                 </p>
                 <div className="space-y-4">
@@ -60,7 +60,7 @@ const BulkAttendanceModal: React.FC<BulkAttendanceModalProps> = ({ isOpen, onClo
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
                                 required
-                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                             />
                         </div>
                         <div>
@@ -71,7 +71,7 @@ const BulkAttendanceModal: React.FC<BulkAttendanceModalProps> = ({ isOpen, onClo
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
                                 required
-                                className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                                className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                             />
                         </div>
                     </div>
@@ -81,7 +81,7 @@ const BulkAttendanceModal: React.FC<BulkAttendanceModalProps> = ({ isOpen, onClo
                             id="status"
                             value={status}
                             onChange={(e) => setStatus(e.target.value as AttendanceStatus)}
-                            className="mt-1 w-full p-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 focus:ring-2 focus:ring-indigo-500"
+                            className="mt-1 w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
                         >
                             {ATTENDANCE_STATUSES.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
@@ -92,14 +92,14 @@ const BulkAttendanceModal: React.FC<BulkAttendanceModalProps> = ({ isOpen, onClo
                             id="overwrite"
                             checked={overwrite}
                             onChange={(e) => setOverwrite(e.target.checked)}
-                            className="h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500"
+                            className="h-4 w-4 rounded text-iaev-blue focus:ring-iaev-blue"
                         />
                         <label htmlFor="overwrite" className="text-sm font-medium">
                             Sobrescribir registros existentes
                         </label>
                     </div>
                     {overwrite && (
-                         <div className="p-2 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200 text-xs rounded-md flex items-center gap-2">
+                         <div className="p-2 bg-iaev-yellow-light text-iaev-yellow-dark text-xs rounded-md flex items-center gap-2">
                             <Icon name="info" className="w-4 h-4 flex-shrink-0"/>
                             <span><strong>¡Atención!</strong> Esta opción reemplazará cualquier asistencia (presente, ausente, etc.) que ya hayas registrado en el rango seleccionado.</span>
                         </div>
