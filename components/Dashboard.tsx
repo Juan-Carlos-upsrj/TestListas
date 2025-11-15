@@ -4,7 +4,6 @@ import { AppContext } from '../context/AppContext';
 import { Group, AttendanceStatus } from '../types';
 import Icon from './icons/Icon';
 import BirthdayCelebration from './BirthdayCelebration';
-import FridayCelebration from './FridayCelebration';
 import { PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
 import Modal from './common/Modal';
 import AttendanceTaker from './AttendanceTaker';
@@ -271,7 +270,6 @@ const Dashboard: React.FC = () => {
 
     const [today, setToday] = useState(new Date());
     const [birthdayPerson, setBirthdayPerson] = useState<string | null>(null);
-    const [isFriday, setIsFriday] = useState(false);
 
     React.useEffect(() => {
         const timer = setInterval(() => setToday(new Date()), 60000); // Update every minute
@@ -284,7 +282,6 @@ const Dashboard: React.FC = () => {
         const todayStr = `${month}-${day}`;
         const birthday = PROFESSOR_BIRTHDAYS.find(p => p.birthdate === todayStr);
         setBirthdayPerson(birthday ? birthday.name : null);
-        setIsFriday(today.getDay() === 5);
     }, [today]);
 
     const dateString = today.toLocaleDateString('es-ES', {
@@ -352,7 +349,6 @@ const Dashboard: React.FC = () => {
     return (
         <div>
             <BirthdayCelebration name={birthdayPerson || ''} show={!!birthdayPerson} />
-            <FridayCelebration show={isFriday && !birthdayPerson} />
             
             <ResponsiveGridLayout
                 layouts={layouts}

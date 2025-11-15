@@ -47,6 +47,23 @@ module.exports = {
             primary: '#2C3E50',
             secondary: '#78909C'
         },
+      },
+      animation: {
+        'gradient-x': 'gradient-x 5s ease infinite',
+        'float': 'float 8s ease-in-out infinite',
+      },
+      keyframes: {
+        'gradient-x': {
+          '0%, 100%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-25px)' },
+        },
+      },
+      backgroundSize: {
+        '300%': '300% 300%',
       }
     },
   },
