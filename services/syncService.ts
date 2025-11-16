@@ -1,4 +1,4 @@
-import { AppState, AppAction, Group, DayOfWeek, Settings } from '../types';
+import { AppState, AppAction, Group, DayOfWeek } from '../types';
 import { Dispatch } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { fetchHorarioCompleto } from './horarioService';
@@ -230,96 +230,5 @@ export const syncScheduleData = async (state: AppState, dispatch: Dispatch<AppAc
     } catch (error) {
         const msg = error instanceof Error ? error.message : 'Error desconocido al sincronizar.';
         dispatch({ type: 'ADD_TOAST', payload: { message: msg, type: 'error' } });
-    }
-};
-
-
-// --- Funciones para Sincronización Personalizada ---
-
-export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<AppAction>) => {
-    if (!checkSettings(state.settings, dispatch)) return;
-    
-    const { settings } = state;
-    const { apiUrl, apiKey, professorName } = settings;
-    const trimmedProfessorName = professorName.trim();
-
-    dispatch({ type: 'ADD_TOAST', payload: { message: 'Subiendo copia de seguridad a la nube...', type: 'info' } });
-
-    const stateToSave = { ...state, toasts: [] };
-    const payload = {
-        profesor_nombre: trimmedProfessorName,
-        estado: stateToSave
-    };
-
-    try {
-        const url = getBaseApiUrl(apiUrl);
-        // Action is sent in the body for POST request
-        const body = { ...payload, action: 'backup-estado' };
-
-        const response = await fetch(url.toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': apiKey,
-            },
-            body: JSON.stringify(body),
-        });
-        
-        const data = await response.json();
-
-        if (response.ok) {
-            dispatch({ type: 'ADD_TOAST', payload: { message: 'Copia de seguridad subida con éxito.', type: 'success' } });
-        } else {
-            throw new Error(data.message || `Error del servidor: ${response.statusText}`);
-        }
-    } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Error de red al subir la copia.';
-        dispatch({ type: 'ADD_TOAST', payload: { message: msg, type: 'error' } });
-    }
-};
-
-export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<AppState> | null> => {
-    const { apiUrl, apiKey, professorName } = settings;
-    const trimmedProfessorName = professorName.trim();
-
-    if (!apiUrl || !apiKey || !trimmedProfessorName || trimmedProfessorName === 'Nombre del Profesor') {
-        throw new Error('La configuración de API y profesor es necesaria.');
-    }
-
-    try {
-        const url = getBaseApiUrl(apiUrl);
-        
-        const body = {
-            action: 'backup-estado',
-            profesor_nombre: trimmedProfessorName
-        };
-        
-        const response = await fetch(url.toString(), {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': apiKey,
-            },
-            body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-             if (response.status === 404) {
-                 throw new Error('No se encontraron datos en la nube para este usuario.');
-            }
-            const data = await response.json().catch(() => ({ message: response.statusText }));
-            throw new Error(data.message || `Error del servidor: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        if (data && data.estado) {
-            return data.estado as Partial<AppState>;
-        } else {
-             throw new Error('No se encontraron datos en la nube para este usuario.');
-        }
-    } catch (error) {
-        const msg = error instanceof Error ? error.message : 'Error de red al descargar la copia.';
-        throw new Error(msg);
     }
 };

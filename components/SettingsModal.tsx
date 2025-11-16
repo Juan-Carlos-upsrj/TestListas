@@ -1,13 +1,12 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Settings, AppState } from '../types';
+import { Settings } from '../types';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import { GROUP_COLORS } from '../constants';
 import { exportBackup, importBackup } from '../services/backupService';
 import Icon from './icons/Icon';
-import { syncAttendanceData, syncScheduleData, uploadStateToCloud, fetchStateFromCloud } from '../services/syncService';
-import ConfirmationModal from './common/ConfirmationModal';
+import { syncAttendanceData, syncScheduleData } from '../services/syncService';
 
 
 interface SettingsModalProps {
@@ -20,10 +19,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const [settings, setSettings] = useState<Settings>(state.settings);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    const [isUploading, setIsUploading] = useState(false);
-    const [isDownloading, setIsDownloading] = useState(false);
-    const [isCloudConfirmOpen, setCloudConfirmOpen] = useState(false);
-    const [cloudDataToLoad, setCloudDataToLoad] = useState<Partial<AppState> | null>(null);
 
     useEffect(() => {
         setSettings(state.settings);
@@ -78,37 +73,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         }
     };
     
-    const handleUploadCloudBackup = async () => {
-        setIsUploading(true);
-        await uploadStateToCloud(state, dispatch);
-        setIsUploading(false);
-    };
-
-    const handleDownloadCloudBackup = async () => {
-        setIsDownloading(true);
-        try {
-            const data = await fetchStateFromCloud(state.settings);
-            if (data) {
-                setCloudDataToLoad(data);
-                setCloudConfirmOpen(true);
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Error desconocido al descargar.';
-            dispatch({ type: 'ADD_TOAST', payload: { message: errorMessage, type: 'error' } });
-        } finally {
-            setIsDownloading(false);
-        }
-    };
-
-    const executeCloudImport = () => {
-        if (cloudDataToLoad) {
-            dispatch({ type: 'SET_INITIAL_STATE', payload: cloudDataToLoad });
-            dispatch({ type: 'ADD_TOAST', payload: { message: 'Datos descargados y aplicados con éxito.', type: 'success' } });
-        }
-        setCloudConfirmOpen(false);
-        setCloudDataToLoad(null);
-        onClose();
-    };
 
     return (
         <>
@@ -259,44 +223,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         </p>
                     </fieldset>
                     
-                    {settings.professorName === 'Juan Carlos S.R' && (
-                        <fieldset className="border p-4 rounded-lg border-iaev-yellow">
-                            <legend className="px-2 font-semibold text-iaev-yellow-dark">Sincronización Personalizada</legend>
-                            <div className="grid grid-cols-2 gap-4">
-                                <Button variant="secondary" onClick={handleUploadCloudBackup} disabled={isUploading || isDownloading} className="w-full">
-                                    {isUploading ? 'Subiendo...' : <><Icon name="upload-cloud" /> Subir Copia a la Nube</>}
-                                </Button>
-                                <Button variant="secondary" onClick={handleDownloadCloudBackup} disabled={isUploading || isDownloading} className="w-full">
-                                    {isDownloading ? 'Descargando...' : <><Icon name="download-cloud" /> Descargar Copia de la Nube</>}
-                                </Button>
-                            </div>
-                            <p className="text-xs text-iaev-text-secondary mt-2">
-                                <strong className="text-iaev-yellow-dark">Exclusivo:</strong> Estas opciones te permiten guardar y cargar una copia completa de tus datos en la nube para sincronizar entre dispositivos.
-                            </p>
-                        </fieldset>
-                    )}
                 </div>
                  <div className="flex justify-end gap-3 mt-8">
                     <Button variant="secondary" onClick={onClose}>Cancelar</Button>
                     <Button onClick={handleSave}>Guardar Cambios</Button>
                 </div>
             </Modal>
-            <ConfirmationModal
-                isOpen={isCloudConfirmOpen}
-                onClose={() => setCloudConfirmOpen(false)}
-                onConfirm={executeCloudImport}
-                title="Confirmar Descarga"
-                confirmText="Sí, reemplazar"
-                variant="danger"
-            >
-                <p>
-                    Has descargado una copia de seguridad de la nube.
-                </p>
-                <p className="font-bold mt-2">
-                    Esto reemplazará TODOS tus datos locales actuales.
-                </p>
-                <p className="mt-2">¿Estás seguro de que deseas continuar?</p>
-            </ConfirmationModal>
         </>
     );
 };
