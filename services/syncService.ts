@@ -215,7 +215,10 @@ export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<App
     };
 
     try {
-        const response = await fetch(`${apiUrl}/backup-estado`, {
+        const url = new URL(apiUrl);
+        url.searchParams.append('action', 'backup-estado');
+
+        const response = await fetch(url.toString(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -244,7 +247,8 @@ export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<A
     }
 
     try {
-        const url = new URL(`${apiUrl}/backup-estado`);
+        const url = new URL(apiUrl);
+        url.searchParams.append('action', 'backup-estado');
         url.searchParams.append('profesor_nombre', professorName);
         
         const response = await fetch(url.toString(), {
