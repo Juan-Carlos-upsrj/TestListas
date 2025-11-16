@@ -34,7 +34,7 @@ const Sidebar: React.FC = () => {
       <aside className="w-64 bg-iaev-surface flex flex-col flex-shrink-0 z-20 border-r border-slate-900/10" aria-label="Barra lateral principal">
         <div className="p-4 border-b border-slate-900/10 flex items-center gap-3">
             <motion.img 
-                src="/logo.png" 
+                src="logo.png" 
                 alt="IAEV Logo" 
                 className="w-10 h-10"
                 animate={{ rotate: [0, 7, -7, 0] }}

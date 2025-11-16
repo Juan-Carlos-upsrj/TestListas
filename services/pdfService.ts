@@ -49,7 +49,7 @@ export const exportReportToPDF = async (
     groupEvaluations: Evaluation[],
     settings: Settings
 ) => {
-    const logoBase64 = await getImageAsBase64('/logo.png');
+    const logoBase64 = await getImageAsBase64('logo.png');
 
     const pdf = new jsPDF({
         orientation: 'landscape',

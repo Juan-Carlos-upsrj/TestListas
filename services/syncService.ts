@@ -45,21 +45,32 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
     dispatch({ type: 'ADD_TOAST', payload: { message: 'Comparando datos con el servidor...', type: 'info' } });
 
     try {
-        // 1. Obtener los registros existentes del servidor
+        // 1. Obtener los registros existentes del servidor usando POST
         const fetchUrl = getBaseApiUrl(apiUrl);
-        fetchUrl.searchParams.append('profesor_nombre', professorName);
-
+        
         const serverResponse = await fetch(fetchUrl.toString(), {
-            method: 'GET',
-            headers: { 'X-API-KEY': apiKey },
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-API-KEY': apiKey
+            },
+            body: JSON.stringify({
+                action: 'get-asistencias',
+                profesor_nombre: professorName
+            })
         });
 
         if (!serverResponse.ok) {
             const errorData = await serverResponse.json().catch(() => ({ message: serverResponse.statusText }));
-            throw new Error(`Error al obtener datos del servidor: ${errorData.message}`);
+            // Handle case where server returns empty for no records, but not as an error
+            if (serverResponse.status === 404 || (await serverResponse.text()).trim() === "") {
+                 // Assume no records exist and proceed
+            } else {
+                throw new Error(`Error al obtener datos del servidor: ${errorData.message}`);
+            }
         }
         
-        const serverRecords: any[] = await serverResponse.json();
+        const serverRecords: any[] = await serverResponse.json().catch(() => []);
         
         // 2. Crear un mapa para una búsqueda eficiente
         const serverRecordsMap = new Map<string, string>(); // Key: 'alumno_id-fecha', Value: 'status'
@@ -238,7 +249,8 @@ export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<App
 
     try {
         const url = getBaseApiUrl(apiUrl);
-        url.searchParams.append('action', 'backup-estado');
+        // Action is sent in the body for POST request
+        const body = { ...payload, action: 'backup-estado' };
 
         const response = await fetch(url.toString(), {
             method: 'POST',
@@ -246,7 +258,7 @@ export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<App
                 'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(body),
         });
         
         const data = await response.json();
@@ -270,14 +282,17 @@ export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<A
 
     try {
         const url = getBaseApiUrl(apiUrl);
-        url.searchParams.append('action', 'backup-estado');
-        url.searchParams.append('profesor_nombre', professorName);
         
         const response = await fetch(url.toString(), {
-            method: 'GET',
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
             },
+            body: JSON.stringify({
+                action: 'backup-estado',
+                profesor_nombre: professorName,
+            }),
         });
 
         const data = await response.json();
