@@ -192,7 +192,7 @@ const QuickActionsWidget: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
 
     const handleSyncAttendance = () => {
-        syncAttendanceData(state, dispatch);
+        syncAttendanceData(state, dispatch, 'today');
     };
 
     const handleSyncSchedule = () => {

@@ -204,8 +204,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             <Button variant="secondary" onClick={handleImportClick} className="w-full">
                                 <Icon name="upload-cloud" /> Importar Respaldo
                             </Button>
-                            <Button variant="secondary" onClick={() => syncAttendanceData(state, dispatch)} className="w-full">
-                                <Icon name="upload-cloud" /> Subir Asistencias
+                            <Button variant="secondary" onClick={() => syncAttendanceData(state, dispatch, 'all')} className="w-full">
+                                <Icon name="upload-cloud" /> Sinc. Asistencia (Completo)
                             </Button>
                             <Button variant="secondary" onClick={() => syncScheduleData(state, dispatch)} className="w-full !bg-iaev-blue hover:!bg-iaev-blue-dark text-white">
                                 <Icon name="download-cloud" /> Actualizar Horario

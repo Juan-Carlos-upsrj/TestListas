@@ -1,4 +1,4 @@
-import { AppState, AppAction, Group, DayOfWeek } from '../types';
+import { AppState, AppAction, Group, DayOfWeek, AttendanceStatus } from '../types';
 import { Dispatch } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { fetchHorarioCompleto } from './horarioService';
@@ -36,12 +36,15 @@ const getBaseApiUrl = (apiUrl: string): URL => {
 };
 
 
-export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<AppAction>) => {
+export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<AppAction>, syncScope: 'today' | 'all') => {
     if (!checkSettings(state.settings, dispatch)) return;
 
     const { settings, attendance, groups } = state;
     const { apiUrl, apiKey, professorName } = settings;
     const trimmedProfessorName = professorName.trim();
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     dispatch({ type: 'ADD_TOAST', payload: { message: 'Comparando datos con el servidor...', type: 'info' } });
 
@@ -96,6 +99,16 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
                 if (!student) continue;
 
                 for (const [date, localStatus] of Object.entries(dateAttendances)) {
+                    // Ignorar si el modo es 'today' y la fecha no es hoy
+                    if (syncScope === 'today' && date !== todayStr) {
+                        continue;
+                    }
+
+                    // Ignorar registros pendientes
+                    if (localStatus === AttendanceStatus.Pending) {
+                        continue;
+                    }
+
                     const key = `${studentId}-${date}`;
                     const serverStatus = serverRecordsMap.get(key);
 
