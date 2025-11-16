@@ -1,12 +1,78 @@
 import React, { useContext, useState, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Group, Student, DayOfWeek } from '../types';
+import { Group, Student, DayOfWeek, EvaluationType } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import Icon from './icons/Icon';
 import { DAYS_OF_WEEK, GROUP_COLORS } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const EvaluationTypesEditor: React.FC<{
+    types: EvaluationType[];
+    onTypesChange: (types: EvaluationType[]) => void;
+    partialName: string;
+}> = ({ types, onTypesChange, partialName }) => {
+    const totalWeight = useMemo(() => types.reduce((sum, type) => sum + (Number(type.weight) || 0), 0), [types]);
+
+    const handleTypeChange = (id: string, field: 'name' | 'weight', value: string) => {
+        onTypesChange(types.map(type => 
+            type.id === id 
+                ? { ...type, [field]: field === 'weight' ? Number(value) : value } 
+                : type
+        ));
+    };
+
+    const addType = () => {
+        onTypesChange([...types, { id: uuidv4(), name: '', weight: 0 }]);
+    };
+    
+    const removeType = (id: string) => {
+        onTypesChange(types.filter(type => type.id !== id));
+    };
+
+    return (
+        <fieldset className="border p-3 rounded-md border-slate-200">
+            <legend className="px-1 text-sm font-semibold">{partialName}</legend>
+            <div className="space-y-2">
+                {types.map(type => (
+                    <div key={type.id} className="grid grid-cols-12 gap-2 items-center">
+                        <input
+                            type="text"
+                            placeholder="Nombre (ej. Tareas)"
+                            value={type.name}
+                            onChange={e => handleTypeChange(type.id, 'name', e.target.value)}
+                            className="col-span-7 p-1.5 border border-slate-300 rounded-md bg-iaev-surface text-sm focus:ring-1 focus:ring-iaev-blue"
+                        />
+                        <div className="col-span-4 relative">
+                            <input
+                                type="number"
+                                placeholder="Peso"
+                                value={type.weight}
+                                onChange={e => handleTypeChange(type.id, 'weight', e.target.value)}
+                                className="w-full p-1.5 border border-slate-300 rounded-md bg-iaev-surface text-sm focus:ring-1 focus:ring-iaev-blue"
+                                min="0" max="100"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 text-sm">%</span>
+                        </div>
+                        <button type="button" onClick={() => removeType(type.id)} className="col-span-1 text-iaev-red hover:bg-iaev-red-light rounded-full p-1">
+                            <Icon name="trash-2" className="w-4 h-4" />
+                        </button>
+                    </div>
+                ))}
+            </div>
+            <div className="flex justify-between items-center mt-3">
+                 <Button type="button" size="sm" variant="secondary" onClick={addType}>
+                    <Icon name="plus" className="w-4 h-4"/> Añadir Tipo
+                </Button>
+                <div className={`text-sm font-bold ${totalWeight !== 100 ? 'text-iaev-red-dark' : 'text-iaev-green-dark'}`}>
+                    Total: {totalWeight}%
+                </div>
+            </div>
+        </fieldset>
+    );
+};
+
 
 // Form for creating/editing a group
 const GroupForm: React.FC<{
@@ -18,6 +84,8 @@ const GroupForm: React.FC<{
     const [subject, setSubject] = useState(group?.subject || '');
     const [classDays, setClassDays] = useState<DayOfWeek[]>(group?.classDays || []);
     const [color, setColor] = useState(group?.color || GROUP_COLORS[0].name);
+    const [p1Types, setP1Types] = useState(group?.evaluationTypes?.partial1 || [{ id: uuidv4(), name: 'General', weight: 100 }]);
+    const [p2Types, setP2Types] = useState(group?.evaluationTypes?.partial2 || [{ id: uuidv4(), name: 'General', weight: 100 }]);
 
     const handleDayToggle = (day: DayOfWeek) => {
         setClassDays(prev =>
@@ -27,17 +95,26 @@ const GroupForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        const p1Weight = p1Types.reduce((sum, t) => sum + t.weight, 0);
+        const p2Weight = p2Types.reduce((sum, t) => sum + t.weight, 0);
+
         if (!name || !subject) {
-            alert('Por favor, completa todos los campos.');
+            alert('Por favor, completa el nombre y la materia del grupo.');
             return;
         }
+        if (p1Weight !== 100 || p2Weight !== 100) {
+            alert('La suma de los pesos para cada parcial debe ser exactamente 100%.');
+            return;
+        }
+
         onSave({
             id: group?.id || uuidv4(),
             name,
             subject,
             classDays,
             students: group?.students || [],
-            color
+            color,
+            evaluationTypes: { partial1: p1Types, partial2: p2Types }
         });
     };
 
@@ -83,6 +160,13 @@ const GroupForm: React.FC<{
                                 className={`w-8 h-8 rounded-full ${c.bg} transition-transform transform hover:scale-110 focus:outline-none ${color === c.name ? 'ring-2 ring-offset-2 ring-iaev-blue ring-offset-iaev-surface' : ''}`}
                             />
                         ))}
+                    </div>
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium mb-2">Ponderación de Calificaciones</label>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <EvaluationTypesEditor types={p1Types} onTypesChange={setP1Types} partialName="Parcial 1" />
+                        <EvaluationTypesEditor types={p2Types} onTypesChange={setP2Types} partialName="Parcial 2" />
                     </div>
                 </div>
             </div>
@@ -365,7 +449,7 @@ const GroupManagement: React.FC = () => {
                 </div>
             </div>
 
-            <Modal isOpen={isGroupModalOpen} onClose={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} title={editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'}>
+            <Modal isOpen={isGroupModalOpen} onClose={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} title={editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'} size="xl">
                 <GroupForm group={editingGroup} onSave={handleSaveGroup} onCancel={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} />
             </Modal>
             <Modal isOpen={isStudentModalOpen} onClose={() => { setStudentModalOpen(false); setEditingStudent(undefined); }} title={editingStudent ? 'Editar Alumno' : 'Nuevo Alumno'}>

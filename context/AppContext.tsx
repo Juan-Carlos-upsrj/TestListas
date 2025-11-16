@@ -4,6 +4,7 @@ import { GROUP_COLORS } from '../constants';
 import { getState, saveState } from '../services/dbService';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
 import { getClassDates } from '../services/dateUtils';
+import { v4 as uuidv4 } from 'uuid';
 
 const today = new Date();
 const nextMonth = new Date();
@@ -41,28 +42,37 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'SET_INITIAL_STATE': {
         const loadedState = action.payload || {};
         
-        // FIX: Filter out null/falsy values and incomplete group objects from arrays to prevent crashes on corrupted data.
-        // A valid group must at least have an id.
         const loadedGroups: Group[] = (Array.isArray(loadedState.groups) ? loadedState.groups : []).filter(g => g && g.id);
-        const migratedGroups = loadedGroups.map((group, index) => ({
-            ...group,
-            classDays: group.classDays || [],
-            color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
-        }));
+        const migratedGroups = loadedGroups.map((group, index) => {
+            const hasEvalTypes = group.evaluationTypes && group.evaluationTypes.partial1 && group.evaluationTypes.partial2;
+            return {
+                ...group,
+                classDays: group.classDays || [],
+                color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
+                // Migration logic for evaluation types
+                evaluationTypes: hasEvalTypes ? group.evaluationTypes : {
+                    partial1: [{ id: uuidv4(), name: 'General', weight: 100 }],
+                    partial2: [{ id: uuidv4(), name: 'General', weight: 100 }]
+                }
+            };
+        });
         
-        // FIX: Ensure loadedEvaluations is a valid object and filter its content.
         const loadedEvaluations = (typeof loadedState.evaluations === 'object' && loadedState.evaluations !== null) ? loadedState.evaluations : {};
         const migratedEvaluations: AppState['evaluations'] = {};
         Object.keys(loadedEvaluations).forEach(groupId => {
-             // FIX: Filter out null/falsy values from arrays to prevent crashes.
+            const group = migratedGroups.find(g => g.id === groupId);
+            if (!group) return;
+
             const evaluationsForGroup = (Array.isArray(loadedEvaluations[groupId]) ? loadedEvaluations[groupId] : []).filter(Boolean);
             migratedEvaluations[groupId] = evaluationsForGroup.map((ev: Evaluation) => ({
                 ...ev,
                 partial: ev.partial || 1,
+                // Migration logic for evaluation typeId
+                typeId: ev.typeId || (ev.partial === 2 ? group.evaluationTypes.partial2[0]?.id : group.evaluationTypes.partial1[0]?.id)
             }));
         });
 
-        // Construct the new state safely, property by property, to avoid corruption from old/invalid saved states.
+        // Construct the new state safely
         const newState: AppState = {
             groups: migratedGroups,
             attendance: loadedState.attendance ?? defaultState.attendance,
@@ -73,11 +83,11 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),
-                theme: 'light', // Force light theme on load
+                theme: 'light',
             },
-            activeView: 'dashboard', // Always start at dashboard for consistency
-            selectedGroupId: loadedState.selectedGroupId ?? null, // Explicitly handle selected group
-            toasts: [], // Always reset toasts on load
+            activeView: 'dashboard',
+            selectedGroupId: loadedState.selectedGroupId ?? null,
+            toasts: [],
         };
         return newState;
     }
@@ -93,7 +103,6 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           groups: state.groups.map(g => g.id === action.payload.id ? action.payload : g),
         };
       }
-      // Assign a color to a new group
       const newGroup = {
         ...action.payload,
         color: action.payload.color || GROUP_COLORS[state.groups.length % GROUP_COLORS.length].name,
@@ -233,30 +242,17 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'BULK_SET_ATTENDANCE': {
         const { groupId, records } = action.payload;
         
-        // Create a copy of the attendance state
         const updatedAttendance = { ...state.attendance };
-
-        // Create a copy of the specific group's attendance, or an empty object if it doesn't exist
         const updatedGroupAttendance = { ...(updatedAttendance[groupId] || {}) };
 
-        // Iterate over the records and update the group's attendance immutably
         records.forEach(record => {
-            // Create a copy of the specific student's attendance, or an empty object
             const updatedStudentAttendance = { ...(updatedGroupAttendance[record.studentId] || {}) };
-            // Set the new status for the date
             updatedStudentAttendance[record.date] = record.status;
-            // Assign the updated student attendance back to the group's attendance
             updatedGroupAttendance[record.studentId] = updatedStudentAttendance;
         });
 
-        // Assign the updated group attendance back to the main attendance object
         updatedAttendance[groupId] = updatedGroupAttendance;
-
-        // Return the new state
-        return {
-            ...state,
-            attendance: updatedAttendance,
-        };
+        return { ...state, attendance: updatedAttendance };
     }
     case 'SAVE_EVALUATION': {
         const { groupId, evaluation } = action.payload;

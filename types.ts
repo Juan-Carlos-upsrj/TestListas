@@ -4,7 +4,7 @@ export type DayOfWeek = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes'
 // FIX: The self-import of types from this file was removed to fix circular dependency errors.
 
 // FIX: The original file had a circular dependency by importing from itself, causing numerous type errors.
-// All type definitions have been consolidated here and circular references removed to create a single source of truth for application types.
+// All type definitions have been consolidated here and a single source of truth for application types has been created.
 export type { Layouts, Layout } from 'react-grid-layout';
 
 export interface CalendarEvent {
@@ -23,6 +23,12 @@ export interface Student {
   nickname?: string;
 }
 
+export interface EvaluationType {
+  id: string;
+  name: string;
+  weight: number; // Percentage (e.g., 30 for 30%)
+}
+
 export interface Group {
   id: string;
   name: string;
@@ -30,6 +36,10 @@ export interface Group {
   classDays: DayOfWeek[];
   students: Student[];
   color: string; // e.g., 'indigo', 'green', etc.
+  evaluationTypes: {
+    partial1: EvaluationType[];
+    partial2: EvaluationType[];
+  };
 }
 
 export enum AttendanceStatus {
@@ -46,6 +56,7 @@ export interface Evaluation {
   name: string;
   maxScore: number;
   partial: 1 | 2;
+  typeId: string; // Links to EvaluationType id
 }
 
 export interface Settings {

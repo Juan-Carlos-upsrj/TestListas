@@ -231,7 +231,12 @@ export const syncScheduleData = async (state: AppState, dispatch: Dispatch<AppAc
                     subject: info.subjectName,
                     classDays: diasDeClase as DayOfWeek[],
                     students: [],
-                    color: GROUP_COLORS[(groups.length + gruposCreados) % GROUP_COLORS.length].name
+                    color: GROUP_COLORS[(groups.length + gruposCreados) % GROUP_COLORS.length].name,
+                    // FIX: Added default evaluationTypes to satisfy the Group type definition.
+                    evaluationTypes: {
+                        partial1: [{ id: uuidv4(), name: 'General', weight: 100 }],
+                        partial2: [{ id: uuidv4(), name: 'General', weight: 100 }],
+                    },
                 };
                 dispatch({ type: 'SAVE_GROUP', payload: nuevoGrupo });
                 gruposCreados++;
