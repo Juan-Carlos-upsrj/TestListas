@@ -16,6 +16,26 @@ const checkSettings = (settings: AppState['settings'], dispatch: Dispatch<AppAct
     return true;
 };
 
+/**
+ * Ensures the API URL points directly to the .php file, removing any
+ * extra path segments that might have been saved in settings.
+ * This prevents malformed URLs that cause 400 Bad Request errors.
+ * @param apiUrl The raw API URL from settings.
+ * @returns A cleaned URL object.
+ */
+const getBaseApiUrl = (apiUrl: string): URL => {
+    const url = new URL(apiUrl);
+    const pathParts = url.pathname.split('/');
+    // Find the index of the part that contains '.php'
+    const apiPhpIndex = pathParts.findIndex(p => p.includes('.php'));
+    if (apiPhpIndex !== -1) {
+        // Reconstruct the pathname to end at the .php file
+        url.pathname = pathParts.slice(0, apiPhpIndex + 1).join('/');
+    }
+    return url;
+};
+
+
 export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<AppAction>) => {
     if (!checkSettings(state.settings, dispatch)) return;
 
@@ -26,7 +46,7 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
 
     try {
         // 1. Obtener los registros existentes del servidor
-        const fetchUrl = new URL(apiUrl);
+        const fetchUrl = getBaseApiUrl(apiUrl);
         fetchUrl.searchParams.append('profesor_nombre', professorName);
 
         const serverResponse = await fetch(fetchUrl.toString(), {
@@ -90,8 +110,10 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
         }
 
         dispatch({ type: 'ADD_TOAST', payload: { message: `Subiendo ${recordsToSync.length} registros nuevos o modificados...`, type: 'info' } });
+        
+        const syncUrl = getBaseApiUrl(apiUrl);
 
-        const syncResponse = await fetch(apiUrl, {
+        const syncResponse = await fetch(syncUrl.toString(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -215,7 +237,7 @@ export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<App
     };
 
     try {
-        const url = new URL(apiUrl);
+        const url = getBaseApiUrl(apiUrl);
         url.searchParams.append('action', 'backup-estado');
 
         const response = await fetch(url.toString(), {
@@ -247,7 +269,7 @@ export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<A
     }
 
     try {
-        const url = new URL(apiUrl);
+        const url = getBaseApiUrl(apiUrl);
         url.searchParams.append('action', 'backup-estado');
         url.searchParams.append('profesor_nombre', professorName);
         
