@@ -71,7 +71,8 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
             }
         }
         
-        const serverRecords: any[] = await serverResponse.json().catch(() => []);
+        const serverData = await serverResponse.json().catch(() => null);
+        const serverRecords: any[] = Array.isArray(serverData) ? serverData : [];
         
         // 2. Crear un mapa para una búsqueda eficiente
         const serverRecordsMap = new Map<string, string>(); // Key: 'alumno_id-fecha', Value: 'status'
@@ -287,28 +288,30 @@ export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<A
 
     try {
         const url = getBaseApiUrl(apiUrl);
+        url.searchParams.append('action', 'backup-estado');
+        url.searchParams.append('profesor_nombre', trimmedProfessorName);
         
         const response = await fetch(url.toString(), {
-            method: 'POST',
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
             },
-            body: JSON.stringify({
-                action: 'backup-estado',
-                profesor_nombre: trimmedProfessorName,
-            }),
         });
+
+        if (!response.ok) {
+             if (response.status === 404) {
+                 throw new Error('No se encontraron datos en la nube para este usuario.');
+            }
+            const data = await response.json().catch(() => ({ message: response.statusText }));
+            throw new Error(data.message || `Error del servidor: ${response.statusText}`);
+        }
 
         const data = await response.json();
 
-        if (response.ok) {
-            if (data && data.estado) {
-                return data.estado as Partial<AppState>;
-            }
-            throw new Error('No se encontraron datos en la nube para este usuario.');
+        if (data && data.estado) {
+            return data.estado as Partial<AppState>;
         } else {
-            throw new Error(data.message || `Error del servidor: ${response.statusText}`);
+             throw new Error('No se encontraron datos en la nube para este usuario.');
         }
     } catch (error) {
         const msg = error instanceof Error ? error.message : 'Error de red al descargar la copia.';
