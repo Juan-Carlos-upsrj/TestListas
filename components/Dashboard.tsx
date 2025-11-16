@@ -55,7 +55,7 @@ const TodaysClassesWidget: React.FC = () => {
     return (
         <ul className="space-y-2 overflow-y-auto h-full pr-2">
             {todaysClasses.map(g => (
-                <li key={g.id} className="text-sm p-2 bg-slate-200/50 rounded-md truncate">{g.name}</li>
+                <li key={g.id} className="text-sm p-2 bg-slate-200/50 rounded-md">{g.name}</li>
             ))}
         </ul>
     );
@@ -142,7 +142,7 @@ const UpcomingEventsWidget: React.FC = () => {
 
                 return (
                     <li key={event.id} className={`text-sm p-2 rounded-md transition-colors ${colorClass}`}>
-                        <p className="font-semibold truncate text-iaev-text-primary">{event.title}</p>
+                        <p className="font-semibold text-iaev-text-primary">{event.title}</p>
                         <p className="text-xs text-iaev-text-secondary capitalize">{dateString}</p>
                     </li>
                 );
