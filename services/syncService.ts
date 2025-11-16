@@ -288,14 +288,19 @@ export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<A
 
     try {
         const url = getBaseApiUrl(apiUrl);
-        url.searchParams.append('action', 'backup-estado');
-        url.searchParams.append('profesor_nombre', trimmedProfessorName);
+        
+        const body = {
+            action: 'backup-estado',
+            profesor_nombre: trimmedProfessorName
+        };
         
         const response = await fetch(url.toString(), {
-            method: 'GET',
+            method: 'POST',
             headers: {
+                'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
             },
+            body: JSON.stringify(body),
         });
 
         if (!response.ok) {
