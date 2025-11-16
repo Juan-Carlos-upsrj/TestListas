@@ -6,7 +6,7 @@ import { GROUP_COLORS } from '../constants';
 
 const checkSettings = (settings: AppState['settings'], dispatch: Dispatch<AppAction>): boolean => {
     const { apiUrl, apiKey, professorName } = settings;
-    if (!apiUrl || !apiKey || !professorName || professorName === 'Nombre del Profesor') {
+    if (!apiUrl || !apiKey || !professorName.trim() || professorName.trim() === 'Nombre del Profesor') {
         dispatch({
             type: 'ADD_TOAST',
             payload: { message: 'Por favor, configura la URL, API Key y tu nombre de profesor en Configuración.', type: 'error' }
@@ -41,6 +41,7 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
 
     const { settings, attendance, groups } = state;
     const { apiUrl, apiKey, professorName } = settings;
+    const trimmedProfessorName = professorName.trim();
 
     dispatch({ type: 'ADD_TOAST', payload: { message: 'Comparando datos con el servidor...', type: 'info' } });
 
@@ -56,7 +57,7 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
             },
             body: JSON.stringify({
                 action: 'get-asistencias',
-                profesor_nombre: professorName
+                profesor_nombre: trimmedProfessorName
             })
         });
 
@@ -100,7 +101,7 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
                     // Sincronizar si el registro es nuevo O si el estado ha cambiado
                     if (!serverStatus || serverStatus !== localStatus) {
                         recordsToSync.push({
-                            profesor_nombre: professorName,
+                            profesor_nombre: trimmedProfessorName,
                             materia_nombre: group.subject,
                             grupo_id: groupId,
                             grupo_nombre: group.name,
@@ -152,7 +153,7 @@ export const syncAttendanceData = async (state: AppState, dispatch: Dispatch<App
 
 export const syncScheduleData = async (state: AppState, dispatch: Dispatch<AppAction>) => {
     const { settings, groups } = state;
-    if (!settings.professorName || settings.professorName === 'Nombre del Profesor') {
+    if (!settings.professorName || settings.professorName.trim() === 'Nombre del Profesor') {
         dispatch({
             type: 'ADD_TOAST',
             payload: { message: 'Por favor, configura tu "Nombre del Profesor/a" en Configuración antes de sincronizar.', type: 'error' }
@@ -163,7 +164,8 @@ export const syncScheduleData = async (state: AppState, dispatch: Dispatch<AppAc
     dispatch({ type: 'ADD_TOAST', payload: { message: 'Sincronizando horario desde Firebase...', type: 'info' } });
 
     try {
-        const horario = await fetchHorarioCompleto(settings.professorName);
+        const trimmedProfessorName = settings.professorName.trim();
+        const horario = await fetchHorarioCompleto(trimmedProfessorName);
 
         if (horario.length === 0) {
             dispatch({ type: 'ADD_TOAST', payload: { message: 'No se encontraron clases para este profesor.', type: 'info' } });
@@ -238,12 +240,13 @@ export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<App
     
     const { settings } = state;
     const { apiUrl, apiKey, professorName } = settings;
+    const trimmedProfessorName = professorName.trim();
 
     dispatch({ type: 'ADD_TOAST', payload: { message: 'Subiendo copia de seguridad a la nube...', type: 'info' } });
 
     const stateToSave = { ...state, toasts: [] };
     const payload = {
-        profesor_nombre: professorName,
+        profesor_nombre: trimmedProfessorName,
         estado: stateToSave
     };
 
@@ -276,7 +279,9 @@ export const uploadStateToCloud = async (state: AppState, dispatch: Dispatch<App
 
 export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<AppState> | null> => {
     const { apiUrl, apiKey, professorName } = settings;
-    if (!apiUrl || !apiKey || !professorName || professorName === 'Nombre del Profesor') {
+    const trimmedProfessorName = professorName.trim();
+
+    if (!apiUrl || !apiKey || !trimmedProfessorName || trimmedProfessorName === 'Nombre del Profesor') {
         throw new Error('La configuración de API y profesor es necesaria.');
     }
 
@@ -291,7 +296,7 @@ export const fetchStateFromCloud = async (settings: Settings): Promise<Partial<A
             },
             body: JSON.stringify({
                 action: 'backup-estado',
-                profesor_nombre: professorName,
+                profesor_nombre: trimmedProfessorName,
             }),
         });
 
