@@ -8,31 +8,6 @@ import { exportBackup, importBackup } from '../services/backupService';
 import Icon from './icons/Icon';
 import { syncAttendanceData, syncScheduleData } from '../services/syncService';
 
-interface ColorPickerProps {
-    label: string;
-    name: keyof Settings['customColors'];
-    value: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}
-
-const ColorPicker: React.FC<ColorPickerProps> = ({ label, name, value, onChange }) => (
-    <div className="flex items-center justify-between">
-        <label className="text-sm">{label}</label>
-        <div className="flex items-center gap-2 p-1 border border-border-color rounded-md">
-            <input
-                type="color"
-                name={name}
-                value={value}
-                onChange={onChange}
-                className="w-6 h-6 p-0 border-none rounded cursor-pointer bg-transparent"
-                aria-label={`Selector de color para ${label}`}
-            />
-            <span className="text-xs font-mono w-20">{value}</span>
-        </div>
-    </div>
-);
-
-
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -59,17 +34,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         }
         
         setSettings(prev => ({ ...prev, [name]: finalValue }));
-    };
-    
-    const handleCustomColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setSettings(prev => ({
-            ...prev,
-            customColors: {
-                ...prev.customColors,
-                [name]: value,
-            },
-        }));
     };
 
     const handleSave = () => {
@@ -121,20 +85,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 <select name="theme" value={settings.theme} onChange={handleChange} className="w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary">
                                     <option value="classic">Claro Clásico</option>
                                     <option value="dark">Oscuro</option>
-                                    <option value="custom">Personalizado</option>
                                 </select>
                            </div>
-                           {settings.theme === 'custom' && (
-                               <div className="p-3 rounded-md border border-dashed border-border-color space-y-3">
-                                   <ColorPicker label="Fondo Principal" name="background" value={settings.customColors.background} onChange={handleCustomColorChange} />
-                                   <ColorPicker label="Fondo Superficies" name="surface" value={settings.customColors.surface} onChange={handleCustomColorChange} />
-                                   <ColorPicker label="Color Primario" name="primary" value={settings.customColors.primary} onChange={handleCustomColorChange} />
-                                   <ColorPicker label="Color Acento" name="accent" value={settings.customColors.accent} onChange={handleCustomColorChange} />
-                                   <ColorPicker label="Texto Principal" name="textPrimary" value={settings.customColors.textPrimary} onChange={handleCustomColorChange} />
-                                   <ColorPicker label="Texto Secundario" name="textSecondary" value={settings.customColors.textSecondary} onChange={handleCustomColorChange} />
-                                   <ColorPicker label="Color de Bordes" name="borderColor" value={settings.customColors.borderColor} onChange={handleCustomColorChange} />
-                               </div>
-                           )}
                         </div>
                     </fieldset>
 

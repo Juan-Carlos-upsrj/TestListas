@@ -24,23 +24,16 @@ const App: React.FC = () => {
     const root = document.documentElement;
     root.classList.remove('dark', 'theme-classic', 'theme-custom');
 
+    // Limpia los estilos en línea que pudieran haber quedado del tema personalizado anterior
+    root.style.cssText = '';
+
     if (settings.theme === 'dark') {
       root.classList.add('dark');
-      root.classList.add('theme-classic'); // Use classic structure for dark mode
-    } else if (settings.theme === 'classic') {
-       root.classList.add('theme-classic');
-    } else if (settings.theme === 'custom') {
-        root.classList.add('theme-custom');
-        root.style.setProperty('--color-background', settings.customColors.background);
-        root.style.setProperty('--color-surface', settings.customColors.surface);
-        root.style.setProperty('--color-primary', settings.customColors.primary);
-        root.style.setProperty('--color-accent', settings.customColors.accent);
-        root.style.setProperty('--color-text-primary', settings.customColors.textPrimary);
-        root.style.setProperty('--color-text-secondary', settings.customColors.textSecondary);
-        root.style.setProperty('--color-border-color', settings.customColors.borderColor);
     }
+    // Tanto el tema oscuro como el clásico necesitan las variables base
+    root.classList.add('theme-classic');
 
-  }, [settings.theme, settings.customColors]);
+  }, [settings.theme]);
 
 
   useEffect(() => {

@@ -25,15 +25,6 @@ const defaultState: AppState = {
     semesterEnd: fourMonthsLater.toISOString().split('T')[0],
     showMatricula: true,
     theme: 'classic', // Default theme
-    customColors: { // Default custom colors for the new advanced customization
-      background: '#f8fafc', // slate-50
-      surface: '#ffffff', // white
-      primary: '#2563eb', // blue-600
-      accent: '#14b8a6', // teal-500
-      textPrimary: '#1e293b', // slate-800
-      textSecondary: '#64748b', // slate-500
-      borderColor: '#e2e8f0', // slate-200
-    },
     lowAttendanceThreshold: 80,
     googleCalendarUrl: '',
     googleCalendarColor: 'blue',
@@ -82,19 +73,12 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         });
 
         // Migration logic for settings
-        const loadedSettings = loadedState.settings; // FIX: Do not use `|| {}` to preserve type information.
+        const loadedSettings = loadedState.settings;
         const migratedSettings = { ...defaultState.settings, ...loadedSettings };
-        // Old 'iaev' theme is now 'classic'
-        if ((migratedSettings.theme as any) === 'iaev') {
+        // Old 'iaev' or 'custom' themes are now 'classic'
+        if ((migratedSettings.theme as any) === 'iaev' || (migratedSettings.theme as any) === 'custom') {
             migratedSettings.theme = 'classic';
         }
-        // Ensure all custom color properties exist
-        migratedSettings.customColors = {
-            ...defaultState.settings.customColors,
-            // FIX: Use optional chaining to safely access customColors.
-            // This prevents a type error when loadedSettings is undefined.
-            ...(loadedSettings?.customColors || {}),
-        };
 
         // Construct the new state safely
         const newState: AppState = {
