@@ -4,20 +4,20 @@
 
 @layer base {
   /*
-    Definición de variables de color para los temas.
-    Nueva paleta de colores para el tema claro, con un estilo más moderno y fresco.
+    Paleta de colores restaurada a un estilo clásico y profesional para máxima legibilidad.
+    Basada en azules y grises neutros para una interfaz limpia y clara.
   */
   :root, .theme-classic {
-    --color-background: #f8f9fa;       /* Gris extra claro */
-    --color-surface: #ffffff;          /* Blanco */
-    --color-surface-secondary: #f1f3f5; /* Gris claro para fondos secundarios */
-    --color-primary: #12b886;          /* Verde azulado vibrante (Teal) */
-    --color-primary-hover: #0ca678;     /* Teal más oscuro */
-    --color-primary-text: #ffffff;      /* Texto blanco */
-    --color-accent: #f59f00;           /* Ámbar cálido */
-    --color-text-primary: #212529;      /* Casi negro para texto principal */
-    --color-text-secondary: #495057;    /* Gris oscuro para texto secundario */
-    --color-border-color: #dee2e6;      /* Gris claro para bordes */
+    --color-background: #f9fafb;      /* gray-50 */
+    --color-surface: #ffffff;         /* white */
+    --color-surface-secondary: #f3f4f6;/* gray-100 */
+    --color-primary: #3b82f6;         /* blue-500 */
+    --color-primary-hover: #2563eb;    /* blue-600 */
+    --color-primary-text: #ffffff;     /* white */
+    --color-accent: #f59e0b;          /* amber-500 */
+    --color-text-primary: #1f2937;     /* gray-800 */
+    --color-text-secondary: #6b7280;   /* gray-500 */
+    --color-border-color: #e5e7eb;     /* gray-200 */
   }
 
   .dark.theme-classic {
@@ -80,5 +80,6 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  -o-user-select: none;
   user-select: none;
 }
