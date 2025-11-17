@@ -82,7 +82,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         });
 
         // Migration logic for settings
-        const loadedSettings = loadedState.settings || {};
+        const loadedSettings = loadedState.settings; // FIX: Do not use `|| {}` to preserve type information.
         const migratedSettings = { ...defaultState.settings, ...loadedSettings };
         // Old 'iaev' theme is now 'classic'
         if ((migratedSettings.theme as any) === 'iaev') {
@@ -91,9 +91,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         // Ensure all custom color properties exist
         migratedSettings.customColors = {
             ...defaultState.settings.customColors,
-            // FIX: Safely access customColors from loadedSettings. It could be inferred as an empty object '{}'
-            // if loadedState.settings is undefined, causing a property access error.
-            ...(loadedSettings.customColors || {}),
+            // FIX: Use optional chaining to safely access customColors.
+            // This prevents a type error when loadedSettings is undefined.
+            ...(loadedSettings?.customColors || {}),
         };
 
         // Construct the new state safely
