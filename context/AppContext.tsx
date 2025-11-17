@@ -24,16 +24,19 @@ const defaultState: AppState = {
     firstPartialEnd: nextMonth.toISOString().split('T')[0],
     semesterEnd: fourMonthsLater.toISOString().split('T')[0],
     showMatricula: true,
-    theme: 'iaev', // Default theme
-    customColors: { // Default custom colors
-      background: '#ffffff',
-      surface: '#f8fafc',
-      primary: '#3F5D7D',
-      textPrimary: '#34495E',
+    theme: 'classic', // Default theme
+    customColors: { // Default custom colors for the new advanced customization
+      background: '#f8fafc', // slate-50
+      surface: '#ffffff', // white
+      primary: '#2563eb', // blue-600
+      accent: '#14b8a6', // teal-500
+      textPrimary: '#1e293b', // slate-800
+      textSecondary: '#64748b', // slate-500
+      borderColor: '#e2e8f0', // slate-200
     },
     lowAttendanceThreshold: 80,
     googleCalendarUrl: '',
-    googleCalendarColor: 'iaev-yellow',
+    googleCalendarColor: 'blue',
     professorName: 'Nombre del Profesor',
     apiUrl: '',
     apiKey: '',
@@ -78,6 +81,21 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             }));
         });
 
+        // Migration logic for settings
+        const loadedSettings = loadedState.settings || {};
+        const migratedSettings = { ...defaultState.settings, ...loadedSettings };
+        // Old 'iaev' theme is now 'classic'
+        if ((migratedSettings.theme as any) === 'iaev') {
+            migratedSettings.theme = 'classic';
+        }
+        // Ensure all custom color properties exist
+        migratedSettings.customColors = {
+            ...defaultState.settings.customColors,
+            // FIX: Safely access customColors from loadedSettings. It could be inferred as an empty object '{}'
+            // if loadedState.settings is undefined, causing a property access error.
+            ...(loadedSettings.customColors || {}),
+        };
+
         // Construct the new state safely
         const newState: AppState = {
             groups: migratedGroups,
@@ -86,13 +104,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             grades: loadedState.grades ?? defaultState.grades,
             calendarEvents: Array.isArray(loadedState.calendarEvents) ? loadedState.calendarEvents.filter(Boolean) : defaultState.calendarEvents,
             gcalEvents: Array.isArray(loadedState.gcalEvents) ? loadedState.gcalEvents.filter(Boolean) : defaultState.gcalEvents,
-            settings: {
-                ...defaultState.settings,
-                ...(loadedState.settings || {}),
-                // Migration: Ensure theme settings exist
-                theme: loadedState.settings?.theme || 'iaev',
-                customColors: loadedState.settings?.customColors || defaultState.settings.customColors,
-            },
+            settings: migratedSettings,
             activeView: 'dashboard',
             selectedGroupId: loadedState.selectedGroupId ?? null,
             toasts: [],

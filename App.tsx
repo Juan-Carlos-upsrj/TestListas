@@ -22,32 +22,22 @@ const App: React.FC = () => {
   useEffect(() => {
     // Theme management
     const root = document.documentElement;
+    root.classList.remove('dark', 'theme-classic', 'theme-custom');
+
     if (settings.theme === 'dark') {
       root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
-
-    if (settings.theme === 'custom') {
+      root.classList.add('theme-classic'); // Use classic structure for dark mode
+    } else if (settings.theme === 'classic') {
+       root.classList.add('theme-classic');
+    } else if (settings.theme === 'custom') {
+        root.classList.add('theme-custom');
         root.style.setProperty('--color-background', settings.customColors.background);
         root.style.setProperty('--color-surface', settings.customColors.surface);
         root.style.setProperty('--color-primary', settings.customColors.primary);
+        root.style.setProperty('--color-accent', settings.customColors.accent);
         root.style.setProperty('--color-text-primary', settings.customColors.textPrimary);
-        // Derive other colors or use defaults
-        root.style.setProperty('--color-primary-hover', settings.customColors.primary); 
-        root.style.setProperty('--color-primary-text', '#FFFFFF'); // Assume white text on custom primary
-        root.style.setProperty('--color-text-secondary', '#78909C'); // Default
-        root.style.setProperty('--color-border-color', '#E2E8F0'); // Default
-    } else {
-        // Clear custom properties when not in custom theme
-        root.style.removeProperty('--color-background');
-        root.style.removeProperty('--color-surface');
-        root.style.removeProperty('--color-primary');
-        root.style.removeProperty('--color-text-primary');
-        root.style.removeProperty('--color-primary-hover');
-        root.style.removeProperty('--color-primary-text');
-        root.style.removeProperty('--color-text-secondary');
-        root.style.removeProperty('--color-border-color');
+        root.style.setProperty('--color-text-secondary', settings.customColors.textSecondary);
+        root.style.setProperty('--color-border-color', settings.customColors.borderColor);
     }
 
   }, [settings.theme, settings.customColors]);
@@ -101,8 +91,8 @@ const App: React.FC = () => {
   const showFridayBanner = isFriday && !isBirthday;
 
   return (
-    <div className="flex h-screen bg-background text-text-primary dark:bg-dark-background dark:text-dark-text-primary font-sans relative">
-      {(settings.theme === 'iaev' || settings.theme === 'dark') && <BackgroundShapesV2 />}
+    <div className="flex h-screen bg-background text-text-primary font-sans relative">
+      {(settings.theme === 'classic' || settings.theme === 'dark') && <BackgroundShapesV2 />}
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden z-10">
@@ -120,8 +110,8 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           ) : (
-            <div className="flex items-center p-4 bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border-color dark:border-dark-border-color">
-              <h1 className="text-2xl font-bold text-primary dark:text-dark-primary">
+            <div className="flex items-center p-4 bg-surface/80 backdrop-blur-sm border-b border-border-color">
+              <h1 className="text-2xl font-bold text-primary">
                 {viewTitles[state.activeView]}
               </h1>
             </div>

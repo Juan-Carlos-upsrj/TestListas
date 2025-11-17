@@ -82,7 +82,7 @@ const AttendanceView: React.FC = () => {
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
-                        className="w-full sm:w-64 p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
+                        className="w-full sm:w-64 p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary"
                     >
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -100,21 +100,21 @@ const AttendanceView: React.FC = () => {
             </div>
 
             {group ? (
-                <div className="bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10 overflow-x-auto">
+                <div className="bg-surface p-4 rounded-xl shadow-sm border border-border-color overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr>
-                                <th rowSpan={3} className="sticky left-0 bg-iaev-surface p-2 text-left font-semibold z-10 border-b-2 border-slate-300">Alumno</th>
+                                <th rowSpan={3} className="sticky left-0 bg-surface p-2 text-left font-semibold z-10 border-b-2 border-border-color">Alumno</th>
                                 {attendanceHeaders && Object.entries(attendanceHeaders).map(([partialName, months]) => {
                                     const colspan = Object.values(months).reduce((sum, dates) => sum + dates.length, 0);
-                                    return <th key={partialName} colSpan={colspan} className="p-2 font-semibold text-center text-lg border-b-2 border-slate-300">{partialName}</th>
+                                    return <th key={partialName} colSpan={colspan} className="p-2 font-semibold text-center text-lg border-b-2 border-border-color">{partialName}</th>
                                 })}
                             </tr>
                             <tr>
                                 {attendanceHeaders && Object.entries(attendanceHeaders).flatMap(([partialName, months]) => 
                                     Object.entries(months).map(([monthName, dates], index) => 
                                         <th key={`${partialName}-${monthName}`} colSpan={dates.length} 
-                                        className={`p-2 font-semibold text-center border-b border-slate-200 ${index % 2 === 0 ? 'bg-slate-100/70' : 'bg-slate-200/50'}`}>
+                                        className={`p-2 font-semibold text-center border-b border-border-color ${index % 2 === 0 ? 'bg-surface-secondary/70' : 'bg-surface-secondary/40'}`}>
                                             {monthName}
                                         </th>
                                     )
@@ -122,7 +122,7 @@ const AttendanceView: React.FC = () => {
                             </tr>
                             <tr>
                                 {classDates.map(date => (
-                                    <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b border-slate-200 ${date === todayStr ? 'bg-iaev-blue-light' : ''}`}>
+                                    <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b border-border-color ${date === todayStr ? 'bg-accent-blue-light dark:bg-accent-blue/20' : ''}`}>
                                         {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                     </th>
                                 ))}
@@ -130,12 +130,12 @@ const AttendanceView: React.FC = () => {
                         </thead>
                         <tbody>
                             {group.students.map(student => (
-                                <tr key={student.id} className="border-b border-slate-200/70 hover:bg-slate-200/40">
-                                    <td className="sticky left-0 bg-iaev-surface p-2 font-medium z-10 whitespace-nowrap">{student.name} {student.nickname && <span className="font-normal text-iaev-text-secondary">({student.nickname})</span>}</td>
+                                <tr key={student.id} className="border-b border-border-color/70 hover:bg-surface-secondary/40">
+                                    <td className="sticky left-0 bg-surface p-2 font-medium z-10 whitespace-nowrap">{student.name} {student.nickname && <span className="font-normal text-text-secondary">({student.nickname})</span>}</td>
                                     {classDates.map(date => {
                                         const status = attendance[group.id]?.[student.id]?.[date] || AttendanceStatus.Pending;
                                         return (
-                                            <td key={date} className={`p-0 text-center ${date === todayStr ? 'bg-iaev-blue-light/30' : ''}`}>
+                                            <td key={date} className={`p-0 text-center ${date === todayStr ? 'bg-accent-blue-light/30 dark:bg-accent-blue/10' : ''}`}>
                                                 <button
                                                     onClick={() => handleStatusChange(student.id, date, getNextStatus(status))}
                                                     onContextMenu={(e) => {
@@ -155,10 +155,10 @@ const AttendanceView: React.FC = () => {
                     </table>
                 </div>
             ) : (
-                <div className="text-center py-20 bg-iaev-surface rounded-xl shadow-sm border border-slate-900/10">
-                    <Icon name="check-square" className="w-20 h-20 mx-auto text-slate-300"/>
-                    <p className="mt-4 text-iaev-text-secondary">Por favor, selecciona un grupo para ver el registro de asistencia.</p>
-                    {groups.length === 0 && <p className="text-slate-400">Primero necesitas crear un grupo en la sección 'Grupos'.</p>}
+                <div className="text-center py-20 bg-surface rounded-xl shadow-sm border border-border-color">
+                    <Icon name="check-square" className="w-20 h-20 mx-auto text-border-color"/>
+                    <p className="mt-4 text-text-secondary">Por favor, selecciona un grupo para ver el registro de asistencia.</p>
+                    {groups.length === 0 && <p className="text-text-secondary/70">Primero necesitas crear un grupo en la sección 'Grupos'.</p>}
                 </div>
             )}
              {group && (

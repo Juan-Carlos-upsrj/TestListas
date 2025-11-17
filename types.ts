@@ -64,12 +64,15 @@ export interface Settings {
   firstPartialEnd: string;
   semesterEnd: string;
   showMatricula: boolean;
-  theme: 'iaev' | 'dark' | 'custom';
+  theme: 'classic' | 'dark' | 'custom';
   customColors: {
     background: string;
     surface: string;
     primary: string;
+    accent: string;
     textPrimary: string;
+    textSecondary: string;
+    borderColor: string;
   };
   lowAttendanceThreshold: number;
   googleCalendarUrl: string;

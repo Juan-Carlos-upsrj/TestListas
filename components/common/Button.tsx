@@ -15,12 +15,12 @@ const Button: React.FC<ButtonProps> = ({
   className,
   ...props
 }) => {
-  const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background dark:focus:ring-offset-dark-background transition-all duration-200 ease-in-out inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background transition-all duration-200 ease-in-out inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
-    primary: 'bg-primary text-primary-text hover:bg-primary-hover focus:ring-primary dark:bg-dark-primary dark:text-dark-primary-text dark:hover:bg-dark-primary-hover dark:focus:ring-dark-primary',
-    secondary: 'bg-surface-secondary text-text-primary hover:bg-border-color focus:ring-primary dark:bg-dark-surface-secondary dark:text-dark-text-primary dark:hover:bg-dark-border-color dark:focus:ring-dark-primary',
-    danger: 'bg-accent-red text-white hover:bg-accent-red-light focus:ring-accent-red dark:bg-dark-accent-red dark:hover:bg-dark-accent-red-light dark:focus:ring-dark-accent-red',
+    primary: 'bg-primary text-primary-text hover:bg-primary-hover focus:ring-primary',
+    secondary: 'bg-surface-secondary text-text-primary hover:bg-border-color focus:ring-primary',
+    danger: 'bg-accent-red text-white hover:bg-red-600 focus:ring-accent-red',
   };
 
   const sizeClasses = {

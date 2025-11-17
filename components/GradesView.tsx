@@ -40,24 +40,24 @@ const EvaluationForm: React.FC<{
         <form onSubmit={handleSubmit}>
             <div className="space-y-4">
                 <div>
-                    <label htmlFor="evalName" className="block text-sm font-medium text-iaev-text-primary">Nombre de la Evaluación</label>
-                    <input type="text" id="evalName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 block w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
+                    <label htmlFor="evalName" className="block text-sm font-medium text-text-primary">Nombre de la Evaluación</label>
+                    <input type="text" id="evalName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 block w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                        <label htmlFor="maxScore" className="block text-sm font-medium text-iaev-text-primary">Puntuación Máxima</label>
-                        <input type="number" id="maxScore" value={maxScore} onChange={e => setMaxScore(Number(e.target.value))} min="1" required className="mt-1 block w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" />
+                        <label htmlFor="maxScore" className="block text-sm font-medium text-text-primary">Puntuación Máxima</label>
+                        <input type="number" id="maxScore" value={maxScore} onChange={e => setMaxScore(Number(e.target.value))} min="1" required className="mt-1 block w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" />
                     </div>
                     <div>
-                        <label htmlFor="partial" className="block text-sm font-medium text-iaev-text-primary">Parcial</label>
-                        <select id="partial" value={partial} onChange={e => setPartial(Number(e.target.value) as 1 | 2)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue">
+                        <label htmlFor="partial" className="block text-sm font-medium text-text-primary">Parcial</label>
+                        <select id="partial" value={partial} onChange={e => setPartial(Number(e.target.value) as 1 | 2)} className="mt-1 block w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary">
                             <option value={1}>Primer Parcial</option>
                             <option value={2}>Segundo Parcial</option>
                         </select>
                     </div>
                      <div>
-                        <label htmlFor="typeId" className="block text-sm font-medium text-iaev-text-primary">Tipo de Evaluación</label>
-                        <select id="typeId" value={typeId} onChange={e => setTypeId(e.target.value)} className="mt-1 block w-full p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue" disabled={availableTypes.length === 0}>
+                        <label htmlFor="typeId" className="block text-sm font-medium text-text-primary">Tipo de Evaluación</label>
+                        <select id="typeId" value={typeId} onChange={e => setTypeId(e.target.value)} className="mt-1 block w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" disabled={availableTypes.length === 0}>
                             {availableTypes.length === 0 && <option>Define tipos en el grupo</option>}
                             {availableTypes.map(type => <option key={type.id} value={type.id}>{type.name} ({type.weight}%)</option>)}
                         </select>
@@ -163,7 +163,7 @@ const GradesView: React.FC = () => {
         if (totalWeightOfGradedItems === 0) return { average: null, color: '' };
 
         const weightedAverage = (finalPartialScore / totalWeightOfGradedItems) * 10;
-        const color = weightedAverage >= 7 ? 'text-iaev-green-dark' : weightedAverage >= 6 ? 'text-iaev-yellow-dark' : 'text-iaev-red-dark';
+        const color = weightedAverage >= 7 ? 'text-accent-green-dark' : weightedAverage >= 6 ? 'text-accent-yellow-dark' : 'text-accent-red';
 
         return { average: weightedAverage, color };
     }, [group, p1Evaluations, p2Evaluations, groupGrades]);
@@ -175,7 +175,7 @@ const GradesView: React.FC = () => {
                     <select
                         value={selectedGroupId || ''}
                         onChange={(e) => setSelectedGroupId(e.target.value)}
-                        className="w-full sm:w-64 p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
+                        className="w-full sm:w-64 p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary"
                     >
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
@@ -185,7 +185,7 @@ const GradesView: React.FC = () => {
 
             {group ? (
                 <>
-                <div className="mb-6 bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10">
+                <div className="mb-6 bg-surface p-4 rounded-xl shadow-sm border border-border-color">
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
                         <h2 className="text-xl font-bold">Evaluaciones del Grupo</h2>
                         <Button onClick={() => { setEditingEvaluation(undefined); setEvalModalOpen(true); }} className="w-full sm:w-auto">
@@ -197,34 +197,34 @@ const GradesView: React.FC = () => {
                             {groupEvaluations.map(ev => {
                                 const type = (ev.partial === 1 ? group.evaluationTypes.partial1 : group.evaluationTypes.partial2).find(t => t.id === ev.typeId);
                                 return (
-                                <div key={ev.id} className="bg-slate-200/60 p-2 rounded-lg flex items-center gap-2">
-                                    <span className="text-xs bg-iaev-blue-light text-iaev-blue-darker px-1.5 py-0.5 rounded-full font-semibold">P{ev.partial}</span>
+                                <div key={ev.id} className="bg-surface-secondary p-2 rounded-lg flex items-center gap-2">
+                                    <span className="text-xs bg-accent-blue-light text-accent-blue px-1.5 py-0.5 rounded-full font-semibold">P{ev.partial}</span>
                                     <span className="font-semibold">{ev.name}</span>
-                                    <span className="text-xs text-slate-500">({type?.name || '??'})</span>
-                                    <span className="text-xs bg-slate-300/80 px-1.5 py-0.5 rounded-full">{ev.maxScore} pts</span>
-                                    <button onClick={() => { setEditingEvaluation(ev); setEvalModalOpen(true); }} className="text-slate-500 hover:text-iaev-blue"><Icon name="edit-3" className="w-3 h-3"/></button>
-                                    <button onClick={() => handleDeleteEvaluation(ev.id)} className="text-slate-500 hover:text-iaev-red"><Icon name="x" className="w-4 h-4"/></button>
+                                    <span className="text-xs text-text-secondary">({type?.name || '??'})</span>
+                                    <span className="text-xs bg-slate-300 dark:bg-slate-600 px-1.5 py-0.5 rounded-full">{ev.maxScore} pts</span>
+                                    <button onClick={() => { setEditingEvaluation(ev); setEvalModalOpen(true); }} className="text-text-secondary hover:text-primary"><Icon name="edit-3" className="w-3 h-3"/></button>
+                                    <button onClick={() => handleDeleteEvaluation(ev.id)} className="text-text-secondary hover:text-accent-red"><Icon name="x" className="w-4 h-4"/></button>
                                 </div>
                             )})}
                         </div>
-                    ) : <p className="text-iaev-text-secondary">Aún no has creado evaluaciones para este grupo.</p>}
+                    ) : <p className="text-text-secondary">Aún no has creado evaluaciones para este grupo.</p>}
                 </div>
 
-                <div className="bg-iaev-surface p-4 rounded-xl shadow-sm border border-slate-900/10 overflow-x-auto">
+                <div className="bg-surface p-4 rounded-xl shadow-sm border border-border-color overflow-x-auto">
                     <table className="w-full border-collapse">
                         <thead>
                             <tr>
-                                <th rowSpan={2} className="sticky left-0 bg-iaev-surface p-2 text-left font-semibold z-10 border-b-2 border-slate-300">Alumno</th>
-                                {p1Evaluations.length > 0 && <th colSpan={p1Evaluations.length + 1} className="p-2 font-semibold text-center text-lg border-b-2 border-slate-300">Primer Parcial</th>}
-                                {p2Evaluations.length > 0 && <th colSpan={p2Evaluations.length + 1} className="p-2 font-semibold text-center text-lg border-b-2 border-slate-300">Segundo Parcial</th>}
-                                <th rowSpan={2} className="p-2 font-semibold text-center text-sm border-b-2 border-slate-300 bg-slate-200/60 min-w-[100px]">Promedio Final</th>
+                                <th rowSpan={2} className="sticky left-0 bg-surface p-2 text-left font-semibold z-10 border-b-2 border-border-color">Alumno</th>
+                                {p1Evaluations.length > 0 && <th colSpan={p1Evaluations.length + 1} className="p-2 font-semibold text-center text-lg border-b-2 border-border-color">Primer Parcial</th>}
+                                {p2Evaluations.length > 0 && <th colSpan={p2Evaluations.length + 1} className="p-2 font-semibold text-center text-lg border-b-2 border-border-color">Segundo Parcial</th>}
+                                <th rowSpan={2} className="p-2 font-semibold text-center text-sm border-b-2 border-border-color bg-surface-secondary min-w-[100px]">Promedio Final</th>
                             </tr>
-                            <tr className="border-b border-slate-200">
+                            <tr className="border-b border-border-color">
                                 {p1Evaluations.map(ev => <th key={ev.id} className="p-2 font-semibold text-center text-sm min-w-[100px]">{ev.name} <span className="font-normal text-xs">({ev.maxScore}pts)</span></th>)}
-                                {p1Evaluations.length > 0 && <th className="p-2 font-semibold text-center text-sm bg-slate-100/80 min-w-[100px]">Prom. P1</th>}
+                                {p1Evaluations.length > 0 && <th className="p-2 font-semibold text-center text-sm bg-surface-secondary/80 min-w-[100px]">Prom. P1</th>}
 
                                 {p2Evaluations.map(ev => <th key={ev.id} className="p-2 font-semibold text-center text-sm min-w-[100px]">{ev.name} <span className="font-normal text-xs">({ev.maxScore}pts)</span></th>)}
-                                {p2Evaluations.length > 0 && <th className="p-2 font-semibold text-center text-sm bg-slate-100/80 min-w-[100px]">Prom. P2</th>}
+                                {p2Evaluations.length > 0 && <th className="p-2 font-semibold text-center text-sm bg-surface-secondary/80 min-w-[100px]">Prom. P2</th>}
                             </tr>
                         </thead>
                         <tbody>
@@ -240,42 +240,42 @@ const GradesView: React.FC = () => {
                                 } else if (p2Avg !== null) {
                                     finalAvg = p2Avg;
                                 }
-                                const finalColor = finalAvg === null ? '' : finalAvg >= 7 ? 'text-iaev-green-dark' : finalAvg >= 6 ? 'text-iaev-yellow-dark' : 'text-iaev-red-dark';
+                                const finalColor = finalAvg === null ? '' : finalAvg >= 7 ? 'text-accent-green-dark' : finalAvg >= 6 ? 'text-accent-yellow-dark' : 'text-accent-red';
 
                                 return (
-                                    <tr key={student.id} className="border-b border-slate-200/70 hover:bg-slate-200/40">
-                                        <td className="sticky left-0 bg-iaev-surface p-2 font-medium z-10 whitespace-nowrap">{student.name}</td>
+                                    <tr key={student.id} className="border-b border-border-color/70 hover:bg-surface-secondary/40">
+                                        <td className="sticky left-0 bg-surface p-2 font-medium z-10 whitespace-nowrap">{student.name}</td>
                                         
                                         {p1Evaluations.map(ev => (
                                             <td key={ev.id} className="p-1 text-center">
                                                 <input type="number" value={groupGrades[student.id]?.[ev.id] ?? ''} onChange={(e) => handleGradeChange(student.id, ev.id, e.target.value)}
-                                                    max={ev.maxScore} min={0} placeholder="-" className="w-20 p-1.5 text-center border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"/>
+                                                    max={ev.maxScore} min={0} placeholder="-" className="w-20 p-1.5 text-center border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary"/>
                                             </td>
                                         ))}
-                                        {p1Evaluations.length > 0 && <td className={`p-2 text-center font-bold text-lg bg-slate-100/80 ${p1Color}`}>{p1Avg?.toFixed(1) || '-'}</td>}
+                                        {p1Evaluations.length > 0 && <td className={`p-2 text-center font-bold text-lg bg-surface-secondary/80 ${p1Color}`}>{p1Avg?.toFixed(1) || '-'}</td>}
 
                                         {p2Evaluations.map(ev => (
                                             <td key={ev.id} className="p-1 text-center">
                                                 <input type="number" value={groupGrades[student.id]?.[ev.id] ?? ''} onChange={(e) => handleGradeChange(student.id, ev.id, e.target.value)}
-                                                    max={ev.maxScore} min={0} placeholder="-" className="w-20 p-1.5 text-center border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"/>
+                                                    max={ev.maxScore} min={0} placeholder="-" className="w-20 p-1.5 text-center border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary"/>
                                             </td>
                                         ))}
-                                        {p2Evaluations.length > 0 && <td className={`p-2 text-center font-bold text-lg bg-slate-100/80 ${p2Color}`}>{p2Avg?.toFixed(1) || '-'}</td>}
+                                        {p2Evaluations.length > 0 && <td className={`p-2 text-center font-bold text-lg bg-surface-secondary/80 ${p2Color}`}>{p2Avg?.toFixed(1) || '-'}</td>}
 
-                                        <td className={`p-2 text-center font-bold text-xl bg-slate-200/60 ${finalColor}`}>{finalAvg?.toFixed(1) || '-'}</td>
+                                        <td className={`p-2 text-center font-bold text-xl bg-surface-secondary ${finalColor}`}>{finalAvg?.toFixed(1) || '-'}</td>
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
-                     {group.students.length === 0 && <p className="text-center text-iaev-text-secondary py-8">No hay alumnos en este grupo.</p>}
+                     {group.students.length === 0 && <p className="text-center text-text-secondary py-8">No hay alumnos en este grupo.</p>}
                 </div>
                 </>
             ) : (
-                 <div className="text-center py-20 bg-iaev-surface rounded-xl shadow-sm border border-slate-900/10">
-                    <Icon name="graduation-cap" className="w-20 h-20 mx-auto text-slate-300"/>
-                    <p className="mt-4 text-iaev-text-secondary">Por favor, selecciona un grupo para registrar calificaciones.</p>
-                    {groups.length === 0 && <p className="text-slate-400">Primero necesitas crear un grupo en la sección 'Grupos'.</p>}
+                 <div className="text-center py-20 bg-surface rounded-xl shadow-sm border border-border-color">
+                    <Icon name="graduation-cap" className="w-20 h-20 mx-auto text-border-color"/>
+                    <p className="mt-4 text-text-secondary">Por favor, selecciona un grupo para registrar calificaciones.</p>
+                    {groups.length === 0 && <p className="text-text-secondary/70">Primero necesitas crear un grupo en la sección 'Grupos'.</p>}
                 </div>
             )}
             {group && <Modal isOpen={isEvalModalOpen} onClose={() => setEvalModalOpen(false)} title={editingEvaluation ? 'Editar Evaluación' : 'Nueva Evaluación'} size="lg">

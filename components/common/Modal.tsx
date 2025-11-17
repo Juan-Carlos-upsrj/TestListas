@@ -46,13 +46,13 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
-            className={`relative z-10 w-full ${sizeClasses[size]} bg-surface dark:bg-dark-surface rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
+            className={`relative z-10 w-full ${sizeClasses[size]} bg-surface rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
           >
-            <header className="flex items-center justify-between p-4 border-b border-border-color dark:border-dark-border-color">
-              <h2 className="text-xl font-bold text-text-primary dark:text-dark-text-primary">{title}</h2>
+            <header className="flex items-center justify-between p-4 border-b border-border-color">
+              <h2 className="text-xl font-bold text-text-primary">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-full text-text-secondary dark:text-dark-text-secondary hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary"
+                className="p-1 rounded-full text-text-secondary hover:bg-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <Icon name="x" className="w-5 h-5"/>
               </button>
@@ -61,7 +61,7 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
               {children}
             </div>
             {footer && (
-              <footer className="flex justify-end p-4 border-t border-border-color dark:border-dark-border-color bg-surface-secondary/50 dark:bg-dark-surface-secondary/50 rounded-b-xl">
+              <footer className="flex justify-end p-4 border-t border-border-color bg-surface-secondary/50 rounded-b-xl">
                 {footer}
               </footer>
             )}
