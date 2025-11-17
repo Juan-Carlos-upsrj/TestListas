@@ -5,6 +5,7 @@ import Modal from './common/Modal';
 import Button from './common/Button';
 import { v4 as uuidv4 } from 'uuid';
 import Icon from './icons/Icon';
+import { CUSTOM_EVENT_COLOR } from '../constants';
 
 interface EventModalProps {
     isOpen: boolean;
@@ -45,7 +46,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
             date: date.toISOString().split('T')[0],
             title: newEventTitle,
             type: 'custom',
-            color: 'bg-cyan-200'
+            color: CUSTOM_EVENT_COLOR
         };
 
         dispatch({ type: 'SAVE_EVENT', payload: newEvent });

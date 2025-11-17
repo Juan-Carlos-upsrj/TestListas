@@ -53,6 +53,8 @@ export const GROUP_COLORS = [
     { name: 'slate', bg: 'bg-slate-500', text: 'text-white', calendar: 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-100' },
 ];
 
+export const CUSTOM_EVENT_COLOR = 'bg-cyan-200 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200';
+
 export const PROFESSOR_BIRTHDAYS: Professor[] = [
     { name: 'Prof. Victor', birthdate: '02-04' },
     { name: 'Profa. Aziz', birthdate: '04-04' },

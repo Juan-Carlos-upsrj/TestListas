@@ -4,20 +4,19 @@
 
 @layer base {
   /*
-    Paleta de colores restaurada a un estilo clásico y profesional para máxima legibilidad.
-    Basada en azules y grises neutros para una interfaz limpia y clara.
+    Paleta de colores del tema claro actualizada según la especificación del usuario.
   */
   :root, .theme-classic {
-    --color-background: #f9fafb;      /* gray-50 */
-    --color-surface: #ffffff;         /* white */
-    --color-surface-secondary: #f3f4f6;/* gray-100 */
-    --color-primary: #3b82f6;         /* blue-500 */
-    --color-primary-hover: #2563eb;    /* blue-600 */
-    --color-primary-text: #ffffff;     /* white */
-    --color-accent: #f59e0b;          /* amber-500 */
-    --color-text-primary: #1f2937;     /* gray-800 */
-    --color-text-secondary: #6b7280;   /* gray-500 */
-    --color-border-color: #e5e7eb;     /* gray-200 */
+    --color-background: #fbfbfb;
+    --color-surface: #fbfbfb;
+    --color-surface-secondary: #ced9e5;
+    --color-primary: #3b82f6;
+    --color-primary-hover: #2563eb;
+    --color-primary-text: #0d000e;
+    --color-accent: #f59e0b;
+    --color-text-primary: #190023;
+    --color-text-secondary: #000000;
+    --color-border-color: #ebebeb;
   }
 
   .dark.theme-classic {

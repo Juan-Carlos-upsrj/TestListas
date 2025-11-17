@@ -360,7 +360,7 @@ const GroupManagement: React.FC = () => {
                                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
                                 return (
                                 <li key={group.id} onClick={() => handleSelectGroup(group.id)}
-                                    className={`p-3 rounded-lg cursor-pointer transition-all border-l-4 ${selectedGroupId === group.id ? `${groupColor.bg} text-white shadow-md ${groupColor.bg.replace('bg-','shadow-')}/40` : 'bg-surface-secondary hover:bg-border-color border-transparent'}`}
+                                    className={`p-3 rounded-lg cursor-pointer transition-all border-l-4 ${selectedGroupId === group.id ? `${groupColor.bg} ${groupColor.text} shadow-md ${groupColor.bg.replace('bg-','shadow-')}/40` : 'bg-surface-secondary hover:bg-border-color border-transparent'}`}
                                     style={{ borderColor: selectedGroupId === group.id ? '' : (GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0]).bg.replace('bg-', '#') }}
                                 >
                                    <div className="flex justify-between items-start">
