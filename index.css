@@ -2,6 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /*
+    Definición de variables de color para los temas.
+    Esto permite que el cambio de tema en la aplicación funcione correctamente.
+    - :root y .theme-classic definen el tema claro por defecto.
+    - .dark.theme-classic define las sobreescrituras para el tema oscuro.
+    - .theme-custom hereda de :root y luego es sobreescrito por estilos en línea desde JS.
+  */
+  :root, .theme-classic {
+    --color-background: #f8fafc; /* slate-50 */
+    --color-surface: #ffffff; /* white */
+    --color-surface-secondary: #f1f5f9; /* slate-100 */
+    --color-primary: #2563eb; /* blue-600 */
+    --color-primary-hover: #1d4ed8; /* blue-700 */
+    --color-primary-text: #ffffff; /* white */
+    --color-accent: #14b8a6; /* teal-500 */
+    --color-text-primary: #1e293b; /* slate-800 */
+    --color-text-secondary: #64748b; /* slate-500 */
+    --color-border-color: #e2e8f0; /* slate-200 */
+  }
+
+  .dark.theme-classic {
+    --color-background: #0f172a; /* slate-900 */
+    --color-surface: #1e293b; /* slate-800 */
+    --color-surface-secondary: #334155; /* slate-700 */
+    --color-primary: #3b82f6; /* blue-500 */
+    --color-primary-hover: #2563eb; /* blue-600 */
+    --color-primary-text: #ffffff; /* white */
+    --color-accent: #14b8a6; /* teal-500 */
+    --color-text-primary: #e2e8f0; /* slate-200 */
+    --color-text-secondary: #94a3b8; /* slate-400 */
+    --color-border-color: #475569; /* slate-600 */
+  }
+}
+
 /* Custom scrollbar for better aesthetics */
 ::-webkit-scrollbar {
     width: 8px;

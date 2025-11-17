@@ -72,7 +72,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                                     <span>{event.title}</span>
                                 </div>
                                 {event.type === 'custom' && !event.id.startsWith('weekend-rest-') && (
-                                    <button onClick={() => handleDeleteEvent(event.id)} className="p-1 hover:text-iaev-red-dark">
+                                    <button onClick={() => handleDeleteEvent(event.id)} className="p-1 hover:text-accent-red">
                                         <Icon name="trash-2" className="w-4 h-4" />
                                     </button>
                                 )}
@@ -80,10 +80,10 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-iaev-text-secondary">No hay eventos para este día.</p>
+                    <p className="text-text-secondary">No hay eventos para este día.</p>
                 )}
 
-                <hr className="border-slate-200"/>
+                <hr className="border-border-color"/>
 
                 <div>
                     <h4 className="font-semibold mb-2">Agregar Nuevo Evento</h4>
@@ -93,7 +93,7 @@ const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, date, events }
                             value={newEventTitle}
                             onChange={(e) => setNewEventTitle(e.target.value)}
                             placeholder="Título del evento"
-                            className="flex-grow p-2 border border-slate-300 rounded-md bg-iaev-surface focus:ring-2 focus:ring-iaev-blue"
+                            className="flex-grow p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary"
                         />
                         <Button type="submit">
                             <Icon name="plus" className="w-4 h-4" /> Agregar

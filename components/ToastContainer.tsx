@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Icon from './icons/Icon';
 
 const toastIcons = {
-    success: { icon: 'check-circle-2', color: 'text-iaev-green-dark' },
-    error: { icon: 'x-circle', color: 'text-iaev-red-dark' },
-    info: { icon: 'info', color: 'text-iaev-blue-dark' },
+    success: { icon: 'check-circle-2', color: 'text-accent-green-dark' },
+    error: { icon: 'x-circle', color: 'text-accent-red' },
+    info: { icon: 'info', color: 'text-accent-blue' },
 };
 
 const ToastMessage: React.FC<{ toast: Toast, onRemove: (id: number) => void }> = ({ toast, onRemove }) => {
@@ -29,7 +29,7 @@ const ToastMessage: React.FC<{ toast: Toast, onRemove: (id: number) => void }> =
             initial={{ opacity: 0, y: 50, scale: 0.3 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
-            className="flex items-center w-full max-w-xs p-4 mb-4 text-iaev-text-primary bg-iaev-surface rounded-lg shadow-lg"
+            className="flex items-center w-full max-w-xs p-4 mb-4 text-text-primary bg-surface rounded-lg shadow-lg"
             role="alert"
         >
             <div className={`inline-flex items-center justify-center flex-shrink-0 w-8 h-8 ${color} bg-opacity-10 rounded-lg`}>
@@ -38,7 +38,7 @@ const ToastMessage: React.FC<{ toast: Toast, onRemove: (id: number) => void }> =
             <div className="ml-3 text-sm font-normal">{toast.message}</div>
             <button
                 type="button"
-                className="ml-auto -mx-1.5 -my-1.5 bg-iaev-surface text-slate-400 hover:text-iaev-text-primary rounded-lg focus:ring-2 focus:ring-slate-300 p-1.5 hover:bg-slate-100 inline-flex h-8 w-8"
+                className="ml-auto -mx-1.5 -my-1.5 bg-surface text-text-secondary hover:text-text-primary rounded-lg focus:ring-2 focus:ring-primary p-1.5 hover:bg-surface-secondary inline-flex h-8 w-8"
                 onClick={() => onRemove(toast.id)}
             >
                 <span className="sr-only">Close</span>

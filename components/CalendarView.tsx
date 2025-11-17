@@ -74,7 +74,7 @@ const CalendarView: React.FC = () => {
 
         const cells = [];
         for (let i = 0; i < startDayOffset; i++) {
-            cells.push(<div key={`blank-${i}`} className="border-r border-b border-slate-200 bg-slate-100/70"></div>);
+            cells.push(<div key={`blank-${i}`} className="border-r border-b border-border-color bg-surface-secondary/70"></div>);
         }
 
         const today = new Date();
@@ -103,10 +103,10 @@ const CalendarView: React.FC = () => {
             cells.push(
                 <div 
                     key={day} 
-                    className="relative border-r border-b border-slate-200 p-1 sm:p-2 min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer transition-colors hover:bg-slate-200/40"
+                    className="relative border-r border-b border-border-color p-1 sm:p-2 min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer transition-colors hover:bg-border-color/40"
                     onClick={() => handleDateClick(day)}
                 >
-                    <span className={`text-sm font-semibold ${isToday ? 'bg-iaev-blue text-white rounded-full w-7 h-7 flex items-center justify-center' : 'text-iaev-text-primary'}`}>
+                    <span className={`text-sm font-semibold ${isToday ? 'bg-primary text-primary-text rounded-full w-7 h-7 flex items-center justify-center' : 'text-text-primary'}`}>
                         {day}
                     </span>
                     <div className="mt-1 space-y-1 overflow-y-auto flex-grow">
@@ -116,7 +116,7 @@ const CalendarView: React.FC = () => {
                             </div>
                         ))}
                         {dayEvents.length > 3 && (
-                            <div className="text-[10px] sm:text-xs text-iaev-text-secondary font-semibold mt-1">
+                            <div className="text-[10px] sm:text-xs text-text-secondary font-semibold mt-1">
                                 +{dayEvents.length - 3} más
                             </div>
                         )}
@@ -133,22 +133,22 @@ const CalendarView: React.FC = () => {
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <div className="flex items-center justify-between sm:justify-end sm:gap-4 w-full ml-auto">
-                    <button onClick={handlePrevMonth} className="p-2 rounded-md hover:bg-slate-200/60 transition-colors"><Icon name="arrow-left" /></button>
+                    <button onClick={handlePrevMonth} className="p-2 rounded-md hover:bg-surface-secondary transition-colors"><Icon name="arrow-left" /></button>
                     <h2 className="text-xl font-semibold text-center">{currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}</h2>
-                    <button onClick={handleNextMonth} className="p-2 rounded-md hover:bg-slate-200/60 transition-colors"><Icon name="arrow-right" /></button>
+                    <button onClick={handleNextMonth} className="p-2 rounded-md hover:bg-surface-secondary transition-colors"><Icon name="arrow-right" /></button>
                 </div>
             </div>
             
-            <div className="bg-iaev-surface rounded-xl shadow-sm border border-slate-900/10 overflow-hidden">
+            <div className="bg-surface rounded-xl shadow-sm border border-border-color overflow-hidden">
                 <div className="grid grid-cols-7">
                     {weekDays.map(day => (
-                        <div key={day} className="p-2 sm:p-3 text-center font-bold text-sm sm:text-base border-b-2 border-slate-300 bg-slate-100/70">
+                        <div key={day} className="p-2 sm:p-3 text-center font-bold text-sm sm:text-base border-b-2 border-border-color bg-surface-secondary/70">
                             <span className="hidden sm:inline">{day}</span>
                             <span className="sm:hidden">{day.charAt(0)}</span>
                         </div>
                     ))}
                 </div>
-                <div className="grid grid-cols-7 border-l border-slate-200">
+                <div className="grid grid-cols-7 border-l border-border-color">
                     {renderCalendarGrid()}
                 </div>
             </div>
