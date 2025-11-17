@@ -5,23 +5,23 @@
 @layer base {
   /*
     Definición de variables de color para los temas.
-    Paleta de colores ajustada para mayor contraste y una estética más clásica,
-    solucionando problemas de legibilidad.
+    Nueva paleta de colores para el tema claro, con un estilo más moderno y fresco.
   */
   :root, .theme-classic {
-    --color-background: #f4f5f7;       /* Gris neutral muy claro */
-    --color-surface: #ffffff;          /* Blanco puro para tarjetas */
-    --color-surface-secondary: #e9ebee; /* Gris claro para fondos secundarios y hovers */
-    --color-primary: #005a9c;          /* Azul IAEV clásico y fuerte */
-    --color-primary-hover: #004a80;     /* Azul más oscuro para hover */
-    --color-primary-text: #ffffff;      /* Texto blanco para botones primarios */
-    --color-accent: #e5a00d;           /* Dorado/amarillo cálido IAEV */
-    --color-text-primary: #172b4d;      /* Azul muy oscuro para texto principal (alto contraste) */
-    --color-text-secondary: #5e6c84;    /* Gris medio para texto secundario */
-    --color-border-color: #dfe1e6;      /* Gris suave para bordes */
+    --color-background: #f8f9fa;       /* Gris extra claro */
+    --color-surface: #ffffff;          /* Blanco */
+    --color-surface-secondary: #f1f3f5; /* Gris claro para fondos secundarios */
+    --color-primary: #12b886;          /* Verde azulado vibrante (Teal) */
+    --color-primary-hover: #0ca678;     /* Teal más oscuro */
+    --color-primary-text: #ffffff;      /* Texto blanco */
+    --color-accent: #f59f00;           /* Ámbar cálido */
+    --color-text-primary: #212529;      /* Casi negro para texto principal */
+    --color-text-secondary: #495057;    /* Gris oscuro para texto secundario */
+    --color-border-color: #dee2e6;      /* Gris claro para bordes */
   }
 
   .dark.theme-classic {
+    /* El tema oscuro se mantiene sin cambios, tal como estaba. */
     --color-background: #17171f;       /* Carbón profundo, casi negro */
     --color-surface: #21212b;          /* Carbón más claro para tarjetas */
     --color-surface-secondary: #2c2c3a; /* Un poco más claro para hovers */
@@ -56,7 +56,7 @@
     background-color: rgba(100, 116, 139, 0.7); /* slate-500 more opaque */
 }
 
-/* Base styles for react-grid-layout resizable handle */
+/* THEMED styles for react-grid-layout resizable handle */
 .react-resizable-handle::after {
   content: "";
   position: absolute;
@@ -64,13 +64,16 @@
   bottom: 3px;
   width: 5px;
   height: 5px;
-  border-right: 2px solid rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+  /* Utiliza el color de texto secundario del tema para que coincida con la UI */
+  border-right: 2px solid var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-text-secondary);
+  opacity: 0.6;
 }
 
-/* Placeholder style for when dragging widgets */
+/* THEMED placeholder style for when dragging widgets */
 .react-grid-placeholder {
-  background: #a855f7 !important; /* purple-500 */
+  /* Utiliza el color primario del tema para el marcador de posición */
+  background: var(--color-primary) !important;
   opacity: 0.2 !important;
   transition-duration: 100ms;
   z-index: 2;
