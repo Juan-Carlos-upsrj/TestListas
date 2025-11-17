@@ -11,23 +11,47 @@ import CalendarView from './components/CalendarView';
 import { PROFESSOR_BIRTHDAYS } from './constants';
 import { motion } from 'framer-motion';
 import Icon from './components/icons/Icon';
-
-const BackgroundShapes: React.FC = () => (
-  <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
-    <div className="absolute -top-32 -left-32 w-80 h-80 bg-iaev-red/25 rounded-full filter blur-3xl opacity-60 animate-float"></div>
-    <div className="absolute top-10 left-0 w-96 h-80 bg-iaev-blue/25 rounded-[50%_60%_40%_70%_/_60%_50%_70%_40%] filter blur-3xl opacity-50 -rotate-12 animate-pulse"></div>
-    <div className="absolute bottom-[-20rem] left-[-10rem] w-[40rem] h-[40rem] bg-iaev-teal/25 rounded-full filter blur-3xl opacity-60 animate-float [animation-delay:-3s]"></div>
-    <div className="absolute top-[-15rem] right-[-15rem] w-[40rem] h-[40rem] bg-iaev-yellow/25 rounded-full filter blur-3xl opacity-70 animate-pulse [animation-delay:-5s]"></div>
-    <div className="absolute top-1/2 right-10 w-24 h-24 bg-iaev-red/25 rounded-full filter blur-2xl opacity-60 animate-float [animation-delay:-2s]"></div>
-    <div className="absolute bottom-10 right-20 w-96 h-80 bg-purple-500/15 rounded-[60%_40%_70%_30%_/_40%_70%_30%_60%] filter blur-3xl opacity-60 -rotate-45 animate-pulse [animation-delay:-1s]"></div>
-  </div>
-);
-
+import BackgroundShapesV2 from './components/common/BackgroundShapesV2';
 
 const App: React.FC = () => {
   const { state } = useContext(AppContext);
+  const { settings } = state;
   const [isFriday, setIsFriday] = useState(false);
   const [isBirthday, setIsBirthday] = useState(false);
+
+  useEffect(() => {
+    // Theme management
+    const root = document.documentElement;
+    if (settings.theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+
+    if (settings.theme === 'custom') {
+        root.style.setProperty('--color-background', settings.customColors.background);
+        root.style.setProperty('--color-surface', settings.customColors.surface);
+        root.style.setProperty('--color-primary', settings.customColors.primary);
+        root.style.setProperty('--color-text-primary', settings.customColors.textPrimary);
+        // Derive other colors or use defaults
+        root.style.setProperty('--color-primary-hover', settings.customColors.primary); 
+        root.style.setProperty('--color-primary-text', '#FFFFFF'); // Assume white text on custom primary
+        root.style.setProperty('--color-text-secondary', '#78909C'); // Default
+        root.style.setProperty('--color-border-color', '#E2E8F0'); // Default
+    } else {
+        // Clear custom properties when not in custom theme
+        root.style.removeProperty('--color-background');
+        root.style.removeProperty('--color-surface');
+        root.style.removeProperty('--color-primary');
+        root.style.removeProperty('--color-text-primary');
+        root.style.removeProperty('--color-primary-hover');
+        root.style.removeProperty('--color-primary-text');
+        root.style.removeProperty('--color-text-secondary');
+        root.style.removeProperty('--color-border-color');
+    }
+
+  }, [settings.theme, settings.customColors]);
+
 
   useEffect(() => {
     const checkDate = () => {
@@ -77,8 +101,8 @@ const App: React.FC = () => {
   const showFridayBanner = isFriday && !isBirthday;
 
   return (
-    <div className="flex h-screen bg-iaev-background text-iaev-text-primary font-sans relative">
-      <BackgroundShapes />
+    <div className="flex h-screen bg-background text-text-primary dark:bg-dark-background dark:text-dark-text-primary font-sans relative">
+      {(settings.theme === 'iaev' || settings.theme === 'dark') && <BackgroundShapesV2 />}
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden z-10">
@@ -96,8 +120,8 @@ const App: React.FC = () => {
               </div>
             </motion.div>
           ) : (
-            <div className="flex items-center p-4 bg-iaev-surface/80 backdrop-blur-sm border-b border-slate-900/10">
-              <h1 className="text-2xl font-bold text-iaev-blue-darker">
+            <div className="flex items-center p-4 bg-surface/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-border-color dark:border-dark-border-color">
+              <h1 className="text-2xl font-bold text-primary dark:text-dark-primary">
                 {viewTitles[state.activeView]}
               </h1>
             </div>

@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Icon from '../icons/Icon';
 
 interface ModalProps {
   isOpen: boolean;
@@ -45,22 +46,22 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, footer,
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
-            className={`relative z-10 w-full ${sizeClasses[size]} bg-iaev-surface rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
+            className={`relative z-10 w-full ${sizeClasses[size]} bg-surface dark:bg-dark-surface rounded-xl shadow-2xl flex flex-col max-h-[90vh]`}
           >
-            <header className="flex items-center justify-between p-4 border-b border-slate-200">
-              <h2 className="text-xl font-bold text-iaev-text-primary">{title}</h2>
+            <header className="flex items-center justify-between p-4 border-b border-border-color dark:border-dark-border-color">
+              <h2 className="text-xl font-bold text-text-primary dark:text-dark-text-primary">{title}</h2>
               <button
                 onClick={onClose}
-                className="p-1 rounded-full text-iaev-text-secondary hover:bg-slate-200/70 focus:outline-none focus:ring-2 focus:ring-iaev-blue"
+                className="p-1 rounded-full text-text-secondary dark:text-dark-text-secondary hover:bg-surface-secondary dark:hover:bg-dark-surface-secondary focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-dark-primary"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <Icon name="x" className="w-5 h-5"/>
               </button>
             </header>
             <div className="p-6 overflow-y-auto flex-grow">
               {children}
             </div>
             {footer && (
-              <footer className="flex justify-end p-4 border-t border-slate-200 bg-slate-100/50 rounded-b-xl">
+              <footer className="flex justify-end p-4 border-t border-border-color dark:border-dark-border-color bg-surface-secondary/50 dark:bg-dark-surface-secondary/50 rounded-b-xl">
                 {footer}
               </footer>
             )}

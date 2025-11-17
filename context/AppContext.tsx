@@ -24,7 +24,13 @@ const defaultState: AppState = {
     firstPartialEnd: nextMonth.toISOString().split('T')[0],
     semesterEnd: fourMonthsLater.toISOString().split('T')[0],
     showMatricula: true,
-    theme: 'light', // Theme is now fixed to light
+    theme: 'iaev', // Default theme
+    customColors: { // Default custom colors
+      background: '#ffffff',
+      surface: '#f8fafc',
+      primary: '#3F5D7D',
+      textPrimary: '#34495E',
+    },
     lowAttendanceThreshold: 80,
     googleCalendarUrl: '',
     googleCalendarColor: 'iaev-yellow',
@@ -83,7 +89,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             settings: {
                 ...defaultState.settings,
                 ...(loadedState.settings || {}),
-                theme: 'light',
+                // Migration: Ensure theme settings exist
+                theme: loadedState.settings?.theme || 'iaev',
+                customColors: loadedState.settings?.customColors || defaultState.settings.customColors,
             },
             activeView: 'dashboard',
             selectedGroupId: loadedState.selectedGroupId ?? null,
@@ -311,7 +319,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         };
     }
     case 'UPDATE_SETTINGS': {
-        const newSettings = { ...state.settings, ...action.payload, theme: 'light' as 'light' | 'dark' };
+        const newSettings = { ...state.settings, ...action.payload };
         return { ...state, settings: newSettings };
     }
     case 'ADD_TOAST':
