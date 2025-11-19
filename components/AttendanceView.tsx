@@ -21,7 +21,7 @@ const NAME_COL_WIDTH = 250;
 const DATE_COL_WIDTH = 50;
 const STAT_COL_WIDTH = 60;
 const ROW_HEIGHT = 45;
-const HEADER_HEIGHT = 90; // Increased height for 3 levels (30px each approx)
+const HEADER_HEIGHT = 90; // Increased height for 3 levels
 
 interface Coords { r: number; c: number; }
 
@@ -170,6 +170,8 @@ const AttendanceView: React.FC = () => {
     const [isTextImporterOpen, setTextImporterOpen] = useState(false);
     
     const headerRef = useRef<HTMLDivElement>(null);
+    // Use a manual ref to attach the scroll listener to the actual DOM element of the list
+    const outerListRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<any>(null);
 
     const today = new Date();
@@ -202,6 +204,23 @@ const AttendanceView: React.FC = () => {
             setSelectedGroupId(groups[0].id);
         }
     }, [groups, selectedGroupId, setSelectedGroupId]);
+    
+    // --- SCROLL SYNCING FIX ---
+    // Using a native event listener on the outer container is more reliable 
+    // than react-window's onScroll for horizontal scrolling in a vertical list.
+    useEffect(() => {
+        const container = outerListRef.current;
+        if (!container) return;
+
+        const handleScroll = () => {
+            if (headerRef.current) {
+                headerRef.current.scrollLeft = container.scrollLeft;
+            }
+        };
+
+        container.addEventListener('scroll', handleScroll);
+        return () => container.removeEventListener('scroll', handleScroll);
+    }, [group]); // Re-bind when group changes/re-renders
 
     // --- Header Structure Logic ---
     const headerStructure = useMemo(() => {
@@ -346,8 +365,6 @@ const AttendanceView: React.FC = () => {
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [group, focusedCell, selection, classDates, selectedGroupId, handleStatusChange]);
     
-    // Manual Outer Ref for Scroll to Today
-    const outerListRef = useRef<HTMLDivElement>(null);
     
     const handleScrollToToday = () => {
          if (!group || !outerListRef.current) return;
@@ -504,11 +521,8 @@ const AttendanceView: React.FC = () => {
                                         onMouseDown: handleMouseDown,
                                         onMouseEnter: handleMouseEnter
                                     }}
-                                    onScroll={({ scrollOffset }: { scrollOffset: number }) => {
-                                        if (headerRef.current) {
-                                            headerRef.current.scrollLeft = scrollOffset;
-                                        }
-                                    }}
+                                    // REMOVED: onScroll prop is unreliable for horizontal sync in vertical lists.
+                                    // Used native listener above instead.
                                     className="overflow-x-auto"
                                     innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
                                         <div
