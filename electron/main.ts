@@ -65,6 +65,7 @@ const createWindow = () => {
     
     // Check for updates only in production
     if (!isDev) {
+        autoUpdater.logger = console;
         autoUpdater.checkForUpdatesAndNotify();
     }
   });
@@ -76,6 +77,11 @@ const createWindow = () => {
 
   autoUpdater.on('update-downloaded', () => {
     mainWindow.webContents.send('update_downloaded');
+  });
+  
+  autoUpdater.on('error', (message) => {
+    console.error('There was a problem updating the application');
+    console.error(message);
   });
 };
 
