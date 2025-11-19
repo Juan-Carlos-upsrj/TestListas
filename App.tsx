@@ -8,6 +8,7 @@ import ReportsView from './components/ReportsView';
 import GradesView from './components/GradesView';
 import ToastContainer from './components/ToastContainer';
 import CalendarView from './components/CalendarView';
+import UpdateNotification from './components/UpdateNotification';
 import { PROFESSOR_BIRTHDAYS } from './constants';
 import { motion } from 'framer-motion';
 import Icon from './components/icons/Icon';
@@ -18,19 +19,17 @@ const App: React.FC = () => {
   const { settings } = state;
   const [isFriday, setIsFriday] = useState(false);
   const [isBirthday, setIsBirthday] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
     // Theme management
     const root = document.documentElement;
     root.classList.remove('dark', 'theme-classic', 'theme-custom');
-
-    // Limpia los estilos en línea que pudieran haber quedado del tema personalizado anterior
     root.style.cssText = '';
 
     if (settings.theme === 'dark') {
       root.classList.add('dark');
     }
-    // Tanto el tema oscuro como el clásico necesitan las variables base
     root.classList.add('theme-classic');
 
   }, [settings.theme]);
@@ -48,9 +47,24 @@ const App: React.FC = () => {
     };
 
     checkDate();
-    const timer = setInterval(checkDate, 60000); // Update every minute
+    const timer = setInterval(checkDate, 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // Update listeners
+  useEffect(() => {
+    if (window.electronAPI) {
+      window.electronAPI.onUpdateDownloaded(() => {
+        setUpdateAvailable(true);
+      });
+    }
+  }, []);
+
+  const handleUpdate = () => {
+    if (window.electronAPI) {
+      window.electronAPI.restartApp();
+    }
+  };
 
 
   const renderView = () => {
@@ -86,6 +100,9 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-background text-text-primary font-sans relative">
       {(settings.theme === 'classic' || settings.theme === 'dark') && <BackgroundShapesV2 />}
+      
+      {updateAvailable && <UpdateNotification onUpdate={handleUpdate} />}
+      
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden z-10">

@@ -38,10 +38,6 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         }
     }, [currentIndex, pendingStudents.length, onClose]);
 
-    // FIX: Removed goToNext() from this function to prevent a race condition.
-    // When a status is set, the student is removed from the pending list.
-    // We let the component re-render naturally, and the *next* pending student
-    // will now appear at the *current* index, or the component will show the "all done" screen.
     const handleSetStatus = useCallback((status: AttendanceStatus) => {
         const studentToUpdate = pendingStudents[currentIndex];
         if (studentToUpdate) {
@@ -72,6 +68,24 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [handleSetStatus, goToNext, pendingStudents.length]);
 
+    // Map specific colors for buttons to ensure high contrast and distinct visual indicators
+    const getButtonColorClass = (status: AttendanceStatus) => {
+        switch (status) {
+            case AttendanceStatus.Present:
+                return '!bg-emerald-600 hover:!bg-emerald-700 !text-white shadow-md shadow-emerald-900/20';
+            case AttendanceStatus.Absent:
+                return '!bg-rose-600 hover:!bg-rose-700 !text-white shadow-md shadow-rose-900/20';
+            case AttendanceStatus.Late:
+                return '!bg-amber-500 hover:!bg-amber-600 !text-white shadow-md shadow-amber-900/20';
+            case AttendanceStatus.Justified:
+                return '!bg-sky-600 hover:!bg-sky-700 !text-white shadow-md shadow-sky-900/20';
+            case AttendanceStatus.Exchange:
+                return '!bg-violet-600 hover:!bg-violet-700 !text-white shadow-md shadow-violet-900/20';
+            default:
+                return '';
+        }
+    };
+
     if (pendingStudents.length === 0) {
         return (
             <div className="text-center p-4">
@@ -97,21 +111,28 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
             <h3 className="text-3xl font-bold my-2">{currentStudent.name}</h3>
             {currentStudent.nickname && <p className="text-xl text-text-secondary mb-4">"{currentStudent.nickname}"</p>}
             
-            <p className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-4 ${STATUS_STYLES[currentStatus].color}`}>
+            <p className={`inline-block px-3 py-1 rounded-full text-sm font-semibold mb-6 ${STATUS_STYLES[currentStatus].color}`}>
                 Estado actual: {currentStatus}
             </p>
             
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
                 {ATTENDANCE_STATUSES.map(status => (
-                    <Button key={status} onClick={() => handleSetStatus(status)} className={`${STATUS_STYLES[status].color.replace('text-','!text-')} !py-3 !text-base !bg-opacity-80 hover:!bg-opacity-100`}>
-                        ({STATUS_STYLES[status].key}) {status}
+                    <Button 
+                        key={status} 
+                        onClick={() => handleSetStatus(status)} 
+                        className={`${getButtonColorClass(status)} !py-4 !text-lg transition-transform active:scale-95`}
+                    >
+                        <span className="flex flex-col items-center gap-1">
+                            <span className="text-2xl font-bold leading-none">({STATUS_STYLES[status].key.toUpperCase()})</span>
+                            <span className="text-xs opacity-90 font-normal uppercase tracking-wider">{status}</span>
+                        </span>
                     </Button>
                 ))}
             </div>
              <Button variant="secondary" onClick={goToNext} className="w-full">
                 (S) Saltar / Siguiente <Icon name="arrow-right" className="w-4 h-4" />
             </Button>
-            <p className="text-xs text-slate-400 mt-4">Usa los atajos de teclado para un pase de lista más rápido.</p>
+            <p className="text-xs text-slate-400 mt-4">Usa las teclas indicadas entre paréntesis para mayor velocidad.</p>
         </div>
     );
 };
