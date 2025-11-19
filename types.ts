@@ -27,6 +27,7 @@ export interface EvaluationType {
   id: string;
   name: string;
   weight: number; // Percentage (e.g., 30 for 30%)
+  isAttendance?: boolean; // If true, grade is calculated automatically from attendance
 }
 
 export interface Group {

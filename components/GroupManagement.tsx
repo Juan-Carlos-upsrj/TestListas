@@ -27,6 +27,15 @@ const EvaluationTypesEditor: React.FC<{
         onTypesChange([...types, { id: uuidv4(), name: '', weight: 0 }]);
     };
     
+    const addAttendanceType = () => {
+        // Check if attendance type already exists
+        if (types.some(t => t.isAttendance)) {
+            alert('Ya existe un criterio de asistencia para este parcial.');
+            return;
+        }
+        onTypesChange([...types, { id: uuidv4(), name: 'Asistencia', weight: 0, isAttendance: true }]);
+    };
+    
     const removeType = (id: string) => {
         onTypesChange(types.filter(type => type.id !== id));
     };
@@ -37,13 +46,22 @@ const EvaluationTypesEditor: React.FC<{
             <div className="space-y-2">
                 {types.map(type => (
                     <div key={type.id} className="grid grid-cols-12 gap-2 items-center">
-                        <input
-                            type="text"
-                            placeholder="Nombre (ej. Tareas)"
-                            value={type.name}
-                            onChange={e => handleTypeChange(type.id, 'name', e.target.value)}
-                            className="col-span-7 p-1.5 border border-border-color rounded-md bg-surface text-sm focus:ring-1 focus:ring-primary"
-                        />
+                        <div className="col-span-7 relative">
+                             <input
+                                type="text"
+                                placeholder="Nombre (ej. Tareas)"
+                                value={type.name}
+                                onChange={e => handleTypeChange(type.id, 'name', e.target.value)}
+                                disabled={type.isAttendance}
+                                className={`w-full p-1.5 border border-border-color rounded-md bg-surface text-sm focus:ring-1 focus:ring-primary ${type.isAttendance ? 'pl-8 opacity-80' : ''}`}
+                            />
+                            {type.isAttendance && (
+                                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-primary" title="Calculado automáticamente">
+                                    <Icon name="users" className="w-4 h-4"/>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="col-span-4 relative">
                             <input
                                 type="number"
@@ -61,10 +79,15 @@ const EvaluationTypesEditor: React.FC<{
                     </div>
                 ))}
             </div>
-            <div className="flex justify-between items-center mt-3">
-                 <Button type="button" size="sm" variant="secondary" onClick={addType}>
-                    <Icon name="plus" className="w-4 h-4"/> Añadir Tipo
-                </Button>
+            <div className="flex flex-wrap gap-2 justify-between items-center mt-3">
+                 <div className="flex gap-2">
+                    <Button type="button" size="sm" variant="secondary" onClick={addType} className="text-xs px-2 py-1">
+                        <Icon name="plus" className="w-3 h-3"/> Tipo
+                    </Button>
+                     <Button type="button" size="sm" variant="secondary" onClick={addAttendanceType} disabled={types.some(t => t.isAttendance)} className="text-xs px-2 py-1">
+                        <Icon name="users" className="w-3 h-3"/> Asistencia
+                    </Button>
+                 </div>
                 <div className={`text-sm font-bold ${totalWeight !== 100 ? 'text-accent-red' : 'text-accent-green-dark'}`}>
                     Total: {totalWeight}%
                 </div>
