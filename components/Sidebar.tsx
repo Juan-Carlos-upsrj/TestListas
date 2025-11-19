@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import SettingsModal from './SettingsModal';
 import Icon from './icons/Icon';
@@ -21,6 +21,13 @@ const Sidebar: React.FC = () => {
   const { state, dispatch } = useContext(AppContext);
   const { groups, selectedGroupId } = state;
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [appVersion, setAppVersion] = useState('');
+
+  useEffect(() => {
+    if (window.electronAPI) {
+        window.electronAPI.getVersion().then(setAppVersion);
+    }
+  }, []);
 
   const handleNavClick = (view: View) => {
     dispatch({ type: 'SET_VIEW', payload: view });
@@ -109,6 +116,11 @@ const Sidebar: React.FC = () => {
             <Icon name="settings" className="w-5 h-5" />
             <span className="text-base font-semibold">Configuración</span>
           </button>
+          {appVersion && (
+              <div className="mt-2 text-center text-xs text-text-secondary opacity-60">
+                  v{appVersion}
+              </div>
+          )}
         </div>
       </aside>
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

@@ -7,6 +7,7 @@ declare global {
     electronAPI: {
       getData: () => Promise<Partial<AppState>>;
       saveData: (data: AppState) => Promise<void>;
+      getVersion: () => Promise<string>;
       onUpdateAvailable: (callback: () => void) => void;
       onUpdateDownloaded: (callback: () => void) => void;
       restartApp: () => void;

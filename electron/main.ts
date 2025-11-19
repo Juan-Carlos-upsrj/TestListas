@@ -88,6 +88,10 @@ app.whenReady().then(() => {
     writeData(data);
   });
   
+  ipcMain.handle('get-version', () => {
+    return app.getVersion();
+  });
+  
   ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
   });
