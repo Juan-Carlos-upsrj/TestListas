@@ -3,6 +3,7 @@ module.exports = {
   content: [
     "./index.html",
     "./App.tsx",
+    "./constants.ts",
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class', // Habilitar estrategia de clase para el modo oscuro
