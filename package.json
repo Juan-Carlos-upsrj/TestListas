@@ -4,6 +4,10 @@
   "description": "Aplicacion de escritorio para gestion academica.",
   "author": "Kakit",
   "main": "dist-electron/main.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TU_USUARIO/TU_REPOSITORIO"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

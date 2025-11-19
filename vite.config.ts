@@ -14,6 +14,13 @@ export default defineConfig(async () => {
         {
           // Main-Process entry.
           entry: 'electron/main.ts',
+          vite: {
+            build: {
+              rollupOptions: {
+                external: ['electron-updater'],
+              },
+            },
+          },
         },
         {
           entry: 'electron/preload.ts',
