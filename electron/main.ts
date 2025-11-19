@@ -5,6 +5,7 @@ import type { AppState } from '../types';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { autoUpdater } from 'electron-updater';
+import log from 'electron-log';
 
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
 
@@ -14,6 +15,10 @@ const __dirname = path.dirname(__filename);
 const userDataPath = app.getPath('userData');
 const dataFilePath = path.join(userDataPath, 'appData.json');
 
+// Configure logging
+log.transports.file.level = 'info';
+autoUpdater.logger = log;
+
 // Function to read application data from a JSON file.
 function readData(): Partial<AppState> {
   try {
@@ -22,7 +27,7 @@ function readData(): Partial<AppState> {
       return JSON.parse(rawData);
     }
   } catch (error) {
-    console.error('Failed to read data file:', error);
+    log.error('Failed to read data file:', error);
   }
   return {};
 }
@@ -32,7 +37,7 @@ function writeData(data: AppState): void {
   try {
     fs.writeFileSync(dataFilePath, JSON.stringify(data, null, 2), 'utf-8');
   } catch (error) {
-    console.error('Failed to write data file:', error);
+    log.error('Failed to write data file:', error);
   }
 }
 
@@ -65,23 +70,33 @@ const createWindow = () => {
     
     // Check for updates only in production
     if (!isDev) {
-        autoUpdater.logger = console;
         autoUpdater.checkForUpdatesAndNotify();
     }
   });
   
   // Auto Updater Events
-  autoUpdater.on('update-available', () => {
+  autoUpdater.on('checking-for-update', () => {
+    log.info('Checking for update...');
+  });
+  
+  autoUpdater.on('update-available', (info) => {
+    log.info('Update available.', info);
     mainWindow.webContents.send('update_available');
   });
+  
+  autoUpdater.on('update-not-available', (info) => {
+    log.info('Update not available.', info);
+    mainWindow.webContents.send('update_not_available');
+  });
 
-  autoUpdater.on('update-downloaded', () => {
+  autoUpdater.on('update-downloaded', (info) => {
+    log.info('Update downloaded', info);
     mainWindow.webContents.send('update_downloaded');
   });
   
-  autoUpdater.on('error', (message) => {
-    console.error('There was a problem updating the application');
-    console.error(message);
+  autoUpdater.on('error', (err) => {
+    log.error('Error in auto-updater. ' + err);
+    mainWindow.webContents.send('update_error', err.message);
   });
 };
 
@@ -100,6 +115,12 @@ app.whenReady().then(() => {
   
   ipcMain.on('restart_app', () => {
     autoUpdater.quitAndInstall();
+  });
+  
+  ipcMain.on('check_for_updates', () => {
+     if(!isDev) {
+         autoUpdater.checkForUpdates();
+     }
   });
 
   createWindow();

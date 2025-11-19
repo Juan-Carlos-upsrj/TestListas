@@ -124,14 +124,11 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                               </td>
                               {classDates.map(date => {
                                   const status = groupAttendance[student.id]?.[date] || AttendanceStatus.Pending;
-                                  const simpleColor = {
-                                      [AttendanceStatus.Present]: 'bg-green-100', [AttendanceStatus.Absent]: 'bg-red-100',
-                                      [AttendanceStatus.Late]: 'bg-yellow-100', [AttendanceStatus.Justified]: 'bg-blue-100',
-                                      [AttendanceStatus.Exchange]: 'bg-purple-100', [AttendanceStatus.Pending]: 'bg-slate-100',
-                                  };
+                                  // Use the updated solid colors from STATUS_STYLES
+                                  const colorClass = STATUS_STYLES[status].color;
                                   return (
-                                      <td key={date} className={`p-0 text-center border-l border-slate-200 ${simpleColor[status]}`}>
-                                          <div className="w-full h-4 flex items-center justify-center font-bold">
+                                      <td key={date} className="p-0 text-center border-l border-slate-200">
+                                          <div className={`w-full h-4 flex items-center justify-center font-bold ${colorClass}`}>
                                               {STATUS_STYLES[status].symbol}
                                           </div>
                                       </td>

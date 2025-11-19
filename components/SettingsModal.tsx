@@ -17,11 +17,33 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const { state, dispatch } = useContext(AppContext);
     const [settings, setSettings] = useState<Settings>(state.settings);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    
+    const [updateStatus, setUpdateStatus] = useState<string>('');
+    const [isChecking, setIsChecking] = useState(false);
 
     useEffect(() => {
         setSettings(state.settings);
     }, [state.settings, isOpen]);
+    
+    useEffect(() => {
+        if (window.electronAPI) {
+            window.electronAPI.onUpdateAvailable(() => {
+                setUpdateStatus('Actualización disponible. Descargando...');
+                setIsChecking(false);
+            });
+            window.electronAPI.onUpdateNotAvailable(() => {
+                setUpdateStatus('Tienes la última versión.');
+                setIsChecking(false);
+            });
+            window.electronAPI.onUpdateError((msg) => {
+                setUpdateStatus(`Error al buscar: ${msg}`);
+                setIsChecking(false);
+            });
+            window.electronAPI.onUpdateDownloaded(() => {
+                setUpdateStatus('¡Lista! Reinicia para actualizar.');
+                setIsChecking(false);
+            });
+        }
+    }, []);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -50,6 +72,16 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const handleImportClick = () => {
         fileInputRef.current?.click();
     };
+    
+    const handleCheckForUpdates = () => {
+        if (window.electronAPI) {
+            setIsChecking(true);
+            setUpdateStatus('Buscando actualizaciones...');
+            window.electronAPI.checkForUpdates();
+        } else {
+            setUpdateStatus('No disponible en modo web.');
+        }
+    };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -77,7 +109,20 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         <>
             <Modal isOpen={isOpen} onClose={onClose} title="Configuración" size="lg">
                 <div className="space-y-6">
-                    {/* Theme selection removed for cleaner UX */}
+                    
+                    <fieldset className="border p-4 rounded-lg border-border-color">
+                         <legend className="px-2 font-semibold">Sistema</legend>
+                         <div className="flex items-center justify-between">
+                             <div>
+                                 <p className="text-sm font-medium">Actualizaciones Automáticas</p>
+                                 <p className="text-xs text-text-secondary">{updateStatus || 'Versión actual instalada.'}</p>
+                             </div>
+                             <Button size="sm" variant="secondary" onClick={handleCheckForUpdates} disabled={isChecking}>
+                                 {isChecking ? 'Buscando...' : 'Buscar Actualizaciones'}
+                             </Button>
+                         </div>
+                    </fieldset>
+
                     <fieldset className="border p-4 rounded-lg border-border-color">
                         <legend className="px-2 font-semibold">Periodo del Semestre</legend>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -8,9 +8,14 @@ declare global {
       getData: () => Promise<Partial<AppState>>;
       saveData: (data: AppState) => Promise<void>;
       getVersion: () => Promise<string>;
+      
       onUpdateAvailable: (callback: () => void) => void;
       onUpdateDownloaded: (callback: () => void) => void;
+      onUpdateNotAvailable: (callback: () => void) => void;
+      onUpdateError: (callback: (message: string) => void) => void;
+      
       restartApp: () => void;
+      checkForUpdates: () => void;
     };
   }
 }
