@@ -85,7 +85,7 @@ const AttendanceView: React.FC = () => {
                         className="w-full sm:w-64 p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary"
                     >
                         <option value="" disabled>Selecciona un grupo</option>
-                        {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+                        {groups.map(g => <option key={g.id} value={g.id}>{g.name} - {g.subject}</option>)}
                     </select>
                     <Button onClick={() => setTextImporterOpen(true)} disabled={!group} variant="secondary" className="w-full sm:w-auto">
                         <Icon name="upload-cloud" /> Importar desde Texto

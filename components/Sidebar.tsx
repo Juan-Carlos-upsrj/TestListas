@@ -4,6 +4,7 @@ import SettingsModal from './SettingsModal';
 import Icon from './icons/Icon';
 import { motion } from 'framer-motion';
 import { ActiveView } from '../types';
+import { GROUP_COLORS } from '../constants';
 
 type View = ActiveView;
 
@@ -25,8 +26,8 @@ const Sidebar: React.FC = () => {
     dispatch({ type: 'SET_VIEW', payload: view });
   };
   
-  const handleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch({ type: 'SET_SELECTED_GROUP', payload: e.target.value });
+  const handleGroupClick = (groupId: string) => {
+    dispatch({ type: 'SET_SELECTED_GROUP', payload: groupId });
   };
 
   return (
@@ -45,19 +46,34 @@ const Sidebar: React.FC = () => {
             </h1>
         </div>
         
-        {/* Global Group Selector */}
+        {/* Quick Group Selector Buttons */}
         <div className="p-4 border-b border-border-color">
-            <label htmlFor="globalGroupSelector" className="text-sm font-medium text-text-secondary mb-1 block">Grupo Activo</label>
-            <select
-                id="globalGroupSelector"
-                value={selectedGroupId || ''}
-                onChange={handleGroupChange}
-                disabled={groups.length === 0}
-                className="w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary disabled:opacity-50"
-            >
-                <option value="" disabled>{groups.length > 0 ? 'Seleccionar Grupo...' : 'No hay grupos'}</option>
-                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
+            <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Grupos Rápidos</h3>
+            {groups.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                    {groups.map(g => {
+                        const colorObj = GROUP_COLORS.find(c => c.name === g.color) || GROUP_COLORS[0];
+                        const isActive = selectedGroupId === g.id;
+                        return (
+                            <motion.button
+                                key={g.id}
+                                onClick={() => handleGroupClick(g.id)}
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 border shadow-sm ${
+                                    isActive
+                                        ? `${colorObj.bg} ${colorObj.text} border-transparent ring-2 ring-offset-1 ring-offset-surface ring-primary/30`
+                                        : 'bg-surface text-text-secondary border-border-color hover:bg-surface-secondary hover:border-primary/30'
+                                }`}
+                            >
+                                {g.name}
+                            </motion.button>
+                        );
+                    })}
+                </div>
+            ) : (
+                <p className="text-xs text-text-secondary italic">No hay grupos creados.</p>
+            )}
         </div>
 
         <nav className="flex-grow p-4">
