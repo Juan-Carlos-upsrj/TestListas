@@ -108,16 +108,40 @@ const ReportsView: React.FC = () => {
 
         return summary;
     }, [group, settings, attendance]);
+    
+    
+    const getExportFileName = useCallback(() => {
+        if (!group) return 'reporte';
+        
+        // Normalize string to remove accents and special chars
+        const cleanString = (str: string) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9]/g, "_").toUpperCase();
+
+        const start = new Date(settings.semesterStart);
+        const end = new Date(settings.semesterEnd);
+        
+        const startMonth = start.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+        const startYear = start.toLocaleDateString('es-MX', { year: '2-digit' });
+        
+        const endMonth = end.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+        const endYear = end.toLocaleDateString('es-MX', { year: '2-digit' });
+        
+        const period = `${startMonth}${startYear}-${endMonth}${endYear}`;
+        const subject = cleanString(group.subject);
+        const groupName = cleanString(group.name);
+        
+        return `${period}_${subject}_${groupName}`;
+    }, [group, settings.semesterStart, settings.semesterEnd]);
+
 
     const handleExportAttendance = () => {
         if (group) {
-            exportAttendanceToCSV(group, classDates, attendance[group.id] || {});
+            exportAttendanceToCSV(group, classDates, attendance[group.id] || {}, getExportFileName());
         }
     };
 
     const handleExportGrades = () => {
         if (group) {
-            exportGradesToCSV(group, groupEvaluations, grades[group.id] || {});
+            exportGradesToCSV(group, groupEvaluations, grades[group.id] || {}, getExportFileName());
         }
     };
 
@@ -130,7 +154,8 @@ const ReportsView: React.FC = () => {
                 attendance[group.id] || {},
                 attendanceHeaders,
                 groupEvaluations,
-                settings
+                settings,
+                getExportFileName()
             );
         } else {
              dispatch({ type: 'ADD_TOAST', payload: { message: 'No hay datos suficientes para generar el PDF.', type: 'error' } });

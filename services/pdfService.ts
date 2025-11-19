@@ -47,7 +47,8 @@ export const exportReportToPDF = async (
     groupAttendance: { [studentId: string]: { [date: string]: AttendanceStatus; }; },
     attendanceHeaders: Record<string, Record<string, string[]>> | null,
     groupEvaluations: Evaluation[],
-    settings: Settings
+    settings: Settings,
+    fileName?: string
 ) => {
     const logoBase64 = await getImageAsBase64('logo.png');
 
@@ -116,5 +117,6 @@ export const exportReportToPDF = async (
         pdf.addImage(pageDataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
     }
 
-    pdf.save(`reporte_${group.name.replace(/\s/g, '_')}.pdf`);
+    const finalName = fileName ? `${fileName}.pdf` : `reporte_${group.name.replace(/\s/g, '_')}.pdf`;
+    pdf.save(finalName);
 };

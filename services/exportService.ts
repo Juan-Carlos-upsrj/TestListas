@@ -17,7 +17,8 @@ function downloadCSV(csvContent: string, filename: string) {
 export const exportAttendanceToCSV = (
     group: Group,
     classDates: string[],
-    attendance: { [studentId: string]: { [date: string]: AttendanceStatus } }
+    attendance: { [studentId: string]: { [date: string]: AttendanceStatus } },
+    fileName?: string
 ) => {
     let csvRows = [];
     
@@ -45,13 +46,15 @@ export const exportAttendanceToCSV = (
         csvRows.push(row.join(','));
     });
     
-    downloadCSV(csvRows.join('\r\n'), `asistencia_${group.name.replace(/\s/g, '_')}.csv`);
+    const finalName = fileName ? `${fileName}.csv` : `asistencia_${group.name.replace(/\s/g, '_')}.csv`;
+    downloadCSV(csvRows.join('\r\n'), finalName);
 };
 
 export const exportGradesToCSV = (
     group: Group,
     evaluations: Evaluation[],
-    grades: { [studentId: string]: { [evaluationId: string]: number | null } }
+    grades: { [studentId: string]: { [evaluationId: string]: number | null } },
+    fileName?: string
 ) => {
     let csvRows = [];
 
@@ -72,5 +75,6 @@ export const exportGradesToCSV = (
         csvRows.push(row.join(','));
     });
 
-    downloadCSV(csvRows.join('\r\n'), `calificaciones_${group.name.replace(/\s/g, '_')}.csv`);
+    const finalName = fileName ? `${fileName}.csv` : `calificaciones_${group.name.replace(/\s/g, '_')}.csv`;
+    downloadCSV(csvRows.join('\r\n'), finalName);
 };

@@ -72,7 +72,7 @@ const PdfTemplate: React.FC<GroupPdfTemplateProps> = ({
                     <h2 className="text-xl font-bold text-slate-900 mb-3 text-center">Asistencia Mensual (Promedio)</h2>
                     <div className="bg-slate-50 p-4 rounded-lg">
                         {groupSummary && Object.keys(groupSummary.monthlyAttendance).length > 0 ? (
-                            <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} height="220px" />
+                            <ReportChart monthlyAttendance={groupSummary.monthlyAttendance} height="220px" barColor={groupColor.hex} />
                         ) : (
                             <p className="text-center text-slate-500 py-8">No hay datos de asistencia.</p>
                         )}
