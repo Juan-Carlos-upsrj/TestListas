@@ -345,35 +345,6 @@ const AttendanceView: React.FC = () => {
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [group, focusedCell, selection, classDates, selectedGroupId, handleStatusChange]);
-
-
-    const scrollToToday = () => {
-        if (!group || !listRef.current || !headerRef.current) return;
-        
-        let targetIndex = classDates.findIndex(d => d === todayStr);
-        if (targetIndex === -1) {
-            targetIndex = classDates.findIndex(d => new Date(d) > new Date(todayStr));
-            if (targetIndex === -1) targetIndex = classDates.length - 1;
-        }
-
-        if (targetIndex !== -1) {
-            const viewportWidth = headerRef.current.clientWidth - NAME_COL_WIDTH - (STAT_COL_WIDTH * 3);
-            const scrollPos = (targetIndex * DATE_COL_WIDTH) - (viewportWidth / 2) + (DATE_COL_WIDTH / 2);
-            
-            if (listRef.current) {
-                // React-Window FixedSizeList doesn't expose scrollTo(x, y) directly in a simple way for grid-like lists
-                // But since we are syncing scroll via onScroll, if we can set the scrollLeft of the outer container, it works.
-                // However, FixedSizeList manages the outer container style.
-                // We need to access the outer container DOM node.
-                // The `outerRef` prop on List gives us that.
-                // But wait, we are using onScroll on List to drive Header.
-                // To drive List from button, we need access to List's outer element.
-                // We already pass outerRef to List.
-                // Wait, outerRef is currently on List? No, the previous implementation had it.
-                // Let's add outerRef back.
-            }
-        }
-    };
     
     // Manual Outer Ref for Scroll to Today
     const outerListRef = useRef<HTMLDivElement>(null);
@@ -533,7 +504,7 @@ const AttendanceView: React.FC = () => {
                                         onMouseDown: handleMouseDown,
                                         onMouseEnter: handleMouseEnter
                                     }}
-                                    onScroll={({ scrollOffset }) => {
+                                    onScroll={({ scrollOffset }: { scrollOffset: number }) => {
                                         if (headerRef.current) {
                                             headerRef.current.scrollLeft = scrollOffset;
                                         }
