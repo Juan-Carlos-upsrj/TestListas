@@ -17,7 +17,6 @@ const AttendanceView: React.FC = () => {
     const [isBulkFillOpen, setBulkFillOpen] = useState(false);
     const [isTextImporterOpen, setTextImporterOpen] = useState(false);
     
-    // Fix for timezone bug: Use local date methods instead of UTC-based toISOString()
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -122,7 +121,7 @@ const AttendanceView: React.FC = () => {
                             </tr>
                             <tr>
                                 {classDates.map(date => (
-                                    <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b border-border-color ${date === todayStr ? 'bg-accent-blue-light dark:bg-accent-blue/20' : ''}`}>
+                                    <th key={date} className={`p-2 font-semibold text-center text-sm min-w-[60px] border-b border-border-color ${date === todayStr ? 'bg-blue-50/80 dark:bg-blue-900/20 ring-inset ring-2 ring-primary/20' : ''}`}>
                                         {new Date(date + 'T00:00:00').toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })}
                                     </th>
                                 ))}
@@ -135,14 +134,14 @@ const AttendanceView: React.FC = () => {
                                     {classDates.map(date => {
                                         const status = attendance[group.id]?.[student.id]?.[date] || AttendanceStatus.Pending;
                                         return (
-                                            <td key={date} className={`p-0 text-center ${date === todayStr ? 'bg-accent-blue-light/30 dark:bg-accent-blue/10' : ''}`}>
+                                            <td key={date} className="p-1 text-center">
                                                 <button
                                                     onClick={() => handleStatusChange(student.id, date, getNextStatus(status))}
                                                     onContextMenu={(e) => {
                                                         e.preventDefault();
                                                         handleStatusChange(student.id, date, AttendanceStatus.Pending);
                                                     }}
-                                                    className={`w-full h-10 text-xs transition-transform transform hover:scale-110 ${STATUS_STYLES[status].color}`}
+                                                    className={`w-full h-9 rounded-md text-xs transition-all duration-150 flex items-center justify-center ${STATUS_STYLES[status].color}`}
                                                 >
                                                     {STATUS_STYLES[status].symbol}
                                                 </button>

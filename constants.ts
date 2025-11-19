@@ -10,13 +10,39 @@ export const ATTENDANCE_STATUSES: AttendanceStatus[] = [
     AttendanceStatus.Exchange,
 ];
 
+// Colores SÓLIDOS para asegurar visibilidad y contraste.
+// Se usa texto blanco (text-white) para todos los estados activos.
 export const STATUS_STYLES: { [key in AttendanceStatus]: { symbol: string; color: string; key: string; } } = {
-    [AttendanceStatus.Pending]: { symbol: '-', color: 'bg-slate-200/60 dark:bg-slate-600/60 text-slate-500 dark:text-slate-300', key: ' ' },
-    [AttendanceStatus.Present]: { symbol: 'P', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold', key: 'p' },
-    [AttendanceStatus.Absent]: { symbol: 'A', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 font-bold', key: 'a' },
-    [AttendanceStatus.Late]: { symbol: 'R', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold', key: 'r' },
-    [AttendanceStatus.Justified]: { symbol: 'J', color: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-bold', key: 'j' },
-    [AttendanceStatus.Exchange]: { symbol: 'I', color: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-bold', key: 'i' },
+    [AttendanceStatus.Pending]: { 
+        symbol: '-', 
+        color: 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700', 
+        key: ' ' 
+    },
+    [AttendanceStatus.Present]: { 
+        symbol: 'P', 
+        color: 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm font-bold', 
+        key: 'p' 
+    },
+    [AttendanceStatus.Absent]: { 
+        symbol: 'A', 
+        color: 'bg-rose-600 text-white hover:bg-rose-700 shadow-sm font-bold', 
+        key: 'a' 
+    },
+    [AttendanceStatus.Late]: { 
+        symbol: 'R', 
+        color: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm font-bold', 
+        key: 'r' 
+    },
+    [AttendanceStatus.Justified]: { 
+        symbol: 'J', 
+        color: 'bg-sky-500 text-white hover:bg-sky-600 shadow-sm font-bold', 
+        key: 'j' 
+    },
+    [AttendanceStatus.Exchange]: { 
+        symbol: 'I', 
+        color: 'bg-violet-500 text-white hover:bg-violet-600 shadow-sm font-bold', 
+        key: 'i' 
+    },
 };
 
 export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
