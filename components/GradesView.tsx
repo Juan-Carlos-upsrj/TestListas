@@ -122,10 +122,27 @@ const GradesView: React.FC = () => {
     };
 
     const handleDeleteEvaluation = (evaluationId: string) => {
-        if (selectedGroupId && window.confirm('¿Seguro que quieres eliminar esta evaluación? Se borrarán todas las calificaciones asociadas.')) {
-            const evalName = groupEvaluations.find(e => e.id === evaluationId)?.name;
+        if (!selectedGroupId) return;
+        
+        const evaluation = groupEvaluations.find(e => e.id === evaluationId);
+        if (!evaluation) return;
+        
+        // Contar cuántas calificaciones existen para esta evaluación
+        const gradesCount = Object.values(groupGrades).filter(studentGrades => 
+            studentGrades[evaluationId] !== null && 
+            studentGrades[evaluationId] !== undefined
+        ).length;
+        
+        const message = gradesCount > 0
+            ? `¿Eliminar "${evaluation.name}"?\n\nSe borrarán ${gradesCount} calificación(es) registrada(s).`
+            : `¿Eliminar "${evaluation.name}"?\n\nNo hay calificaciones registradas aún.`;
+        
+        if (window.confirm(message)) {
             dispatch({ type: 'DELETE_EVALUATION', payload: { groupId: selectedGroupId, evaluationId } });
-            dispatch({ type: 'ADD_TOAST', payload: { message: `Evaluación '${evalName}' eliminada.`, type: 'error' } });
+            dispatch({ type: 'ADD_TOAST', payload: { 
+                message: `Evaluación '${evaluation.name}' eliminada.`, 
+                type: 'error' 
+            }});
         }
     };
 

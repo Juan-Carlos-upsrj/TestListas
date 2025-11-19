@@ -374,10 +374,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, []);
   
    // Save state to DB whenever it changes, after initialization
+   // Debounced save to improve performance
   useEffect(() => {
-    if (isInitialized) {
+    if (!isInitialized) return;
+
+    const timeoutId = setTimeout(() => {
       saveState(state);
-    }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
   }, [state, isInitialized]);
   
   // Fetch Google Calendar events when URL or color changes

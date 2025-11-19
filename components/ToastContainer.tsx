@@ -12,9 +12,10 @@ const toastIcons = {
 
 const ToastMessage: React.FC<{ toast: Toast, onRemove: (id: number) => void }> = ({ toast, onRemove }) => {
     React.useEffect(() => {
+        const duration = toast.type === 'error' ? 7000 : 3000;
         const timer = setTimeout(() => {
             onRemove(toast.id);
-        }, 3000);
+        }, duration);
 
         return () => {
             clearTimeout(timer);

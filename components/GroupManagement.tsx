@@ -313,8 +313,21 @@ const GroupManagement: React.FC = () => {
     const [isBulkModalOpen, setBulkModalOpen] = useState(false);
     const [editingGroup, setEditingGroup] = useState<Group | undefined>(undefined);
     const [editingStudent, setEditingStudent] = useState<Student | undefined>(undefined);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const selectedGroup = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
+    
+    const filteredStudents = useMemo(() => {
+      if (!selectedGroup) return [];
+      if (!searchTerm.trim()) return selectedGroup.students;
+      
+      const search = searchTerm.toLowerCase();
+      return selectedGroup.students.filter(student =>
+        student.name.toLowerCase().includes(search) ||
+        student.matricula?.toLowerCase().includes(search) ||
+        student.nickname?.toLowerCase().includes(search)
+      );
+    }, [selectedGroup, searchTerm]);
 
     const handleSelectGroup = (groupId: string) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: groupId });
@@ -416,8 +429,20 @@ const GroupManagement: React.FC = () => {
                    {selectedGroup ? (
                         <div>
                             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-2">
-                                <h2 className="text-2xl font-bold text-text-primary">{selectedGroup.name} <span className="font-normal text-lg text-text-secondary">({selectedGroup.students.length} alumnos)</span></h2>
-                                <div className="flex gap-2 flex-wrap">
+                                <h2 className="text-2xl font-bold text-text-primary">
+                                    {selectedGroup.name} 
+                                    <span className="font-normal text-lg text-text-secondary">
+                                      ({filteredStudents.length} de {selectedGroup.students.length} alumnos)
+                                    </span>
+                                </h2>
+                                <div className="flex gap-2 flex-wrap items-center">
+                                    <input
+                                      type="text"
+                                      value={searchTerm}
+                                      onChange={(e) => setSearchTerm(e.target.value)}
+                                      placeholder="Buscar alumno..."
+                                      className="px-3 py-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary text-sm"
+                                    />
                                     <Button size="sm" variant="secondary" onClick={() => setBulkModalOpen(true)}>
                                         <Icon name="list-plus" className="w-4 h-4"/> Agregar Varios
                                     </Button>
@@ -438,7 +463,7 @@ const GroupManagement: React.FC = () => {
                                     </thead>
                                     <tbody>
                                         <AnimatePresence>
-                                        {selectedGroup.students.map((student, index) => (
+                                        {filteredStudents.map((student, index) => (
                                             <motion.tr
                                                 key={student.id}
                                                 layout
@@ -463,6 +488,9 @@ const GroupManagement: React.FC = () => {
                                 </table>
                                 {selectedGroup.students.length === 0 && (
                                     <p className="text-center text-text-secondary py-8">No hay alumnos en este grupo.</p>
+                                )}
+                                {selectedGroup.students.length > 0 && filteredStudents.length === 0 && (
+                                     <p className="text-center text-text-secondary py-8">No se encontraron alumnos con esa búsqueda.</p>
                                 )}
                             </div>
                         </div>
