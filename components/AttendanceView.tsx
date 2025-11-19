@@ -13,10 +13,10 @@ import * as ReactWindow from 'react-window';
 import type { ListChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-// Handle ESM/CJS interop for react-window
-const List = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?.FixedSizeList;
+// Robust import for FixedSizeList to handle potential ESM/CJS mismatch
+const List = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?.FixedSizeList || ReactWindow.FixedSizeList;
 
-// Dimensiones de las celdas
+// Dimension constants
 const NAME_COL_WIDTH = 250;
 const DATE_COL_WIDTH = 60;
 const STATS_COL_WIDTH = 100;
@@ -33,12 +33,12 @@ interface CellData {
     todayStr: string;
 }
 
-// Componente de Fila Virtualizada
+// Virtualized Row Component
 const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
     const { students, classDates, attendance, groupId, handleStatusChange, focusedCell, todayStr, setFocusedCell } = data;
     const student = students[index];
     
-    // Cálculo de estadísticas en tiempo real para la fila
+    // Real-time stats calculation
     const studentAttendance = attendance[groupId]?.[student.id] || {};
     let presentCount = 0;
     let totalPastClasses = 0;
@@ -56,12 +56,12 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
     
     const percentage = totalPastClasses > 0 ? Math.round((presentCount / totalPastClasses) * 100) : 100;
     
-    // Color del porcentaje
+    // Color coding for percentage
     const percentageColor = percentage >= 90 ? 'text-emerald-600' : percentage >= 80 ? 'text-amber-600' : 'text-rose-600';
 
     return (
         <div style={style} className="flex items-center border-b border-border-color/70 hover:bg-surface-secondary/40 group transition-colors">
-            {/* Columna Fija: Nombre (Sticky Left) */}
+            {/* Fixed Name Column (Sticky Left) */}
             <div 
                 className="sticky left-0 z-10 bg-surface group-hover:bg-surface-secondary/40 flex items-center px-3 border-r border-border-color h-full shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                 style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
@@ -72,9 +72,9 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                 </div>
             </div>
 
-            {/* Celdas de Fechas */}
+            {/* Date Cells */}
             {classDates.map((date, colIndex) => {
-                // Explicitly cast status to AttendanceStatus to satisfy TypeScript indexing
+                // Cast to AttendanceStatus to satisfy TS
                 const status = (studentAttendance[date] || AttendanceStatus.Pending) as AttendanceStatus;
                 const isFocused = focusedCell?.r === index && focusedCell?.c === colIndex;
                 const isToday = date === todayStr;
@@ -88,7 +88,7 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                     >
                          <button
                             onClick={(e) => {
-                                e.stopPropagation(); // Evitar doble setFocusedCell si es necesario
+                                e.stopPropagation();
                                 const nextIndex = (ATTENDANCE_STATUSES.indexOf(status) + 1) % ATTENDANCE_STATUSES.length;
                                 handleStatusChange(student.id, date, ATTENDANCE_STATUSES[nextIndex]);
                                 setFocusedCell({ r: index, c: colIndex });
@@ -101,7 +101,7 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                                 ${STATUS_STYLES[status].color}
                                 ${isFocused ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface z-20 scale-110' : ''}
                             `}
-                            tabIndex={-1} // Managed by container
+                            tabIndex={-1}
                         >
                             {STATUS_STYLES[status].symbol}
                         </button>
@@ -109,7 +109,7 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                 );
             })}
 
-            {/* Columna Fija: Global % (Sticky Right) */}
+            {/* Fixed Global % Column (Sticky Right) */}
             <div 
                 className="sticky right-0 z-10 bg-surface group-hover:bg-surface-secondary/40 flex items-center justify-center border-l border-border-color h-full shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                 style={{ width: STATS_COL_WIDTH, minWidth: STATS_COL_WIDTH }}
@@ -134,12 +134,12 @@ const AttendanceView: React.FC = () => {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    // Estado para navegación por teclado: { r: rowIndex, c: colIndex }
+    // Navigation State: { r: rowIndex, c: colIndex }
     const [focusedCell, setFocusedCell] = useState<{ r: number; c: number } | null>(null);
 
     const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
-        setFocusedCell(null); // Reset focus on group change
+        setFocusedCell(null);
     }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
@@ -157,9 +157,8 @@ const AttendanceView: React.FC = () => {
         }
     }, [groups, selectedGroupId, setSelectedGroupId]);
 
-    // Sincronización de Scroll Horizontal (Header <-> Body)
+    // Horizontal Scroll Sync (Header <-> Body)
     const handleScroll = useCallback((event: any) => {
-        // react-window outerRef scroll event
         if (headerRef.current && event.target) {
             headerRef.current.scrollLeft = event.target.scrollLeft;
         }
@@ -171,7 +170,7 @@ const AttendanceView: React.FC = () => {
             outerElement.addEventListener('scroll', handleScroll);
             return () => outerElement.removeEventListener('scroll', handleScroll);
         }
-    }, [handleScroll, group]); // Re-attach if group changes (re-render)
+    }, [handleScroll, group]);
 
     const handleStatusChange = useCallback((studentId: string, date: string, status: AttendanceStatus) => {
         if (selectedGroupId) {
@@ -183,7 +182,7 @@ const AttendanceView: React.FC = () => {
         handleStatusChange(studentId, todayStr, status);
     };
 
-    // Manejo de Teclado
+    // Keyboard Handling
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (!group || !focusedCell) return;
         
@@ -191,7 +190,7 @@ const AttendanceView: React.FC = () => {
         const maxR = group.students.length - 1;
         const maxC = classDates.length - 1;
 
-        // Movimiento
+        // Movement
         if (e.key === 'ArrowUp') {
             e.preventDefault();
             if (r > 0) setFocusedCell({ r: r - 1, c });
@@ -206,7 +205,7 @@ const AttendanceView: React.FC = () => {
             if (c < maxC) setFocusedCell({ r, c: c + 1 });
         }
         
-        // Acciones directas
+        // Actions
         const keyMap: { [key: string]: AttendanceStatus } = {
             'p': AttendanceStatus.Present,
             'a': AttendanceStatus.Absent,
@@ -225,23 +224,19 @@ const AttendanceView: React.FC = () => {
         }
     };
 
-    // Scroll to Today Logic
+    // Scroll to Today
     const scrollToToday = () => {
         if (!group || !outerListRef.current) return;
         
-        // Find index of today or closest future date
         let targetIndex = classDates.findIndex(d => d === todayStr);
         if (targetIndex === -1) {
-            // If today isn't a class day, find the next one
             targetIndex = classDates.findIndex(d => new Date(d) > new Date(todayStr));
-            if (targetIndex === -1) targetIndex = classDates.length - 1; // End of list if all passed
+            if (targetIndex === -1) targetIndex = classDates.length - 1;
         }
 
         if (targetIndex !== -1) {
-            // Calculate pixel offset
-            // offset = NameWidth + (Index * DateWidth) - (ViewportWidth / 2) + (DateWidth / 2)
-            // Centering the column
             const viewportWidth = outerListRef.current.clientWidth;
+            // Calculate position to center the target column
             const scrollPos = (targetIndex * DATE_COL_WIDTH) - (viewportWidth / 2) + (DATE_COL_WIDTH / 2) + NAME_COL_WIDTH;
             
             outerListRef.current.scrollTo({
@@ -251,13 +246,10 @@ const AttendanceView: React.FC = () => {
         }
     };
 
-    // Cálculo del ancho total del contenido
     const totalContentWidth = useMemo(() => {
         return NAME_COL_WIDTH + (classDates.length * DATE_COL_WIDTH) + STATS_COL_WIDTH;
     }, [classDates.length]);
 
-
-    // Render Header Columns
     const renderHeader = () => {
         return (
             <div className="flex h-full text-sm font-semibold text-text-secondary">
@@ -297,7 +289,7 @@ const AttendanceView: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col h-full" onKeyDown={handleKeyDown} tabIndex={0}>
+        <div className="flex flex-col h-full outline-none" onKeyDown={handleKeyDown} tabIndex={0}>
             {/* Toolbar */}
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4 flex-shrink-0">
                 <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4 sm:ml-auto">
@@ -344,7 +336,7 @@ const AttendanceView: React.FC = () => {
                     {/* Virtualized Body */}
                     <div className="flex-1 relative">
                         <AutoSizer>
-                            {({ height, width }) => (
+                            {({ height, width }: { height: number, width: number }) => (
                                 <List
                                     ref={listRef}
                                     outerRef={outerListRef}
@@ -363,7 +355,6 @@ const AttendanceView: React.FC = () => {
                                         todayStr
                                     }}
                                     className="overflow-x-auto scroll-smooth"
-                                    // IMPORTANT: innerElementType must handle the full width for horizontal scrolling to work
                                     innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
                                         <div
                                             ref={ref}
