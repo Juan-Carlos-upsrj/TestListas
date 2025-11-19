@@ -12,11 +12,11 @@ export const ATTENDANCE_STATUSES: AttendanceStatus[] = [
 
 export const STATUS_STYLES: { [key in AttendanceStatus]: { symbol: string; color: string; key: string; } } = {
     [AttendanceStatus.Pending]: { symbol: '-', color: 'bg-slate-200/60 dark:bg-slate-600/60 text-slate-500 dark:text-slate-300', key: ' ' },
-    [AttendanceStatus.Present]: { symbol: 'P', color: 'bg-accent-green-light dark:bg-accent-green/20 text-accent-green-dark dark:text-green-300 font-bold', key: 'p' },
-    [AttendanceStatus.Absent]: { symbol: 'A', color: 'bg-accent-red-light dark:bg-accent-red/20 text-accent-red dark:text-red-300 font-bold', key: 'a' },
-    [AttendanceStatus.Late]: { symbol: 'R', color: 'bg-accent-yellow-light dark:bg-accent-yellow/20 text-accent-yellow-dark dark:text-yellow-300 font-bold', key: 'r' },
-    [AttendanceStatus.Justified]: { symbol: 'J', color: 'bg-accent-blue-light dark:bg-accent-blue/20 text-accent-blue dark:text-blue-300 font-bold', key: 'j' },
-    [AttendanceStatus.Exchange]: { symbol: 'I', color: 'bg-accent-teal-light dark:bg-accent-teal/20 text-accent-teal dark:text-teal-300 font-bold', key: 'i' },
+    [AttendanceStatus.Present]: { symbol: 'P', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 font-bold', key: 'p' },
+    [AttendanceStatus.Absent]: { symbol: 'A', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 font-bold', key: 'a' },
+    [AttendanceStatus.Late]: { symbol: 'R', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 font-bold', key: 'r' },
+    [AttendanceStatus.Justified]: { symbol: 'J', color: 'bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-bold', key: 'j' },
+    [AttendanceStatus.Exchange]: { symbol: 'I', color: 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 font-bold', key: 'i' },
 };
 
 export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
@@ -28,7 +28,7 @@ export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
     {
         text: "Sipoooooooo",
         author: "Mely",
-        image: "/images/benjamin-franklin.jpg" // Para usar esta imagen, crea una carpeta 'public/images' y guarda el archivo ahí.
+        image: "/images/benjamin-franklin.jpg" 
     },
     {
         text: "No pues miaw",
@@ -42,18 +42,19 @@ export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
     }
 ];
 
+// Updated colors to ensure high contrast (Darker backgrounds for white text)
 export const GROUP_COLORS = [
-    { name: 'blue', bg: 'bg-blue-600', text: 'text-white', calendar: 'bg-blue-200 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200' },
-    { name: 'teal', bg: 'bg-teal-500', text: 'text-white', calendar: 'bg-teal-200 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
-    { name: 'yellow', bg: 'bg-yellow-500', text: 'text-black', calendar: 'bg-yellow-200 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200' },
-    { name: 'red', bg: 'bg-red-500', text: 'text-white', calendar: 'bg-red-200 dark:bg-red-900/50 text-red-800 dark:text-red-200' },
-    { name: 'green', bg: 'bg-green-500', text: 'text-white', calendar: 'bg-green-200 dark:bg-green-900/50 text-green-800 dark:text-green-200' },
-    { name: 'fuchsia', bg: 'bg-fuchsia-500', text: 'text-white', calendar: 'bg-fuchsia-200 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
-    { name: 'rose', bg: 'bg-rose-500', text: 'text-white', calendar: 'bg-rose-200 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
-    { name: 'slate', bg: 'bg-slate-500', text: 'text-white', calendar: 'bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-slate-100' },
+    { name: 'blue', bg: 'bg-blue-600', text: 'text-white', ring: 'ring-blue-600', calendar: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200' },
+    { name: 'teal', bg: 'bg-teal-600', text: 'text-white', ring: 'ring-teal-600', calendar: 'bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
+    { name: 'amber', bg: 'bg-amber-600', text: 'text-white', ring: 'ring-amber-600', calendar: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
+    { name: 'red', bg: 'bg-red-600', text: 'text-white', ring: 'ring-red-600', calendar: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' },
+    { name: 'green', bg: 'bg-green-600', text: 'text-white', ring: 'ring-green-600', calendar: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' },
+    { name: 'fuchsia', bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600', calendar: 'bg-fuchsia-100 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
+    { name: 'rose', bg: 'bg-rose-600', text: 'text-white', ring: 'ring-rose-600', calendar: 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
+    { name: 'indigo', bg: 'bg-indigo-600', text: 'text-white', ring: 'ring-indigo-600', calendar: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200' },
 ];
 
-export const CUSTOM_EVENT_COLOR = 'bg-cyan-200 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200';
+export const CUSTOM_EVENT_COLOR = 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200';
 
 export const PROFESSOR_BIRTHDAYS: Professor[] = [
     { name: 'Prof. Victor', birthdate: '02-04' },

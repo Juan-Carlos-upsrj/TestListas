@@ -22,16 +22,13 @@ const App: React.FC = () => {
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
-    // Theme management
+    // Simple Theme management (Dark/Light only)
     const root = document.documentElement;
-    root.classList.remove('dark', 'theme-classic', 'theme-custom');
-    root.style.cssText = '';
-
     if (settings.theme === 'dark') {
       root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
     }
-    root.classList.add('theme-classic');
-
   }, [settings.theme]);
 
 
@@ -99,7 +96,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen bg-background text-text-primary font-sans relative">
-      {(settings.theme === 'classic' || settings.theme === 'dark') && <BackgroundShapesV2 />}
+      <BackgroundShapesV2 />
       
       {updateAvailable && <UpdateNotification onUpdate={handleUpdate} />}
       

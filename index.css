@@ -3,34 +3,38 @@
 @tailwind utilities;
 
 @layer base {
-  /*
-    Paleta de colores del tema claro actualizada según la especificación del usuario.
-  */
-  :root, .theme-classic {
-    --color-background: #fbfbfb;
-    --color-surface: #fbfbfb;
-    --color-surface-secondary: #ced9e5;
-    --color-primary: #3b82f6;
-    --color-primary-hover: #2563eb;
-    --color-primary-text: #0d000e;
-    --color-accent: #f59e0b;
-    --color-text-primary: #190023;
-    --color-text-secondary: #000000;
-    --color-border-color: #ebebeb;
+  :root {
+    /* Tema Claro Base (Slate) */
+    --color-background: #f8fafc;       /* slate-50 */
+    --color-surface: #ffffff;          /* white */
+    --color-surface-secondary: #f1f5f9; /* slate-100 */
+    
+    --color-primary: #3b82f6;          /* blue-500 */
+    --color-primary-hover: #2563eb;    /* blue-600 */
+    --color-primary-text: #ffffff;     /* white */
+    
+    --color-accent: #f59e0b;           /* amber-500 */
+    
+    --color-text-primary: #0f172a;     /* slate-900 */
+    --color-text-secondary: #64748b;   /* slate-500 */
+    --color-border-color: #e2e8f0;     /* slate-200 */
   }
 
-  .dark.theme-classic {
-    /* El tema oscuro se mantiene sin cambios, tal como estaba. */
-    --color-background: #17171f;       /* Carbón profundo, casi negro */
-    --color-surface: #21212b;          /* Carbón más claro para tarjetas */
-    --color-surface-secondary: #2c2c3a; /* Un poco más claro para hovers */
-    --color-primary: #4c9aff;          /* Azul vibrante y accesible para modo oscuro */
-    --color-primary-hover: #6fabff;     /* Azul más claro para hover */
-    --color-primary-text: #0d101e;      /* Texto muy oscuro para alto contraste en botones */
-    --color-accent: #f7b944;           /* Dorado vibrante para modo oscuro */
-    --color-text-primary: #e0e0e0;      /* Gris claro para texto principal */
-    --color-text-secondary: #9e9e9e;    /* Gris medio para texto secundario */
-    --color-border-color: #3d3d4d;      /* Color sutil para bordes */
+  .dark {
+    /* Tema Oscuro Base (Slate Profundo) */
+    --color-background: #0f172a;       /* slate-900 */
+    --color-surface: #1e293b;          /* slate-800 */
+    --color-surface-secondary: #334155; /* slate-700 */
+    
+    --color-primary: #60a5fa;          /* blue-400 */
+    --color-primary-hover: #93c5fd;    /* blue-300 */
+    --color-primary-text: #0f172a;     /* slate-900 */
+    
+    --color-accent: #fbbf24;           /* amber-400 */
+    
+    --color-text-primary: #f8fafc;     /* slate-50 */
+    --color-text-secondary: #94a3b8;   /* slate-400 */
+    --color-border-color: #334155;     /* slate-700 */
   }
 }
 
@@ -43,13 +47,13 @@
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background-color: rgba(100, 116, 139, 0.4); /* slate-500 with opacity */
+    background-color: rgba(148, 163, 184, 0.5); /* slate-400 with opacity */
     border-radius: 4px;
     border: 2px solid transparent;
     background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(100, 116, 139, 0.7); /* slate-500 more opaque */
+    background-color: rgba(148, 163, 184, 0.8);
 }
 
 /* Base styles for react-grid-layout resizable handle */
@@ -60,19 +64,15 @@
   bottom: 3px;
   width: 5px;
   height: 5px;
-  border-right: 2px solid rgba(0, 0, 0, 0.4);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+  border-right: 2px solid var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-text-secondary);
+  opacity: 0.5;
 }
 
 /* Placeholder style for when dragging widgets */
 .react-grid-placeholder {
-  background: #a855f7 !important; /* purple-500 */
+  background: var(--color-primary) !important;
   opacity: 0.2 !important;
-  transition-duration: 100ms;
+  border-radius: 0.75rem; /* rounded-xl */
   z-index: 2;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -o-user-select: none;
-  user-select: none;
 }

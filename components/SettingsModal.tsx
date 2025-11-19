@@ -77,19 +77,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         <>
             <Modal isOpen={isOpen} onClose={onClose} title="Configuración" size="lg">
                 <div className="space-y-6">
-                    <fieldset className="border p-4 rounded-lg border-border-color">
-                        <legend className="px-2 font-semibold">Apariencia</legend>
-                        <div className="space-y-4">
-                           <div>
-                                <label className="block text-sm font-medium mb-2">Tema Visual</label>
-                                <select name="theme" value={settings.theme} onChange={handleChange} className="w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary">
-                                    <option value="classic">Claro Clásico</option>
-                                    <option value="dark">Oscuro</option>
-                                </select>
-                           </div>
-                        </div>
-                    </fieldset>
-
+                    {/* Theme selection removed for cleaner UX */}
                     <fieldset className="border p-4 rounded-lg border-border-color">
                         <legend className="px-2 font-semibold">Periodo del Semestre</legend>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

@@ -48,7 +48,7 @@ const Sidebar: React.FC = () => {
                 animate={{ rotate: [0, 7, -7, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
             />
-            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent via-accent-blue to-primary bg-[length:300%] animate-gradient-x">
+            <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">
                 Gestión IAEV
             </h1>
         </div>
@@ -61,16 +61,21 @@ const Sidebar: React.FC = () => {
                     {groups.map(g => {
                         const colorObj = GROUP_COLORS.find(c => c.name === g.color) || GROUP_COLORS[0];
                         const isActive = selectedGroupId === g.id;
+                        
+                        // Force high contrast logic:
+                        // Active: Colored background, White text.
+                        // Inactive: Light/Surface background, Normal text.
+                        const activeClass = `${colorObj.bg} text-white shadow-md ring-2 ring-offset-1 ring-offset-surface ${colorObj.ring || 'ring-primary'}`;
+                        const inactiveClass = `bg-surface-secondary text-text-secondary hover:bg-border-color hover:text-text-primary`;
+
                         return (
                             <motion.button
                                 key={g.id}
                                 onClick={() => handleGroupClick(g.id)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 border shadow-sm ${
-                                    isActive
-                                        ? `${colorObj.bg} ${colorObj.text} border-transparent ring-2 ring-offset-1 ring-offset-surface ring-primary/30`
-                                        : 'bg-surface text-text-secondary border-border-color hover:bg-surface-secondary hover:border-primary/30'
+                                className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all duration-200 border border-transparent ${
+                                    isActive ? activeClass : inactiveClass
                                 }`}
                             >
                                 {g.name}
@@ -95,10 +100,10 @@ const Sidebar: React.FC = () => {
                   }}
                   className={`flex items-center gap-3 px-4 py-2.5 my-1 rounded-lg text-base font-semibold transition-all duration-200 relative overflow-hidden ${
                     state.activeView === item.view
-                      ? 'bg-primary text-primary-text shadow-lg shadow-primary/30'
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30'
                       : 'text-text-primary hover:bg-surface-secondary'
                   }`}
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Icon name={item.icon} className="w-5 h-5" />
