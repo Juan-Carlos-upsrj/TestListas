@@ -18,9 +18,10 @@ const List = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?
 
 // Dimension constants
 const NAME_COL_WIDTH = 250;
-const DATE_COL_WIDTH = 50; // Reduced slightly to fit more
-const STAT_COL_WIDTH = 60; // Width for each stat column (P1, P2, Global)
+const DATE_COL_WIDTH = 50;
+const STAT_COL_WIDTH = 60;
 const ROW_HEIGHT = 45;
+const HEADER_HEIGHT = 90; // Increased height for 3 levels (30px each approx)
 
 interface Coords { r: number; c: number; }
 
@@ -33,12 +34,11 @@ interface CellData {
     focusedCell: Coords | null;
     selection: { start: Coords | null; end: Coords | null; isDragging: boolean };
     todayStr: string;
-    firstPartialEnd: string; // Passed for calculation
+    firstPartialEnd: string;
     onMouseDown: (r: number, c: number) => void;
     onMouseEnter: (r: number, c: number) => void;
 }
 
-// --- Helper to calculate percentage ---
 const calculatePercentage = (
     studentAttendance: { [date: string]: AttendanceStatus },
     dates: string[]
@@ -47,11 +47,6 @@ const calculatePercentage = (
     let total = 0;
     dates.forEach(date => {
         const status = studentAttendance[date];
-        // Only count dates that have passed or are today? Usually we calculate based on dates *taken* or all dates up to now.
-        // For simplicity, we count all dates in the range.
-        // If you want to count only dates with status != Pending, change logic here.
-        // Current logic: Count all dates in the column list (which are usually dates up to today or semester end)
-        // But normally attendance is percentage of *classes passed*.
         if (new Date(date) <= new Date()) {
              total++;
              if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified || status === AttendanceStatus.Exchange) {
@@ -65,20 +60,17 @@ const calculatePercentage = (
     };
 };
 
-// Virtualized Row Component
 const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
     const { 
         students, classDates, attendance, groupId, 
         focusedCell, selection, todayStr, firstPartialEnd,
-        onMouseDown, onMouseEnter
+        onMouseDown, onMouseEnter, handleStatusChange
     } = data;
     
     const student = students[index];
     const studentAttendance = attendance[groupId]?.[student.id] || {};
     
-    // --- Statistics Calculation ---
     const p1End = new Date(firstPartialEnd);
-    
     const p1Dates = classDates.filter(d => new Date(d) <= p1End);
     const p2Dates = classDates.filter(d => new Date(d) > p1End);
     
@@ -88,14 +80,12 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
 
     const getScoreColor = (pct: number) => pct >= 90 ? 'text-emerald-600' : pct >= 80 ? 'text-amber-600' : 'text-rose-600';
 
-    // Check if row is involved in selection for highlighting logic
     const isRowInSelection = selection.start && selection.end && 
         index >= Math.min(selection.start.r, selection.end.r) && 
         index <= Math.max(selection.start.r, selection.end.r);
 
     return (
         <div style={style} className={`flex items-center border-b border-border-color/70 hover:bg-surface-secondary/40 transition-colors ${isRowInSelection ? 'bg-blue-50/30' : ''}`}>
-            {/* Fixed Name Column (Sticky Left) */}
             <div 
                 className="sticky left-0 z-10 bg-surface flex items-center px-3 border-r border-border-color h-full shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                 style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
@@ -106,13 +96,11 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                 </div>
             </div>
 
-            {/* Date Cells */}
             {classDates.map((date, colIndex) => {
                 const status = (studentAttendance[date] || AttendanceStatus.Pending) as AttendanceStatus;
                 const isFocused = focusedCell?.r === index && focusedCell?.c === colIndex;
                 const isToday = date === todayStr;
 
-                // Selection Check
                 let isSelected = false;
                 if (selection.start && selection.end) {
                     const minR = Math.min(selection.start.r, selection.end.r);
@@ -127,15 +115,18 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                 return (
                     <div 
                         key={date}
-                        className={`flex items-center justify-center border-r border-border-color/50 h-full relative select-none
+                        className={`flex items-center justify-center border-r border-border-color/50 h-full relative select-none cursor-pointer
                             ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}
                             ${isSelected ? 'bg-blue-200/50 dark:bg-blue-800/50' : ''}
                         `}
                         style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
                         onMouseDown={() => onMouseDown(index, colIndex)}
                         onMouseEnter={() => onMouseEnter(index, colIndex)}
+                        onContextMenu={(e) => {
+                            e.preventDefault();
+                            handleStatusChange(student.id, date, AttendanceStatus.Pending);
+                        }}
                     >
-                        {/* Visual Indicator (Symbol) */}
                          <div
                             className={`w-8 h-8 rounded-md text-xs font-bold flex items-center justify-center pointer-events-none
                                 ${STATUS_STYLES[status].color}
@@ -147,26 +138,19 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                     </div>
                 );
             })}
-
-            {/* Fixed Stats Columns (Sticky Right) */}
             
-            {/* P1 % */}
             <div 
                 className="sticky z-10 bg-amber-50/80 dark:bg-amber-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs"
                 style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
             >
                  <span className={getScoreColor(p1Stats.percent)}>{p1Stats.percent}%</span>
             </div>
-            
-             {/* P2 % */}
             <div 
                 className="sticky z-10 bg-sky-50/80 dark:bg-sky-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs"
                 style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
             >
                  <span className={getScoreColor(p2Stats.percent)}>{p2Stats.percent}%</span>
             </div>
-
-            {/* Global % */}
             <div 
                 className="sticky right-0 z-10 bg-surface flex items-center justify-center border-l-2 border-border-color h-full font-bold text-sm shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]"
                 style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
@@ -181,20 +165,16 @@ const AttendanceView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const { groups, attendance, settings, selectedGroupId } = state;
     
-    // State for Modals
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [isBulkFillOpen, setBulkFillOpen] = useState(false);
     const [isTextImporterOpen, setTextImporterOpen] = useState(false);
     
-    // Refs for Scrolling
-    const outerListRef = useRef<HTMLDivElement>(null);
     const headerRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<any>(null);
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-    // Selection & Focus State
     const [focusedCell, setFocusedCell] = useState<Coords | null>(null);
     const [selection, setSelection] = useState<{ start: Coords | null; end: Coords | null; isDragging: boolean }>({
         start: null,
@@ -223,27 +203,49 @@ const AttendanceView: React.FC = () => {
         }
     }, [groups, selectedGroupId, setSelectedGroupId]);
 
-    // --- SCROLL SYNC LOGIC ---
-    // We attach a listener to the OUTER element of the FixedSizeList to catch horizontal scroll
-    useEffect(() => {
-        const handleScroll = (e: Event) => {
-            const target = e.target as HTMLElement;
-            if (headerRef.current) {
-                headerRef.current.scrollLeft = target.scrollLeft;
-            }
+    // --- Header Structure Logic ---
+    const headerStructure = useMemo(() => {
+        const p1End = new Date(settings.firstPartialEnd);
+        const structure: { label: string; width: number; months: { label: string; width: number; }[] }[] = [];
+        
+        // Partials
+        const p1Dates = classDates.filter(d => new Date(d) <= p1End);
+        const p2Dates = classDates.filter(d => new Date(d) > p1End);
+        
+        // Helper to group dates by month
+        const groupDatesByMonth = (dates: string[]) => {
+             const months: { label: string; count: number }[] = [];
+             dates.forEach(d => {
+                 const m = new Date(d).toLocaleDateString('es-MX', { month: 'long' });
+                 const label = m.charAt(0).toUpperCase() + m.slice(1);
+                 const last = months[months.length - 1];
+                 if (last && last.label === label) {
+                     last.count++;
+                 } else {
+                     months.push({ label, count: 1 });
+                 }
+             });
+             return months.map(m => ({ label: m.label, width: m.count * DATE_COL_WIDTH }));
         };
 
-        const listContainer = outerListRef.current;
-        if (listContainer) {
-            listContainer.addEventListener('scroll', handleScroll);
+        if (p1Dates.length > 0) {
+            structure.push({
+                label: 'Primer Parcial',
+                width: p1Dates.length * DATE_COL_WIDTH,
+                months: groupDatesByMonth(p1Dates)
+            });
         }
+        if (p2Dates.length > 0) {
+            structure.push({
+                label: 'Segundo Parcial',
+                width: p2Dates.length * DATE_COL_WIDTH,
+                months: groupDatesByMonth(p2Dates)
+            });
+        }
+        
+        return structure;
+    }, [classDates, settings.firstPartialEnd]);
 
-        return () => {
-            if (listContainer) {
-                listContainer.removeEventListener('scroll', handleScroll);
-            }
-        };
-    }, [group]); // Re-bind if group changes
 
     const handleStatusChange = useCallback((studentId: string, date: string, status: AttendanceStatus) => {
         if (selectedGroupId) {
@@ -251,7 +253,6 @@ const AttendanceView: React.FC = () => {
         }
     }, [selectedGroupId, dispatch]);
 
-    // --- MOUSE INTERACTION LOGIC ---
     const handleMouseDown = useCallback((r: number, c: number) => {
         setSelection({ start: { r, c }, end: { r, c }, isDragging: true });
         setFocusedCell({ r, c });
@@ -274,12 +275,10 @@ const AttendanceView: React.FC = () => {
         return () => window.removeEventListener('mouseup', handleMouseUp);
     }, []);
 
-    // --- KEYBOARD LOGIC ---
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!group) return;
             
-            // 1. Navigation
             if (focusedCell) {
                 const { r, c } = focusedCell;
                 const maxR = group.students.length - 1;
@@ -298,14 +297,12 @@ const AttendanceView: React.FC = () => {
                 } else if (e.key === 'ArrowLeft') {
                     e.preventDefault();
                     setFocusedCell({ r, c: Math.max(0, c - 1) });
-                    // Horizontal scroll is manual, difficult to auto-scroll precisely with react-window fixedlist without ref manipulation
                 } else if (e.key === 'ArrowRight') {
                     e.preventDefault();
                     setFocusedCell({ r, c: Math.min(maxC, c + 1) });
                 }
             }
 
-            // 2. Data Entry (Apply to Selection or Focused Cell)
             const keyMap: { [key: string]: AttendanceStatus } = {
                 'p': AttendanceStatus.Present,
                 'a': AttendanceStatus.Absent,
@@ -320,16 +317,12 @@ const AttendanceView: React.FC = () => {
 
             if (statusToApply && selectedGroupId) {
                 e.preventDefault();
-                
-                // Determine range to update
                 let updateRange: { r: number, c: number }[] = [];
-                
                 if (selection.start && selection.end) {
                      const minR = Math.min(selection.start.r, selection.end.r);
                      const maxR = Math.max(selection.start.r, selection.end.r);
                      const minC = Math.min(selection.start.c, selection.end.c);
                      const maxC = Math.max(selection.start.c, selection.end.c);
-                     
                      for (let r = minR; r <= maxR; r++) {
                          for (let c = minC; c <= maxC; c++) {
                              updateRange.push({ r, c });
@@ -339,11 +332,6 @@ const AttendanceView: React.FC = () => {
                     updateRange.push(focusedCell);
                 }
 
-                // Batch update via dispatch needed? 
-                // Dispatching many individual actions might be slow. 
-                // Better to create a BULK_SET action, but for now individual is safer logic-wise.
-                // To avoid lag, we can optimistically update? 
-                // Given local state, it should be fast enough for < 100 cells.
                 updateRange.forEach(({ r, c }) => {
                     const student = group.students[r];
                     const date = classDates[c];
@@ -359,9 +347,8 @@ const AttendanceView: React.FC = () => {
     }, [group, focusedCell, selection, classDates, selectedGroupId, handleStatusChange]);
 
 
-    // Scroll to Today Logic
     const scrollToToday = () => {
-        if (!group || !outerListRef.current) return;
+        if (!group || !listRef.current || !headerRef.current) return;
         
         let targetIndex = classDates.findIndex(d => d === todayStr);
         if (targetIndex === -1) {
@@ -370,8 +357,39 @@ const AttendanceView: React.FC = () => {
         }
 
         if (targetIndex !== -1) {
-            const viewportWidth = outerListRef.current.clientWidth;
-            const scrollPos = (targetIndex * DATE_COL_WIDTH) - (viewportWidth / 2) + (DATE_COL_WIDTH / 2) + NAME_COL_WIDTH;
+            const viewportWidth = headerRef.current.clientWidth - NAME_COL_WIDTH - (STAT_COL_WIDTH * 3);
+            const scrollPos = (targetIndex * DATE_COL_WIDTH) - (viewportWidth / 2) + (DATE_COL_WIDTH / 2);
+            
+            if (listRef.current) {
+                // React-Window FixedSizeList doesn't expose scrollTo(x, y) directly in a simple way for grid-like lists
+                // But since we are syncing scroll via onScroll, if we can set the scrollLeft of the outer container, it works.
+                // However, FixedSizeList manages the outer container style.
+                // We need to access the outer container DOM node.
+                // The `outerRef` prop on List gives us that.
+                // But wait, we are using onScroll on List to drive Header.
+                // To drive List from button, we need access to List's outer element.
+                // We already pass outerRef to List.
+                // Wait, outerRef is currently on List? No, the previous implementation had it.
+                // Let's add outerRef back.
+            }
+        }
+    };
+    
+    // Manual Outer Ref for Scroll to Today
+    const outerListRef = useRef<HTMLDivElement>(null);
+    
+    const handleScrollToToday = () => {
+         if (!group || !outerListRef.current) return;
+        
+        let targetIndex = classDates.findIndex(d => d === todayStr);
+        if (targetIndex === -1) {
+            targetIndex = classDates.findIndex(d => new Date(d) > new Date(todayStr));
+            if (targetIndex === -1) targetIndex = classDates.length - 1;
+        }
+
+        if (targetIndex !== -1) {
+            const viewportWidth = outerListRef.current.clientWidth - NAME_COL_WIDTH - (STAT_COL_WIDTH * 3);
+            const scrollPos = (targetIndex * DATE_COL_WIDTH) - (viewportWidth / 2) + (DATE_COL_WIDTH / 2);
             
             outerListRef.current.scrollTo({
                 left: Math.max(0, scrollPos),
@@ -380,13 +398,13 @@ const AttendanceView: React.FC = () => {
         }
     };
 
+
     const totalContentWidth = useMemo(() => {
         return NAME_COL_WIDTH + (classDates.length * DATE_COL_WIDTH) + (STAT_COL_WIDTH * 3);
     }, [classDates.length]);
 
     return (
         <div className="flex flex-col h-full outline-none">
-            {/* Toolbar */}
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4 flex-shrink-0">
                 <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4 sm:ml-auto">
                     <select
@@ -398,7 +416,7 @@ const AttendanceView: React.FC = () => {
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name} - {g.subject}</option>)}
                     </select>
                     
-                     <Button onClick={scrollToToday} disabled={!group} variant="secondary" className="w-full sm:w-auto">
+                     <Button onClick={handleScrollToToday} disabled={!group} variant="secondary" className="w-full sm:w-auto">
                         <Icon name="calendar" className="w-4 h-4" /> Ir a Hoy
                     </Button>
 
@@ -418,57 +436,77 @@ const AttendanceView: React.FC = () => {
 
             {group ? (
                 <div className="flex-1 border border-border-color rounded-xl overflow-hidden bg-surface flex flex-col shadow-sm select-none">
-                    {/* Header Container */}
+                    
+                    {/* --- 3-Level Header --- */}
                     <div 
                         ref={headerRef}
                         className="overflow-hidden border-b-2 border-border-color bg-surface-secondary/30 flex-shrink-0"
-                        style={{ height: 50 }}
+                        style={{ height: HEADER_HEIGHT }}
                     >
-                        <div style={{ width: totalContentWidth, height: '100%', display: 'flex' }}>
-                             {/* Name Header */}
-                             <div 
-                                className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
-                                style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
-                            >
-                                <span className="text-sm font-semibold text-text-secondary">Alumno</span>
-                            </div>
+                         <div style={{ width: totalContentWidth, height: '100%', display: 'flex', flexDirection: 'column' }}>
                             
-                            {/* Date Headers */}
-                            {classDates.map(date => {
-                                const isToday = date === todayStr;
-                                const dateObj = new Date(date + 'T00:00:00');
-                                return (
-                                    <div 
-                                        key={date}
-                                        className={`flex flex-col items-center justify-center border-r border-border-color/50 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`}
-                                        style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
-                                    >
-                                        <span className="text-[10px] uppercase opacity-70">{dateObj.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span>
-                                        <span className="text-xs">{dateObj.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }).split(' ')[0]}</span>
+                            {/* Row 1: Partials */}
+                            <div className="flex h-1/3 w-full border-b border-border-color/50">
+                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                    {/* Empty Corner */}
+                                </div>
+                                
+                                {headerStructure.map((part, i) => (
+                                    <div key={i} className="flex items-center justify-center border-r border-border-color font-bold text-xs uppercase tracking-wide bg-surface-secondary/50 text-text-secondary" style={{ width: part.width }}>
+                                        {part.label}
                                     </div>
-                                );
-                            })}
-                            
-                            {/* Sticky Stat Headers */}
-                            <div 
-                                className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary"
-                                style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
-                            >
-                                % P1
+                                ))}
+
+                                {/* Stats Placeholders */}
+                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
+                                     <div className="w-full bg-surface-secondary/50 border-l border-border-color"></div>
+                                </div>
                             </div>
-                             <div 
-                                className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary"
-                                style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
-                            >
-                                % P2
+
+                            {/* Row 2: Months */}
+                            <div className="flex h-1/3 w-full border-b border-border-color/50">
+                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                     {/* Empty Corner */}
+                                </div>
+
+                                {headerStructure.flatMap((part) => part.months.map((month, j) => (
+                                    <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-border-color text-[10px] font-semibold uppercase text-text-secondary bg-surface/50" style={{ width: month.width }}>
+                                        {month.label}
+                                    </div>
+                                )))}
+
+                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
+                                     <div className="w-full bg-surface/50 border-l border-border-color"></div>
+                                </div>
                             </div>
-                            <div 
-                                className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary"
-                                style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
-                            >
-                                Global
+
+                            {/* Row 3: Days & Labels */}
+                            <div className="flex h-1/3 w-full">
+                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                    <span className="text-sm font-semibold text-text-secondary">Alumno</span>
+                                </div>
+
+                                {classDates.map(date => {
+                                    const isToday = date === todayStr;
+                                    const dateObj = new Date(date + 'T00:00:00');
+                                    return (
+                                        <div 
+                                            key={date}
+                                            className={`flex flex-col items-center justify-center border-r border-border-color/50 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`}
+                                            style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
+                                        >
+                                            <span className="text-[10px] uppercase opacity-70 leading-none">{dateObj.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span>
+                                            <span className="text-xs leading-none">{dateObj.toLocaleDateString('es-MX', { day: '2-digit' })}</span>
+                                        </div>
+                                    );
+                                })}
+
+                                <div className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P1</div>
+                                <div className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P2</div>
+                                <div className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>Global</div>
                             </div>
-                        </div>
+
+                         </div>
                     </div>
 
                     {/* Virtualized Body */}
@@ -494,6 +532,11 @@ const AttendanceView: React.FC = () => {
                                         firstPartialEnd: settings.firstPartialEnd,
                                         onMouseDown: handleMouseDown,
                                         onMouseEnter: handleMouseEnter
+                                    }}
+                                    onScroll={({ scrollOffset }) => {
+                                        if (headerRef.current) {
+                                            headerRef.current.scrollLeft = scrollOffset;
+                                        }
                                     }}
                                     className="overflow-x-auto"
                                     innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
@@ -521,7 +564,6 @@ const AttendanceView: React.FC = () => {
                 </div>
             )}
              
-             {/* Modals */}
              {group && (
                 <Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${group.name}`}>
                     <AttendanceTaker 
