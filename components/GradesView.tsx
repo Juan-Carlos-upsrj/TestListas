@@ -6,6 +6,7 @@ import Modal from './common/Modal';
 import Button from './common/Button';
 import Icon from './icons/Icon';
 import { getClassDates } from '../services/dateUtils';
+import { GroupForm } from './GroupManagement';
 
 const EvaluationForm: React.FC<{
     evaluation?: Evaluation;
@@ -81,6 +82,7 @@ const GradesView: React.FC = () => {
     const { groups, evaluations, grades, selectedGroupId, attendance, settings } = state;
 
     const [isEvalModalOpen, setEvalModalOpen] = useState(false);
+    const [isGroupConfigOpen, setGroupConfigOpen] = useState(false);
     const [editingEvaluation, setEditingEvaluation] = useState<Evaluation | undefined>(undefined);
 
     const setSelectedGroupId = useCallback((id: string | null) => {
@@ -113,6 +115,12 @@ const GradesView: React.FC = () => {
         }
     };
     
+    const handleUpdateGroup = (updatedGroup: Group) => {
+        dispatch({ type: 'SAVE_GROUP', payload: updatedGroup });
+        dispatch({ type: 'ADD_TOAST', payload: { message: `Configuración del grupo actualizada.`, type: 'success' } });
+        setGroupConfigOpen(false);
+    };
+
     const handleDeleteEvaluation = (evaluationId: string) => {
         if (selectedGroupId && window.confirm('¿Seguro que quieres eliminar esta evaluación? Se borrarán todas las calificaciones asociadas.')) {
             const evalName = groupEvaluations.find(e => e.id === evaluationId)?.name;
@@ -241,9 +249,14 @@ const GradesView: React.FC = () => {
                 <div className="mb-6 bg-surface p-4 rounded-xl shadow-sm border border-border-color">
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
                         <h2 className="text-xl font-bold">Evaluaciones del Grupo</h2>
-                        <Button onClick={() => { setEditingEvaluation(undefined); setEvalModalOpen(true); }} className="w-full sm:w-auto">
-                            <Icon name="plus" /> Nueva Evaluación
-                        </Button>
+                        <div className="flex gap-3 w-full sm:w-auto">
+                            <Button variant="secondary" onClick={() => setGroupConfigOpen(true)} className="flex-1 sm:flex-initial">
+                                <Icon name="settings" className="w-4 h-4"/> Configurar Grupo
+                            </Button>
+                            <Button onClick={() => { setEditingEvaluation(undefined); setEvalModalOpen(true); }} className="flex-1 sm:flex-initial">
+                                <Icon name="plus" className="w-4 h-4"/> Nueva Evaluación
+                            </Button>
+                        </div>
                     </div>
                      {groupEvaluations.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
@@ -382,6 +395,9 @@ const GradesView: React.FC = () => {
             )}
             {group && <Modal isOpen={isEvalModalOpen} onClose={() => setEvalModalOpen(false)} title={editingEvaluation ? 'Editar Evaluación' : 'Nueva Evaluación'} size="lg">
                 <EvaluationForm evaluation={editingEvaluation} group={group} onSave={handleSaveEvaluation} onCancel={() => setEvalModalOpen(false)} />
+            </Modal>}
+            {group && <Modal isOpen={isGroupConfigOpen} onClose={() => setGroupConfigOpen(false)} title="Configuración del Grupo" size="xl">
+                <GroupForm group={group} onSave={handleUpdateGroup} onCancel={() => setGroupConfigOpen(false)} />
             </Modal>}
         </div>
     );

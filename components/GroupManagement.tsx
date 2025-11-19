@@ -8,7 +8,7 @@ import Icon from './icons/Icon';
 import { DAYS_OF_WEEK, GROUP_COLORS } from '../constants';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const EvaluationTypesEditor: React.FC<{
+export const EvaluationTypesEditor: React.FC<{
     types: EvaluationType[];
     onTypesChange: (types: EvaluationType[]) => void;
     partialName: string;
@@ -98,7 +98,7 @@ const EvaluationTypesEditor: React.FC<{
 
 
 // Form for creating/editing a group
-const GroupForm: React.FC<{
+export const GroupForm: React.FC<{
     group?: Group;
     onSave: (group: Group) => void;
     onCancel: () => void;

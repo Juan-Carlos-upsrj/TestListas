@@ -1,46 +1,26 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ChartDataLabels);
 
 interface ReportChartProps {
   monthlyAttendance: { [monthYear: string]: number };
   height?: string;
+  barColor?: string; // HEX Code
 }
 
-const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '300px' }) => {
+const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '300px', barColor }) => {
   const [chartThemeColors, setChartThemeColors] = useState({
-    primary: 'rgba(37, 99, 235, 0.8)', // blue-600
-    primaryBorder: 'rgba(37, 99, 235, 1)',
     textSecondary: '#64748b' // slate-500
   });
 
   useEffect(() => {
-    // This effect ensures the chart colors update when the theme changes.
     const rootStyles = getComputedStyle(document.documentElement);
-    const primaryColor = rootStyles.getPropertyValue('--color-primary').trim() || '#2563eb';
     const textSecondaryColor = rootStyles.getPropertyValue('--color-text-secondary').trim() || '#64748b';
-
-    const hexToRgba = (hex: string, alpha: number) => {
-      let c: any;
-      if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
-        c = hex.substring(1).split('');
-        if (c.length === 3) {
-          c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-        }
-        c = '0x' + c.join('');
-        return `rgba(${[(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',')},${alpha})`;
-      }
-      return hex; // Fallback if not hex
-    };
-
-    setChartThemeColors({
-      primary: hexToRgba(primaryColor, 0.8),
-      primaryBorder: hexToRgba(primaryColor, 1),
-      textSecondary: textSecondaryColor,
-    });
-  }, []); // Re-run this logic only when the component mounts, assuming theme is set on App load.
+    setChartThemeColors({ textSecondary: textSecondaryColor });
+  }, []);
 
   const chartData = useMemo(() => {
     const sortedMonths = Object.keys(monthlyAttendance).sort((a, b) => {
@@ -55,20 +35,24 @@ const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '
     });
     const data = sortedMonths.map(monthYear => monthlyAttendance[monthYear]);
     
+    // Fallback color if none provided
+    const backgroundColor = barColor || '#3b82f6';
+
     return {
       labels: labels,
       datasets: [
         {
           label: 'Asistencia Promedio (%)',
           data: data,
-          backgroundColor: chartThemeColors.primary,
-          borderColor: chartThemeColors.primaryBorder,
+          backgroundColor: backgroundColor,
+          borderColor: backgroundColor,
           borderWidth: 1,
-          borderRadius: 4,
+          borderRadius: 6,
+          barPercentage: 0.6,
         },
       ],
     };
-  }, [monthlyAttendance, chartThemeColors]);
+  }, [monthlyAttendance, barColor]);
 
   const options = {
     responsive: true,
@@ -93,12 +77,36 @@ const ReportChart: React.FC<ReportChartProps> = ({ monthlyAttendance, height = '
                     return label;
                 }
             }
-        }
+        },
+      datalabels: {
+        display: true,
+        anchor: 'end' as const,
+        align: 'top' as const,
+        offset: -4, // Push it slightly inside if bar is tall, or outside if bar is short? 
+        // Let's actually align 'end' and anchor 'end' to put it on top.
+        // If we want it inside the bar: anchor: 'end', align: 'start'
+        // If we want it outside (above) the bar: anchor: 'end', align: 'end'
+        // Since the bar color changes, putting text *above* the bar in a consistent color (like gray) is safer.
+        
+        // Override for better visibility:
+        // If bar is colored, let's put the number ON TOP of the bar in the text color of the theme.
+        
+        formatter: (value: number) => {
+            return value.toFixed(1) + '%';
+        },
+        font: {
+            weight: 'bold' as const,
+            size: 12
+        },
+        // Dynamic color for the label based on where it sits?
+        // To keep it simple and clean: Text above bar in dark gray.
+        color: chartThemeColors.textSecondary, 
+      }
     },
     scales: {
         y: {
             beginAtZero: true,
-            max: 100,
+            max: 115, // Add padding at top for labels
             ticks: {
                 stepSize: 20,
                 color: chartThemeColors.textSecondary,

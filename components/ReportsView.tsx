@@ -8,7 +8,7 @@ import Icon from './icons/Icon';
 import Button from './common/Button';
 import ReportChart from './ReportChart';
 import { motion } from 'framer-motion';
-import { STATUS_STYLES } from '../constants';
+import { STATUS_STYLES, GROUP_COLORS } from '../constants';
 
 const ReportsView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
@@ -20,6 +20,13 @@ const ReportsView: React.FC = () => {
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
     const groupEvaluations = useMemo(() => (evaluations[selectedGroupId || ''] || []), [evaluations, selectedGroupId]);
+    
+    // Resolve group color hex
+    const groupColorHex = useMemo(() => {
+        if (!group) return undefined;
+        const colorObj = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
+        return colorObj.hex;
+    }, [group]);
 
     useEffect(() => {
         if (!selectedGroupId && groups.length > 0) {
@@ -162,7 +169,7 @@ const ReportsView: React.FC = () => {
                         <div className="lg:col-span-2 bg-surface p-6 rounded-xl shadow-sm border border-border-color">
                             <h3 className="text-xl font-bold mb-4 text-text-primary">Asistencia Mensual del Grupo</h3>
                             {groupSummaryData && Object.keys(groupSummaryData.monthlyAttendance).length > 0 ? (
-                                <ReportChart monthlyAttendance={groupSummaryData.monthlyAttendance} />
+                                <ReportChart monthlyAttendance={groupSummaryData.monthlyAttendance} barColor={groupColorHex} />
                             ) : (
                                 <p className="text-center text-text-secondary py-8">No hay suficientes datos de asistencia para mostrar el gráfico.</p>
                             )}

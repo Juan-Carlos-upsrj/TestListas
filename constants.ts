@@ -69,15 +69,16 @@ export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
 ];
 
 // Updated colors to ensure high contrast (Darker backgrounds for white text)
+// Added 'hex' property for Chart.js integration
 export const GROUP_COLORS = [
-    { name: 'blue', bg: 'bg-blue-600', text: 'text-white', ring: 'ring-blue-600', calendar: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200' },
-    { name: 'teal', bg: 'bg-teal-600', text: 'text-white', ring: 'ring-teal-600', calendar: 'bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
-    { name: 'amber', bg: 'bg-amber-600', text: 'text-white', ring: 'ring-amber-600', calendar: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
-    { name: 'red', bg: 'bg-red-600', text: 'text-white', ring: 'ring-red-600', calendar: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' },
-    { name: 'green', bg: 'bg-green-600', text: 'text-white', ring: 'ring-green-600', calendar: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' },
-    { name: 'fuchsia', bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600', calendar: 'bg-fuchsia-100 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
-    { name: 'rose', bg: 'bg-rose-600', text: 'text-white', ring: 'ring-rose-600', calendar: 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
-    { name: 'indigo', bg: 'bg-indigo-600', text: 'text-white', ring: 'ring-indigo-600', calendar: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200' },
+    { name: 'blue', hex: '#2563eb', bg: 'bg-blue-600', text: 'text-white', ring: 'ring-blue-600', calendar: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200' },
+    { name: 'teal', hex: '#0d9488', bg: 'bg-teal-600', text: 'text-white', ring: 'ring-teal-600', calendar: 'bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
+    { name: 'amber', hex: '#d97706', bg: 'bg-amber-600', text: 'text-white', ring: 'ring-amber-600', calendar: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
+    { name: 'red', hex: '#dc2626', bg: 'bg-red-600', text: 'text-white', ring: 'ring-red-600', calendar: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' },
+    { name: 'green', hex: '#16a34a', bg: 'bg-green-600', text: 'text-white', ring: 'ring-green-600', calendar: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' },
+    { name: 'fuchsia', hex: '#c026d3', bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600', calendar: 'bg-fuchsia-100 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
+    { name: 'rose', hex: '#e11d48', bg: 'bg-rose-600', text: 'text-white', ring: 'ring-rose-600', calendar: 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
+    { name: 'indigo', hex: '#4f46e5', bg: 'bg-indigo-600', text: 'text-white', ring: 'ring-indigo-600', calendar: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200' },
 ];
 
 export const CUSTOM_EVENT_COLOR = 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-200';
