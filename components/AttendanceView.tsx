@@ -2,7 +2,7 @@ import React, { useContext, useState, useMemo, useEffect, useCallback, useRef } 
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus, Student } from '../types';
 import { getClassDates } from '../services/dateUtils';
-import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
+import { STATUS_STYLES } from '../constants';
 import Icon from './icons/Icon';
 import Modal from './common/Modal';
 import Button from './common/Button';
