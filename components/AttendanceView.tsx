@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
-import { AttendanceStatus } from '../types';
+import { AttendanceStatus, Student } from '../types';
 import { getClassDates } from '../services/dateUtils';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
 import Icon from './icons/Icon';
@@ -23,9 +23,9 @@ const STATS_COL_WIDTH = 100;
 const ROW_HEIGHT = 50;
 
 interface CellData {
-    students: any[];
+    students: Student[];
     classDates: string[];
-    attendance: any;
+    attendance: { [groupId: string]: { [studentId: string]: { [date: string]: AttendanceStatus } } };
     groupId: string;
     handleStatusChange: (studentId: string, date: string, status: AttendanceStatus) => void;
     focusedCell: { r: number; c: number } | null;
@@ -74,7 +74,8 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
 
             {/* Celdas de Fechas */}
             {classDates.map((date, colIndex) => {
-                const status = studentAttendance[date] || AttendanceStatus.Pending;
+                // Explicitly cast status to AttendanceStatus to satisfy TypeScript indexing
+                const status = (studentAttendance[date] || AttendanceStatus.Pending) as AttendanceStatus;
                 const isFocused = focusedCell?.r === index && focusedCell?.c === colIndex;
                 const isToday = date === todayStr;
 
