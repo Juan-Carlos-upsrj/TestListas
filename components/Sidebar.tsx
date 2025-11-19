@@ -62,10 +62,10 @@ const Sidebar: React.FC = () => {
                         const colorObj = GROUP_COLORS.find(c => c.name === g.color) || GROUP_COLORS[0];
                         const isActive = selectedGroupId === g.id;
                         
-                        // Force high contrast logic:
-                        // Active: Colored background, White text.
-                        // Inactive: Light/Surface background, Normal text.
-                        const activeClass = `${colorObj.bg} text-white shadow-md ring-2 ring-offset-1 ring-offset-surface ${colorObj.ring || 'ring-primary'}`;
+                        // High contrast logic:
+                        // Active: Solid Color Background + White Text
+                        // Inactive: Light Gray Background + Dark Text
+                        const activeClass = `${colorObj.bg} !text-white shadow-md ring-2 ring-offset-1 ring-offset-surface ${colorObj.ring || 'ring-primary'}`;
                         const inactiveClass = `bg-surface-secondary text-text-secondary hover:bg-border-color hover:text-text-primary`;
 
                         return (

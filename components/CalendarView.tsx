@@ -34,7 +34,8 @@ const CalendarView: React.FC = () => {
                     date,
                     title: `Clase: ${group.name}`,
                     type: 'class',
-                    color: groupColor.calendar
+                    // UPDATED: Use solid background and white text for better visibility
+                    color: `${groupColor.bg} ${groupColor.text}`
                 });
             });
         });
@@ -111,7 +112,7 @@ const CalendarView: React.FC = () => {
                     </span>
                     <div className="mt-1 space-y-1 overflow-y-auto flex-grow">
                         {dayEvents.slice(0, 3).map(event => (
-                            <div key={event.id} className={`text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded ${event.color} truncate`}>
+                            <div key={event.id} className={`text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded shadow-sm ${event.color} truncate`}>
                                 {event.title}
                             </div>
                         ))}

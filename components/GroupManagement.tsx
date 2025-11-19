@@ -358,21 +358,25 @@ const GroupManagement: React.FC = () => {
                         <ul className="space-y-2">
                            {groups.map(group => {
                                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
+                                const isSelected = selectedGroupId === group.id;
                                 return (
                                 <li key={group.id} onClick={() => handleSelectGroup(group.id)}
-                                    className={`p-3 rounded-lg cursor-pointer transition-all border-l-4 ${selectedGroupId === group.id ? `${groupColor.bg} ${groupColor.text} shadow-md ${groupColor.bg.replace('bg-','shadow-')}/40` : 'bg-surface-secondary hover:bg-border-color border-transparent'}`}
-                                    style={{ borderColor: selectedGroupId === group.id ? '' : (GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0]).bg.replace('bg-', '#') }}
+                                    className={`p-3 rounded-lg cursor-pointer transition-all border-l-4 ${
+                                        isSelected 
+                                            ? `${groupColor.bg} ${groupColor.text} shadow-md border-transparent` 
+                                            : 'bg-surface-secondary hover:bg-border-color border-transparent hover:border-l-gray-400'
+                                    }`}
                                 >
                                    <div className="flex justify-between items-start">
                                        <div className="flex items-start gap-3">
                                             <div>
                                                <p className="font-semibold">{group.name}</p>
-                                               <p className={`text-sm ${selectedGroupId === group.id ? 'opacity-80' : 'text-text-secondary'}`}>{group.subject}</p>
+                                               <p className={`text-sm ${isSelected ? 'opacity-90' : 'text-text-secondary'}`}>{group.subject}</p>
                                            </div>
                                        </div>
                                        <div className="flex gap-2 items-center flex-shrink-0">
-                                            <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setGroupModalOpen(true); }} className="p-1 hover:text-primary"><Icon name="edit-3" className="w-4 h-4"/></button>
-                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }} className="p-1 hover:text-accent-red"><Icon name="trash-2" className="w-4 h-4"/></button>
+                                            <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setGroupModalOpen(true); }} className={`p-1 ${isSelected ? 'hover:bg-white/20' : 'hover:text-primary'}`}><Icon name="edit-3" className="w-4 h-4"/></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }} className={`p-1 ${isSelected ? 'hover:bg-white/20' : 'hover:text-accent-red'}`}><Icon name="trash-2" className="w-4 h-4"/></button>
                                        </div>
                                    </div>
                                </li>

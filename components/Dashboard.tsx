@@ -237,7 +237,8 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onTakeAttendance(group)}
-                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90`}
+                        // Use solid colors for better visibility and match the new style
+                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90 shadow-md`}
                     >
                         <Icon name="list-checks" className="w-5 h-5 flex-shrink-0" />
                         <div>
