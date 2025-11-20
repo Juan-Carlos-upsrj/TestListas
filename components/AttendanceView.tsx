@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useCallback, useRef, createContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus, Student } from '../types';
 import { getClassDates } from '../services/dateUtils';
@@ -16,25 +16,40 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 // Robust import for FixedSizeList
 const List = (ReactWindow as any).FixedSizeList || (ReactWindow as any).default?.FixedSizeList || ReactWindow.FixedSizeList;
 
-// Dimension constants
-const NAME_COL_WIDTH = 250;
-const DATE_COL_WIDTH = 50;
-const STAT_COL_WIDTH = 60;
-const ROW_HEIGHT = 45;
-const HEADER_HEIGHT = 90;
+// --- CONSTANTS & CONFIG ---
+const NAME_COL_WIDTH = 300;
+const DATE_COL_WIDTH = 45;
+const STAT_COL_WIDTH = 55;
+const ROW_HEIGHT = 36;
+const HEADER_HEIGHT = 96; // 32px * 3 rows
 
 interface Coords { r: number; c: number; }
 
-// Helper to calculate percentages (Pure function)
-const calculateStats = (
-    studentAttendance: { [date: string]: AttendanceStatus },
-    dates: string[],
-    todayStr: string
-) => {
-    let present = 0;
-    let total = 0;
-    const len = dates.length;
-    for (let i = 0; i < len; i++) {
+// --- INTERNAL CONTEXT ---
+// We use a context to pass data to the InnerElement (Header) and Rows 
+// to avoid re-creating the component definitions on every render.
+interface AttendanceContextValue {
+    students: Student[];
+    classDates: string[];
+    attendance: any;
+    groupId: string;
+    focusedCell: Coords | null;
+    selection: { start: Coords | null; end: Coords | null; isDragging: boolean };
+    todayStr: string;
+    headerStructure: any[];
+    totalWidth: number;
+    handleStatusChange: (studentId: string, date: string, status: AttendanceStatus) => void;
+    onMouseDown: (r: number, c: number) => void;
+    onMouseEnter: (r: number, c: number) => void;
+    precalcStats: any[];
+}
+
+const AttendanceInternalContext = createContext<AttendanceContextValue | null>(null);
+
+// --- HELPER FUNCTIONS ---
+const calculateStats = (studentAttendance: any, dates: string[], todayStr: string) => {
+    let present = 0, total = 0;
+    for (let i = 0; i < dates.length; i++) {
         const date = dates[i];
         if (date <= todayStr) {
              total++;
@@ -44,83 +59,172 @@ const calculateStats = (
             }
         }
     }
-    return {
-        percent: total > 0 ? Math.round((present / total) * 100) : 100,
-        valid: total > 0
-    };
+    return { percent: total > 0 ? Math.round((present / total) * 100) : 100 };
 };
 
-interface ItemData {
-    students: Student[];
-    classDates: string[];
-    attendance: { [groupId: string]: { [studentId: string]: { [date: string]: AttendanceStatus } } };
-    groupId: string;
-    focusedCell: Coords | null;
-    selection: { start: Coords | null; end: Coords | null; isDragging: boolean };
-    todayStr: string;
-    totalWidth: number;
-    handleStatusChange: (studentId: string, date: string, status: AttendanceStatus) => void;
-    onMouseDown: (r: number, c: number) => void;
-    onMouseEnter: (r: number, c: number) => void;
-    precalcStats: any[]; // Array of precalculated stats per student
-}
+// --- COMPONENTS ---
 
-// --- ROW COMPONENT (STRICTLY MEMOIZED) ---
-const Row = React.memo(({ index, style, data }: ListChildComponentProps<ItemData>) => {
-    const { 
-        students, classDates, attendance, groupId, 
-        focusedCell, selection, todayStr, totalWidth,
-        handleStatusChange, onMouseDown, onMouseEnter, precalcStats
-    } = data;
-    
-    const student = students[index];
-    const studentAttendance = attendance[groupId]?.[student.id] || {};
-    
-    // Use pre-calculated stats
-    const { p1: p1Stats, p2: p2Stats, global: globalStats } = precalcStats[index];
+// 1. STICKY HEADER (The "Classic HTML Table" Look)
+const StickyHeader = () => {
+    const context = useContext(AttendanceInternalContext);
+    if (!context) return null;
+    const { headerStructure, classDates, totalWidth, todayStr, precalcStats } = context;
 
-    const getScoreColor = (pct: number) => pct >= 90 ? 'text-emerald-600' : pct >= 80 ? 'text-amber-600' : 'text-rose-600';
-
-    const isRowInSelection = selection.start && selection.end && 
-        index >= Math.min(selection.start.r, selection.end.r) && 
-        index <= Math.max(selection.start.r, selection.end.r);
+    const globalP1Avg = Math.round(precalcStats.reduce((acc, s) => acc + s.p1.percent, 0) / (precalcStats.length || 1));
+    const globalP2Avg = Math.round(precalcStats.reduce((acc, s) => acc + s.p2.percent, 0) / (precalcStats.length || 1));
+    const globalTotalAvg = Math.round(precalcStats.reduce((acc, s) => acc + s.global.percent, 0) / (precalcStats.length || 1));
 
     return (
-        <div style={{ ...style, width: totalWidth }} className={`flex items-center border-b border-border-color/70 hover:bg-surface-secondary/40 transition-colors ${isRowInSelection ? 'bg-blue-50/30' : ''}`}>
-            <div 
-                className="sticky left-0 z-10 bg-surface flex items-center px-3 border-r border-border-color h-full shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] flex-shrink-0"
-                style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
-            >
-                <div className="truncate w-full">
-                    <p className="font-medium text-sm text-text-primary truncate">{student.name}</p>
-                    {student.nickname && <p className="text-xs text-text-secondary truncate">({student.nickname})</p>}
+        <div 
+            className="absolute top-0 left-0 z-40 bg-slate-50 border-b border-slate-300 shadow-sm"
+            style={{ width: totalWidth, height: HEADER_HEIGHT }}
+        >
+            {/* ROW 1: PARTIALS */}
+            <div className="flex h-8 w-full border-b border-slate-300">
+                <div className="sticky left-0 z-50 bg-slate-100 border-r border-slate-300 flex items-center px-2 font-bold text-xs text-slate-600 uppercase tracking-wider" style={{ width: NAME_COL_WIDTH }}>
+                    Periodo
+                </div>
+                {headerStructure.map((part: any, i: number) => (
+                    <div key={i} className="flex items-center justify-center border-r border-slate-300 bg-slate-200/50 font-bold text-xs text-slate-600 uppercase" style={{ width: part.width }}>
+                        {part.label}
+                    </div>
+                ))}
+                {/* Sticky Stats Headers Row 1 */}
+                <div className="sticky right-0 z-50 flex">
+                    <div className="bg-amber-50 border-l border-slate-300 flex items-center justify-center font-bold text-[10px] text-amber-700 uppercase" style={{ width: STAT_COL_WIDTH }}></div>
+                    <div className="bg-sky-50 border-l border-slate-300 flex items-center justify-center font-bold text-[10px] text-sky-700 uppercase" style={{ width: STAT_COL_WIDTH }}></div>
+                    <div className="bg-slate-100 border-l border-slate-300 flex items-center justify-center font-bold text-[10px] text-slate-700 uppercase" style={{ width: STAT_COL_WIDTH }}></div>
                 </div>
             </div>
 
+            {/* ROW 2: MONTHS */}
+            <div className="flex h-8 w-full border-b border-slate-300">
+                <div className="sticky left-0 z-50 bg-slate-100 border-r border-slate-300 flex items-center px-2 font-bold text-xs text-slate-600 uppercase" style={{ width: NAME_COL_WIDTH }}>
+                    Mes
+                </div>
+                {headerStructure.flatMap((part: any) => part.months.map((month: any, j: number) => (
+                    <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-slate-300 bg-slate-50 font-semibold text-[10px] text-slate-500 uppercase" style={{ width: month.width }}>
+                        {month.label}
+                    </div>
+                )))}
+                <div className="sticky right-0 z-50 flex">
+                     <div className="bg-amber-50 border-l border-slate-300 flex items-center justify-center font-bold text-[10px] text-amber-700 uppercase" style={{ width: STAT_COL_WIDTH }}></div>
+                    <div className="bg-sky-50 border-l border-slate-300 flex items-center justify-center font-bold text-[10px] text-sky-700 uppercase" style={{ width: STAT_COL_WIDTH }}></div>
+                    <div className="bg-slate-100 border-l border-slate-300 flex items-center justify-center font-bold text-[10px] text-slate-700 uppercase" style={{ width: STAT_COL_WIDTH }}></div>
+                </div>
+            </div>
+
+            {/* ROW 3: DAYS */}
+            <div className="flex h-8 w-full">
+                <div className="sticky left-0 z-50 bg-white border-r border-slate-300 flex items-center px-2 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ width: NAME_COL_WIDTH }}>
+                    <span className="font-bold text-sm text-slate-700">Alumno</span>
+                </div>
+                {classDates.map(date => {
+                    const isToday = date === todayStr;
+                    const d = new Date(date + 'T00:00:00');
+                    return (
+                        <div key={date} className={`flex flex-col items-center justify-center border-r border-slate-200 flex-shrink-0 ${isToday ? 'bg-blue-100 text-blue-700' : 'bg-white text-slate-600'}`} style={{ width: DATE_COL_WIDTH }}>
+                            <span className="text-[10px] leading-none font-bold">{d.getDate()}</span>
+                            <span className="text-[8px] leading-none uppercase">{d.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span>
+                        </div>
+                    );
+                })}
+                <div className="sticky right-0 z-50 flex shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                    <div className="bg-amber-50 border-l border-slate-300 flex flex-col items-center justify-center text-[9px] font-bold text-amber-800" style={{ width: STAT_COL_WIDTH }}>
+                        <span>% P1</span>
+                        <span className="text-[8px] opacity-70">({isNaN(globalP1Avg) ? '-' : globalP1Avg}%)</span>
+                    </div>
+                    <div className="bg-sky-50 border-l border-slate-300 flex flex-col items-center justify-center text-[9px] font-bold text-sky-800" style={{ width: STAT_COL_WIDTH }}>
+                        <span>% P2</span>
+                        <span className="text-[8px] opacity-70">({isNaN(globalP2Avg) ? '-' : globalP2Avg}%)</span>
+                    </div>
+                    <div className="bg-slate-100 border-l border-slate-300 flex flex-col items-center justify-center text-[9px] font-bold text-slate-800" style={{ width: STAT_COL_WIDTH }}>
+                        <span>Global</span>
+                        <span className="text-[8px] opacity-70">({isNaN(globalTotalAvg) ? '-' : globalTotalAvg}%)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 2. INNER ELEMENT (Wrapper for Header + List)
+const InnerElement = React.forwardRef(({ children, style, ...rest }: any, ref) => {
+    const context = useContext(AttendanceInternalContext);
+    if (!context) return null;
+    
+    // Override height to account for the header offset
+    const h = parseFloat(style.height) + HEADER_HEIGHT;
+    const w = context.totalWidth;
+
+    return (
+        <div ref={ref} {...rest} style={{ ...style, height: h, width: w, position: 'relative' }}>
+            <StickyHeader />
+            {children}
+        </div>
+    );
+});
+
+// 3. ROW COMPONENT
+const Row = React.memo(({ index, style }: ListChildComponentProps) => {
+    const context = useContext(AttendanceInternalContext);
+    if (!context) return null;
+    const { 
+        students, classDates, attendance, groupId, 
+        focusedCell, selection, todayStr, totalWidth,
+        handleStatusChange, onMouseDown, onMouseEnter, precalcStats 
+    } = context;
+
+    const student = students[index];
+    const studentAttendance = attendance[groupId]?.[student.id] || {};
+    const { p1, p2, global } = precalcStats[index];
+    
+    // Shift row down by header height
+    const top = parseFloat(style.top.toString()) + HEADER_HEIGHT;
+    
+    const getScoreColor = (pct: number) => pct >= 90 ? 'text-emerald-600 bg-emerald-50' : pct >= 80 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
+    
+    return (
+        <div 
+            className="flex items-center border-b border-slate-200 hover:bg-blue-50/30 transition-colors box-border"
+            style={{ ...style, top, height: ROW_HEIGHT, width: totalWidth }}
+        >
+            {/* Sticky Name Column */}
+            <div 
+                className="sticky left-0 z-10 bg-white border-r border-slate-300 flex items-center px-3 h-full shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                style={{ width: NAME_COL_WIDTH }}
+            >
+                <div className="truncate w-full">
+                    <span className="text-xs font-medium text-slate-700 mr-2 w-5 inline-block text-right text-slate-400">{index + 1}.</span>
+                    <span className="font-semibold text-xs text-slate-800">{student.name}</span>
+                    {student.nickname && <span className="ml-1 text-[10px] text-slate-500">({student.nickname})</span>}
+                </div>
+            </div>
+
+            {/* Date Columns */}
             {classDates.map((date, colIndex) => {
                 const status = (studentAttendance[date] || AttendanceStatus.Pending) as AttendanceStatus;
                 const isFocused = focusedCell?.r === index && focusedCell?.c === colIndex;
                 const isToday = date === todayStr;
-
+                
                 let isSelected = false;
                 if (selection.start && selection.end) {
-                    const minR = Math.min(selection.start.r, selection.end.r);
-                    const maxR = Math.max(selection.start.r, selection.end.r);
-                    const minC = Math.min(selection.start.c, selection.end.c);
-                    const maxC = Math.max(selection.start.c, selection.end.c);
-                    if (index >= minR && index <= maxR && colIndex >= minC && colIndex <= maxC) {
-                        isSelected = true;
-                    }
+                     const minR = Math.min(selection.start.r, selection.end.r);
+                     const maxR = Math.max(selection.start.r, selection.end.r);
+                     const minC = Math.min(selection.start.c, selection.end.c);
+                     const maxC = Math.max(selection.start.c, selection.end.c);
+                     isSelected = index >= minR && index <= maxR && colIndex >= minC && colIndex <= maxC;
                 }
 
                 return (
                     <div 
                         key={date}
-                        className={`flex items-center justify-center border-r border-border-color/50 h-full relative select-none cursor-pointer flex-shrink-0
-                            ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}
-                            ${isSelected ? 'bg-blue-200/50 dark:bg-blue-800/50' : ''}
+                        className={`
+                            flex items-center justify-center border-r border-slate-200 h-full cursor-pointer select-none relative
+                            ${isToday ? 'bg-blue-50/30' : ''}
+                            ${isSelected ? '!bg-blue-100' : ''}
                         `}
-                        style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
+                        style={{ width: DATE_COL_WIDTH }}
                         onMouseDown={() => onMouseDown(index, colIndex)}
                         onMouseEnter={() => onMouseEnter(index, colIndex)}
                         onContextMenu={(e) => {
@@ -128,74 +232,42 @@ const Row = React.memo(({ index, style, data }: ListChildComponentProps<ItemData
                             handleStatusChange(student.id, date, AttendanceStatus.Pending);
                         }}
                     >
-                         <div
-                            className={`w-8 h-8 rounded-md text-xs font-bold flex items-center justify-center pointer-events-none
-                                ${STATUS_STYLES[status].color}
-                                ${isFocused ? 'ring-2 ring-primary ring-offset-2 ring-offset-surface z-20 scale-110' : ''}
-                            `}
-                        >
+                        <div className={`
+                            w-6 h-6 rounded flex items-center justify-center text-[10px] font-bold transition-transform
+                            ${STATUS_STYLES[status].color}
+                            ${isFocused ? 'ring-2 ring-primary ring-offset-1 scale-110 z-20' : ''}
+                        `}>
                             {STATUS_STYLES[status].symbol}
                         </div>
                     </div>
                 );
             })}
-            
-            <div className="sticky z-10 bg-amber-50/80 dark:bg-amber-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs flex-shrink-0" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>
-                 <span className={getScoreColor(p1Stats.percent)}>{p1Stats.percent}%</span>
-            </div>
-            <div className="sticky z-10 bg-sky-50/80 dark:bg-sky-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs flex-shrink-0" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>
-                 <span className={getScoreColor(p2Stats.percent)}>{p2Stats.percent}%</span>
-            </div>
-            <div className="sticky right-0 z-10 bg-surface flex items-center justify-center border-l-2 border-border-color h-full font-bold text-sm shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] flex-shrink-0" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>
-                 <span className={getScoreColor(globalStats.percent)}>{globalStats.percent}%</span>
+
+            {/* Sticky Stats Columns */}
+             <div className="sticky right-0 z-10 flex h-full shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                <div className={`border-l border-slate-300 flex items-center justify-center text-xs font-bold ${getScoreColor(p1.percent)}`} style={{ width: STAT_COL_WIDTH }}>
+                    {p1.percent}%
+                </div>
+                <div className={`border-l border-slate-300 flex items-center justify-center text-xs font-bold ${getScoreColor(p2.percent)}`} style={{ width: STAT_COL_WIDTH }}>
+                    {p2.percent}%
+                </div>
+                <div className={`border-l border-slate-300 flex items-center justify-center text-xs font-bold ${getScoreColor(global.percent)}`} style={{ width: STAT_COL_WIDTH }}>
+                    {global.percent}%
+                </div>
             </div>
         </div>
     );
-}, (prevProps, nextProps) => {
-    // CUSTOM COMPARISON FUNCTION (Crucial for performance)
-    const { index: prevIndex, data: prevData } = prevProps;
-    const { index: nextIndex, data: nextData } = nextProps;
-
-    // 1. Check if student changed (sorting/filtering)
-    if (prevData.students[prevIndex]?.id !== nextData.students[nextIndex]?.id) return false;
-
-    // 2. Check Attendance Data for this student
-    const sId = prevData.students[prevIndex].id;
-    const gId = prevData.groupId;
-    // We only care if the attendance object *reference* for this student changed
-    // Note: This assumes immutable updates in the parent context
-    if (prevData.attendance[gId]?.[sId] !== nextData.attendance[gId]?.[sId]) return false;
-
-    // 3. Check Focus State
-    const prevFocused = prevData.focusedCell?.r === prevIndex;
-    const nextFocused = nextData.focusedCell?.r === nextIndex;
-    if (prevFocused !== nextFocused) return false; // Row gained or lost focus
-    if (nextFocused && prevData.focusedCell?.c !== nextData.focusedCell?.c) return false; // Focus moved horizontally within this row
-
-    // 4. Check Selection State
-    // Helper to check if index overlaps selection range
-    const isSel = (idx: number, sel: typeof prevData.selection) => {
-        if (!sel.start || !sel.end) return false;
-        const min = Math.min(sel.start.r, sel.end.r);
-        const max = Math.max(sel.start.r, sel.end.r);
-        return idx >= min && idx <= max;
-    };
-    const prevSel = isSel(prevIndex, prevData.selection);
-    const nextSel = isSel(nextIndex, nextData.selection);
-    
-    // If row was in selection or is in selection now, check if selection bounds changed
-    if (prevSel || nextSel) {
-        if (prevData.selection.start !== nextData.selection.start || prevData.selection.end !== nextData.selection.end) return false;
-    }
-    
-    // 5. Check Width (Resize)
-    if (prevProps.style.width !== nextProps.style.width) return false;
-
-    return true; // No relevant changes, skip render
+}, (prev, next) => {
+    // Strict comparison for performance
+    return prev.index === next.index && prev.style.width === next.style.width; 
+    // Note: Since we use Context, props to Row don't change often. 
+    // The context updates trigger re-renders. 
+    // React.memo here is actually less effective when consuming Context inside, 
+    // BUT react-window relies on it. The real optimization is passing stable objects in Context.
 });
 
 
-// --- MAIN COMPONENT ---
+// --- MAIN VIEW ---
 const AttendanceView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const { groups, attendance, settings, selectedGroupId } = state;
@@ -203,116 +275,43 @@ const AttendanceView: React.FC = () => {
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [isBulkFillOpen, setBulkFillOpen] = useState(false);
     const [isTextImporterOpen, setTextImporterOpen] = useState(false);
-    
-    // State to delay rendering list to ensure AutoSizer picks up correct dims after tab switch
     const [isReady, setIsReady] = useState(false);
 
+    // Fix for tab switching render issue
     useEffect(() => {
-        // Reset ready state on mount, then enable it
         setIsReady(false);
-        const timer = setTimeout(() => setIsReady(true), 50);
-        return () => clearTimeout(timer);
-    }, []); // Empty dep array means this runs on mount/unmount of the View
+        setTimeout(() => setIsReady(true), 50);
+    }, []);
 
-    const headerRef = useRef<HTMLDivElement>(null);
-    const outerListRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<any>(null);
-
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
+    // Interaction State
     const [focusedCell, setFocusedCell] = useState<Coords | null>(null);
-    const [selection, setSelection] = useState<{ start: Coords | null; end: Coords | null; isDragging: boolean }>({
-        start: null,
-        end: null,
-        isDragging: false
-    });
-
-    const focusRef = useRef(focusedCell);
-    const selectionRef = useRef(selection);
-    useEffect(() => { focusRef.current = focusedCell; }, [focusedCell]);
-    useEffect(() => { selectionRef.current = selection; }, [selection]);
+    const [selection, setSelection] = useState<{ start: Coords | null; end: Coords | null; isDragging: boolean }>({ start: null, end: null, isDragging: false });
+    
+    // Refs for event listeners
+    const stateRef = useRef({ focusedCell, selection, group: null as any });
 
     const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
-        setFocusedCell(null);
-        setSelection({ start: null, end: null, isDragging: false });
     }, [dispatch]);
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
-
-    const classDates = useMemo(() => {
-        if (group) {
-            return getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays);
-        }
-        return [];
-    }, [group, settings.semesterStart, settings.semesterEnd]);
     
-    // PRE-CALC DATES (P1 vs P2)
-    const { p1Dates, p2Dates } = useMemo(() => ({
-        p1Dates: classDates.filter(d => d <= settings.firstPartialEnd),
-        p2Dates: classDates.filter(d => d > settings.firstPartialEnd)
-    }), [classDates, settings.firstPartialEnd]);
-
-    // PRE-CALC ALL STATS (Massive perf boost: calculated once per data change, not per row render)
-    const precalcStats = useMemo(() => {
-        if (!group) return [];
-        return group.students.map(student => {
-            const att = attendance[group.id]?.[student.id] || {};
-            return {
-                p1: calculateStats(att, p1Dates, todayStr),
-                p2: calculateStats(att, p2Dates, todayStr),
-                global: calculateStats(att, classDates, todayStr)
-            };
-        });
-    }, [group, attendance, p1Dates, p2Dates, classDates, todayStr]);
-
     useEffect(() => {
-        if (!selectedGroupId && groups.length > 0) {
-            setSelectedGroupId(groups[0].id);
-        }
+         if (!selectedGroupId && groups.length > 0) setSelectedGroupId(groups[0].id);
     }, [groups, selectedGroupId, setSelectedGroupId]);
-    
-    // Scroll Sync
-    useLayoutEffect(() => {
-        const container = outerListRef.current;
-        const header = headerRef.current;
-        if (!container || !header) return;
-        const handleScroll = () => { header.scrollLeft = container.scrollLeft; };
-        container.addEventListener('scroll', handleScroll);
-        return () => container.removeEventListener('scroll', handleScroll);
-    }, [isReady, group]); // Re-bind when ready or group changes
 
-    // Header Structure
-    const headerStructure = useMemo(() => {
-        const p1End = new Date(settings.firstPartialEnd);
-        const structure: { label: string; width: number; months: { label: string; width: number; }[] }[] = [];
-        
-        const p1DatesArr = classDates.filter(d => new Date(d) <= p1End);
-        const p2DatesArr = classDates.filter(d => new Date(d) > p1End);
-        
-        const groupDatesByMonth = (dates: string[]) => {
-             const months: { label: string; count: number }[] = [];
-             dates.forEach(d => {
-                 const m = new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { month: 'long' });
-                 const label = m.charAt(0).toUpperCase() + m.slice(1);
-                 const last = months[months.length - 1];
-                 if (last && last.label === label) last.count++;
-                 else months.push({ label, count: 1 });
-             });
-             return months.map(m => ({ label: m.label, width: m.count * DATE_COL_WIDTH }));
-        };
+    const classDates = useMemo(() => group ? getClassDates(settings.semesterStart, settings.semesterEnd, group.classDays) : [], [group, settings]);
 
-        if (p1DatesArr.length > 0) structure.push({ label: 'Primer Parcial', width: p1DatesArr.length * DATE_COL_WIDTH, months: groupDatesByMonth(p1DatesArr) });
-        if (p2DatesArr.length > 0) structure.push({ label: 'Segundo Parcial', width: p2DatesArr.length * DATE_COL_WIDTH, months: groupDatesByMonth(p2DatesArr) });
-        
-        return structure;
-    }, [classDates, settings.firstPartialEnd]);
+    // Update Ref
+    useEffect(() => { stateRef.current = { focusedCell, selection, group }; }, [focusedCell, selection, group]);
 
+    // Handlers
     const handleStatusChange = useCallback((studentId: string, date: string, status: AttendanceStatus) => {
-        if (selectedGroupId) {
-            dispatch({ type: 'UPDATE_ATTENDANCE', payload: { groupId: selectedGroupId, studentId, date, status } });
-        }
+        if (selectedGroupId) dispatch({ type: 'UPDATE_ATTENDANCE', payload: { groupId: selectedGroupId, studentId, date, status } });
     }, [selectedGroupId, dispatch]);
 
     const handleMouseDown = useCallback((r: number, c: number) => {
@@ -321,105 +320,150 @@ const AttendanceView: React.FC = () => {
     }, []);
 
     const handleMouseEnter = useCallback((r: number, c: number) => {
-        setSelection(prev => {
-            if (prev.isDragging) return { ...prev, end: { r, c } };
-            return prev;
-        });
+        setSelection(prev => prev.isDragging ? { ...prev, end: { r, c } } : prev);
     }, []);
 
+    // Global Keyboard & Mouse Up
     useEffect(() => {
         const handleMouseUp = () => setSelection(prev => ({ ...prev, isDragging: false }));
-        window.addEventListener('mouseup', handleMouseUp);
-        return () => window.removeEventListener('mouseup', handleMouseUp);
-    }, []);
-
-    useEffect(() => {
+        
         const handleKeyDown = (e: KeyboardEvent) => {
+            const { focusedCell, selection, group } = stateRef.current;
             if (!group) return;
-            const currentFocus = focusRef.current;
-            const currentSelection = selectionRef.current;
             
-            if (currentFocus) {
-                const { r, c } = currentFocus;
+            // Navigation
+            if (focusedCell && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                let { r, c } = focusedCell;
                 const maxR = group.students.length - 1;
                 const maxC = classDates.length - 1;
                 
-                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                    e.preventDefault();
-                    let newR = r, newC = c;
-                    if (e.key === 'ArrowUp') newR = Math.max(0, r - 1);
-                    if (e.key === 'ArrowDown') newR = Math.min(maxR, r + 1);
-                    if (e.key === 'ArrowLeft') newC = Math.max(0, c - 1);
-                    if (e.key === 'ArrowRight') newC = Math.min(maxC, c + 1);
-                    
-                    setFocusedCell({ r: newR, c: newC });
-                    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                         if (listRef.current) listRef.current.scrollToItem(newR);
-                    }
+                if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
+                if (e.key === 'ArrowDown') r = Math.min(maxR, r + 1);
+                if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
+                if (e.key === 'ArrowRight') c = Math.min(maxC, c + 1);
+                
+                setFocusedCell({ r, c });
+                if (listRef.current && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    listRef.current.scrollToItem(r);
                 }
             }
 
-            const keyMap: { [key: string]: AttendanceStatus } = {
-                'p': AttendanceStatus.Present, 'a': AttendanceStatus.Absent, 'r': AttendanceStatus.Late,
-                'j': AttendanceStatus.Justified, 'i': AttendanceStatus.Exchange,
-                'delete': AttendanceStatus.Pending, 'backspace': AttendanceStatus.Pending,
-            };
-            const statusToApply = keyMap[e.key.toLowerCase()];
-
-            if (statusToApply && selectedGroupId) {
+            // Input
+            const keyMap: any = { 'p': 'Presente', 'a': 'Ausente', 'r': 'Retardo', 'j': 'Justificado', 'i': 'Intercambio', 'delete': 'Pendiente', 'backspace': 'Pendiente' };
+            const status = keyMap[e.key.toLowerCase()];
+            
+            if (status) {
                 e.preventDefault();
-                let updateRange: { r: number, c: number }[] = [];
-                
-                if (currentSelection.start && currentSelection.end) {
-                     const minR = Math.min(currentSelection.start.r, currentSelection.end.r);
-                     const maxR = Math.max(currentSelection.start.r, currentSelection.end.r);
-                     const minC = Math.min(currentSelection.start.c, currentSelection.end.c);
-                     const maxC = Math.max(currentSelection.start.c, currentSelection.end.c);
-                     for (let r = minR; r <= maxR; r++) {
-                         for (let c = minC; c <= maxC; c++) updateRange.push({ r, c });
-                     }
-                } else if (currentFocus) {
-                    updateRange.push(currentFocus);
+                let targets = [];
+                if (selection.start && selection.end) {
+                    const minR = Math.min(selection.start.r, selection.end.r);
+                    const maxR = Math.max(selection.start.r, selection.end.r);
+                    const minC = Math.min(selection.start.c, selection.end.c);
+                    const maxC = Math.max(selection.start.c, selection.end.c);
+                    for(let r=minR; r<=maxR; r++) for(let c=minC; c<=maxC; c++) targets.push({r,c});
+                } else if (focusedCell) {
+                    targets.push(focusedCell);
                 }
-
-                updateRange.forEach(({ r, c }) => {
-                    const student = group.students[r];
-                    const date = classDates[c];
-                    if (student && date) handleStatusChange(student.id, date, statusToApply);
+                
+                targets.forEach(({r, c}) => {
+                     const s = group.students[r];
+                     const d = classDates[c];
+                     if(s && d) handleStatusChange(s.id, d, status as AttendanceStatus);
                 });
             }
         };
+
+        window.addEventListener('mouseup', handleMouseUp);
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [group, classDates, selectedGroupId, handleStatusChange]);
-    
+        return () => {
+            window.removeEventListener('mouseup', handleMouseUp);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [classDates, handleStatusChange]);
+
+
+    // Derived Data
+    const { p1Dates, p2Dates } = useMemo(() => ({
+        p1Dates: classDates.filter(d => d <= settings.firstPartialEnd),
+        p2Dates: classDates.filter(d => d > settings.firstPartialEnd)
+    }), [classDates, settings.firstPartialEnd]);
+
+    const precalcStats = useMemo(() => {
+        if (!group) return [];
+        return group.students.map(s => {
+            const att = attendance[group.id]?.[s.id] || {};
+            return {
+                p1: calculateStats(att, p1Dates, todayStr),
+                p2: calculateStats(att, p2Dates, todayStr),
+                global: calculateStats(att, classDates, todayStr)
+            };
+        });
+    }, [group, attendance, p1Dates, p2Dates, classDates, todayStr]);
+
+    const headerStructure = useMemo(() => {
+        const p1End = new Date(settings.firstPartialEnd);
+        const structure = [];
+        const p1 = classDates.filter(d => new Date(d) <= p1End);
+        const p2 = classDates.filter(d => new Date(d) > p1End);
+        
+        const getMonths = (dates: string[]) => {
+             const months: any[] = [];
+             dates.forEach(d => {
+                 const m = new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { month: 'long' });
+                 const label = m.charAt(0).toUpperCase() + m.slice(1);
+                 const last = months[months.length - 1];
+                 if (last && last.label === label) last.width += DATE_COL_WIDTH;
+                 else months.push({ label, width: DATE_COL_WIDTH });
+             });
+             return months;
+        };
+
+        if (p1.length) structure.push({ label: 'Primer Parcial', width: p1.length * DATE_COL_WIDTH, months: getMonths(p1) });
+        if (p2.length) structure.push({ label: 'Segundo Parcial', width: p2.length * DATE_COL_WIDTH, months: getMonths(p2) });
+        return structure;
+    }, [classDates, settings.firstPartialEnd]);
+
+    const totalWidth = useMemo(() => NAME_COL_WIDTH + (classDates.length * DATE_COL_WIDTH) + (STAT_COL_WIDTH * 3), [classDates.length]);
+
     const handleScrollToToday = () => {
-         if (!group || !outerListRef.current) return;
-        let targetIndex = classDates.findIndex(d => d === todayStr);
-        if (targetIndex === -1) {
-            targetIndex = classDates.findIndex(d => d > todayStr);
-            if (targetIndex === -1) targetIndex = classDates.length - 1;
-        }
-        if (targetIndex !== -1) {
-            const viewportWidth = outerListRef.current.clientWidth - NAME_COL_WIDTH - (STAT_COL_WIDTH * 3);
-            const scrollPos = (targetIndex * DATE_COL_WIDTH) - (viewportWidth / 2) + (DATE_COL_WIDTH / 2);
-            outerListRef.current.scrollTo({ left: Math.max(0, scrollPos), behavior: 'smooth' });
+        if (!listRef.current || !group) return;
+        const idx = classDates.findIndex(d => d >= todayStr);
+        if(idx >= 0) {
+             // We can't easily scroll horizontal in standard FixedSizeList, but standard html scroll works on outer container
+             // We can try to find the outer element reference if needed, but for now vertical scroll is priority
+             // To scroll horizontal, we'd need a ref to the outer element of react-window
+             const outer = document.querySelector('.react-window-outer');
+             if(outer) outer.scrollLeft = (idx * DATE_COL_WIDTH);
         }
     };
 
-    const totalContentWidth = useMemo(() => {
-        return NAME_COL_WIDTH + (classDates.length * DATE_COL_WIDTH) + (STAT_COL_WIDTH * 3);
-    }, [classDates.length]);
+    // Context Value
+    const contextValue: AttendanceContextValue | null = useMemo(() => (!group ? null : {
+        students: group.students,
+        classDates,
+        attendance,
+        groupId: group.id,
+        focusedCell,
+        selection,
+        todayStr,
+        headerStructure,
+        totalWidth,
+        handleStatusChange,
+        onMouseDown: handleMouseDown,
+        onMouseEnter: handleMouseEnter,
+        precalcStats
+    }), [group, classDates, attendance, focusedCell, selection, todayStr, headerStructure, totalWidth, handleStatusChange, handleMouseDown, handleMouseEnter, precalcStats]);
 
     return (
-        <div className="flex flex-col h-full outline-none">
+        <div className="flex flex-col h-full">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-4 gap-4 flex-shrink-0">
-                <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4 sm:ml-auto">
-                    <select value={selectedGroupId || ''} onChange={(e) => setSelectedGroupId(e.target.value)} className="w-full sm:w-64 p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary">
+                 <div className="flex flex-col sm:flex-row w-full sm:w-auto items-center gap-4 sm:ml-auto">
+                    <select value={selectedGroupId || ''} onChange={(e) => setSelectedGroupId(e.target.value)} className="w-full sm:w-64 p-2 border border-slate-300 rounded-md bg-white focus:ring-2 focus:ring-primary">
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name} - {g.subject}</option>)}
                     </select>
-                     <Button onClick={handleScrollToToday} disabled={!group} variant="secondary" className="w-full sm:w-auto"><Icon name="calendar" className="w-4 h-4" /> Ir a Hoy</Button>
+                    <Button onClick={handleScrollToToday} disabled={!group} variant="secondary"><Icon name="calendar" className="w-4 h-4" /> Ir a Hoy</Button>
                     <div className="hidden md:flex gap-2">
                         <Button onClick={() => setTextImporterOpen(true)} disabled={!group} variant="secondary" size="sm"><Icon name="upload-cloud" className="w-4 h-4" /> Importar</Button>
                         <Button onClick={() => setBulkFillOpen(true)} disabled={!group} variant="secondary" size="sm"><Icon name="grid" className="w-4 h-4" /> Relleno</Button>
@@ -429,87 +473,35 @@ const AttendanceView: React.FC = () => {
             </div>
 
             {group && isReady ? (
-                <div className="flex-1 border border-border-color rounded-xl overflow-hidden bg-surface flex flex-col shadow-sm select-none">
-                    <AutoSizer>
-                        {({ height, width }: { height: number, width: number }) => {
-                            // Native scrollbar width comp.
-                            const hasScroll = (group.students.length * ROW_HEIGHT) > (height - HEADER_HEIGHT);
-                            const paddingRight = hasScroll ? 15 : 0; // Approximate scrollbar width
-
-                            return (
-                                <div style={{ width, height }} className="flex flex-col">
-                                    <div ref={headerRef} className="overflow-hidden border-b-2 border-border-color bg-surface-secondary/30 flex-shrink-0" style={{ height: HEADER_HEIGHT, width: width, paddingRight }}>
-                                         <div style={{ width: totalContentWidth, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                                            {/* Header Rows... (Kept same structure but minimized for brevity in this updated response, functionality is identical to prev) */}
-                                            {/* ROW 1 */}
-                                            <div className="flex h-1/3 w-full border-b border-border-color/50">
-                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 flex-shrink-0" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}></div>
-                                                {headerStructure.map((part, i) => <div key={i} className="flex items-center justify-center border-r border-border-color font-bold text-xs uppercase tracking-wide bg-surface-secondary/50 text-text-secondary flex-shrink-0" style={{ width: part.width }}>{part.label}</div>)}
-                                                <div className="sticky right-0 z-20 flex flex-shrink-0" style={{ width: STAT_COL_WIDTH * 3 }}><div className="w-full bg-surface-secondary/50 border-l border-border-color"></div></div>
-                                            </div>
-                                            {/* ROW 2 */}
-                                            <div className="flex h-1/3 w-full border-b border-border-color/50">
-                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 flex-shrink-0" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}></div>
-                                                {headerStructure.flatMap((part) => part.months.map((month, j) => <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-border-color text-[10px] font-semibold uppercase text-text-secondary bg-surface/50 flex-shrink-0" style={{ width: month.width }}>{month.label}</div>))}
-                                                <div className="sticky right-0 z-20 flex flex-shrink-0" style={{ width: STAT_COL_WIDTH * 3 }}><div className="w-full bg-surface/50 border-l border-border-color"></div></div>
-                                            </div>
-                                            {/* ROW 3 */}
-                                            <div className="flex h-1/3 w-full">
-                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] flex-shrink-0" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}><span className="text-sm font-semibold text-text-secondary">Alumno</span></div>
-                                                {classDates.map(date => {
-                                                    const isToday = date === todayStr;
-                                                    const dateObj = new Date(date + 'T00:00:00');
-                                                    return <div key={date} className={`flex flex-col items-center justify-center border-r border-border-color/50 flex-shrink-0 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`} style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}><span className="text-[10px] uppercase opacity-70 leading-none">{dateObj.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span><span className="text-xs leading-none">{dateObj.toLocaleDateString('es-MX', { day: '2-digit' })}</span></div>;
-                                                })}
-                                                <div className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary flex-shrink-0" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P1</div>
-                                                <div className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary flex-shrink-0" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P2</div>
-                                                <div className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary flex-shrink-0" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>Global</div>
-                                            </div>
-                                         </div>
-                                    </div>
-                                    <List
-                                        ref={listRef}
-                                        outerRef={outerListRef}
-                                        height={height - HEADER_HEIGHT}
-                                        width={width}
-                                        itemCount={group.students.length}
-                                        itemSize={ROW_HEIGHT}
-                                        itemData={{
-                                            students: group.students,
-                                            classDates,
-                                            attendance,
-                                            groupId: group.id,
-                                            handleStatusChange,
-                                            focusedCell,
-                                            selection,
-                                            todayStr,
-                                            totalWidth: totalContentWidth,
-                                            onMouseDown: handleMouseDown,
-                                            onMouseEnter: handleMouseEnter,
-                                            precalcStats // PASSED HERE
-                                        }}
-                                        className="overflow-x-auto"
-                                        style={{ willChange: 'transform' }}
-                                        innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
-                                            <div ref={ref} style={{ ...style, width: totalContentWidth, position: 'relative' }} {...rest} />
-                                        ))}
-                                    >
-                                        {Row}
-                                    </List>
-                                </div>
-                            );
-                        }}
-                    </AutoSizer>
+                <div className="flex-1 border border-slate-300 rounded-lg overflow-hidden bg-white shadow-sm">
+                    <AttendanceInternalContext.Provider value={contextValue}>
+                        <AutoSizer>
+                            {({ height, width }: any) => (
+                                <List
+                                    ref={listRef}
+                                    height={height}
+                                    width={width}
+                                    itemCount={group.students.length}
+                                    itemSize={ROW_HEIGHT}
+                                    className="react-window-outer"
+                                    innerElementType={InnerElement}
+                                >
+                                    {Row}
+                                </List>
+                            )}
+                        </AutoSizer>
+                    </AttendanceInternalContext.Provider>
                 </div>
             ) : (
-                <div className="text-center py-20 bg-surface rounded-xl shadow-sm border border-border-color">
-                    <Icon name="check-square" className="w-20 h-20 mx-auto text-border-color"/>
-                    <p className="mt-4 text-text-secondary">{group ? 'Cargando lista...' : 'Por favor, selecciona un grupo para ver el registro de asistencia.'}</p>
+                <div className="text-center py-20 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+                    <Icon name="check-square" className="w-16 h-16 mx-auto text-slate-300"/>
+                    <p className="mt-4 text-slate-500">{group ? 'Cargando...' : 'Selecciona un grupo para comenzar.'}</p>
                 </div>
             )}
-             {group && (<Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${group.name}`}><AttendanceTaker students={group.students} date={todayStr} groupAttendance={attendance[group.id] || {}} onStatusChange={(id, status) => handleStatusChange(id, todayStr, status)} onClose={() => setTakerOpen(false)} /></Modal>)}
-             {group && (<BulkAttendanceModal isOpen={isBulkFillOpen} onClose={() => setBulkFillOpen(false)} group={group} />)}
-             {group && (<AttendanceTextImporter isOpen={isTextImporterOpen} onClose={() => setTextImporterOpen(false)} group={group} />)}
+            
+            {group && (<Modal isOpen={isTakerOpen} onClose={() => setTakerOpen(false)} title={`Pase de Lista: ${group.name}`}><AttendanceTaker students={group.students} date={todayStr} groupAttendance={attendance[group.id] || {}} onStatusChange={(id, status) => handleStatusChange(id, todayStr, status)} onClose={() => setTakerOpen(false)} /></Modal>)}
+            {group && (<BulkAttendanceModal isOpen={isBulkFillOpen} onClose={() => setBulkFillOpen(false)} group={group} />)}
+            {group && (<AttendanceTextImporter isOpen={isTextImporterOpen} onClose={() => setTextImporterOpen(false)} group={group} />)}
         </div>
     );
 };
