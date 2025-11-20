@@ -28,13 +28,14 @@ interface Coords { r: number; c: number; }
 interface CellData {
     students: Student[];
     classDates: string[];
+    p1Dates: string[]; // Pre-calculated
+    p2Dates: string[]; // Pre-calculated
     attendance: { [groupId: string]: { [studentId: string]: { [date: string]: AttendanceStatus } } };
     groupId: string;
     handleStatusChange: (studentId: string, date: string, status: AttendanceStatus) => void;
     focusedCell: Coords | null;
     selection: { start: Coords | null; end: Coords | null; isDragging: boolean };
     todayStr: string;
-    firstPartialEnd: string;
     totalWidth: number; // Added to force row width
     onMouseDown: (r: number, c: number) => void;
     onMouseEnter: (r: number, c: number) => void;
@@ -53,44 +54,48 @@ const getScrollbarWidth = () => {
     return scrollbarWidth;
 };
 
+// Optimized percentage calculation using string comparison instead of Date objects
 const calculatePercentage = (
     studentAttendance: { [date: string]: AttendanceStatus },
-    dates: string[]
+    dates: string[],
+    todayStr: string
 ): { percent: number; valid: boolean } => {
     let present = 0;
     let total = 0;
-    dates.forEach(date => {
-        const status = studentAttendance[date];
-        if (new Date(date) <= new Date()) {
+    const len = dates.length;
+    
+    for (let i = 0; i < len; i++) {
+        const date = dates[i];
+        // String comparison is valid and fast for ISO YYYY-MM-DD dates
+        if (date <= todayStr) {
              total++;
+             const status = studentAttendance[date];
              if (status === AttendanceStatus.Present || status === AttendanceStatus.Late || status === AttendanceStatus.Justified || status === AttendanceStatus.Exchange) {
                 present++;
             }
         }
-    });
+    }
+    
     return {
         percent: total > 0 ? Math.round((present / total) * 100) : 100,
         valid: total > 0
     };
 };
 
-const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
+const Row = React.memo(({ index, style, data }: ListChildComponentProps<CellData>) => {
     const { 
-        students, classDates, attendance, groupId, 
-        focusedCell, selection, todayStr, firstPartialEnd, totalWidth,
+        students, classDates, p1Dates, p2Dates, attendance, groupId, 
+        focusedCell, selection, todayStr, totalWidth,
         onMouseDown, onMouseEnter, handleStatusChange
     } = data;
     
     const student = students[index];
     const studentAttendance = attendance[groupId]?.[student.id] || {};
     
-    const p1End = new Date(firstPartialEnd);
-    const p1Dates = classDates.filter(d => new Date(d) <= p1End);
-    const p2Dates = classDates.filter(d => new Date(d) > p1End);
-    
-    const p1Stats = calculatePercentage(studentAttendance, p1Dates);
-    const p2Stats = calculatePercentage(studentAttendance, p2Dates);
-    const globalStats = calculatePercentage(studentAttendance, classDates);
+    // Calculations are now faster using pre-filtered arrays and string comparison
+    const p1Stats = calculatePercentage(studentAttendance, p1Dates, todayStr);
+    const p2Stats = calculatePercentage(studentAttendance, p2Dates, todayStr);
+    const globalStats = calculatePercentage(studentAttendance, classDates, todayStr);
 
     const getScoreColor = (pct: number) => pct >= 90 ? 'text-emerald-600' : pct >= 80 ? 'text-amber-600' : 'text-rose-600';
 
@@ -118,6 +123,8 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
 
                 let isSelected = false;
                 if (selection.start && selection.end) {
+                    // Simple bounds check without Math.min/max re-calc for every cell could be slightly faster, 
+                    // but V8 optimizes this well.
                     const minR = Math.min(selection.start.r, selection.end.r);
                     const maxR = Math.max(selection.start.r, selection.end.r);
                     const minC = Math.min(selection.start.c, selection.end.c);
@@ -174,7 +181,7 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
             </div>
         </div>
     );
-};
+});
 
 const AttendanceView: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
@@ -203,6 +210,13 @@ const AttendanceView: React.FC = () => {
         isDragging: false
     });
 
+    // Refs to store state for event listeners without re-binding
+    const focusRef = useRef(focusedCell);
+    const selectionRef = useRef(selection);
+    
+    useEffect(() => { focusRef.current = focusedCell; }, [focusedCell]);
+    useEffect(() => { selectionRef.current = selection; }, [selection]);
+
     const setSelectedGroupId = useCallback((id: string | null) => {
         dispatch({ type: 'SET_SELECTED_GROUP', payload: id });
         setFocusedCell(null);
@@ -218,6 +232,14 @@ const AttendanceView: React.FC = () => {
         return [];
     }, [group, settings.semesterStart, settings.semesterEnd]);
     
+    // Pre-calculate partial date arrays to avoid repeated filtering in Row
+    const { p1Dates, p2Dates } = useMemo(() => {
+        return {
+            p1Dates: classDates.filter(d => d <= settings.firstPartialEnd),
+            p2Dates: classDates.filter(d => d > settings.firstPartialEnd)
+        };
+    }, [classDates, settings.firstPartialEnd]);
+
     useEffect(() => {
         if (!selectedGroupId && groups.length > 0) {
             setSelectedGroupId(groups[0].id);
@@ -225,7 +247,6 @@ const AttendanceView: React.FC = () => {
     }, [groups, selectedGroupId, setSelectedGroupId]);
     
     // --- SCROLL SYNCING (STRICT) ---
-    // useLayoutEffect fires synchronously after DOM mutations, preventing the "lag" or "float" effect.
     useLayoutEffect(() => {
         const container = outerListRef.current;
         const header = headerRef.current;
@@ -245,14 +266,14 @@ const AttendanceView: React.FC = () => {
         const structure: { label: string; width: number; months: { label: string; width: number; }[] }[] = [];
         
         // Partials
-        const p1Dates = classDates.filter(d => new Date(d) <= p1End);
-        const p2Dates = classDates.filter(d => new Date(d) > p1End);
+        const p1DatesArr = classDates.filter(d => new Date(d) <= p1End);
+        const p2DatesArr = classDates.filter(d => new Date(d) > p1End);
         
-        // Helper to group dates by month
         const groupDatesByMonth = (dates: string[]) => {
              const months: { label: string; count: number }[] = [];
              dates.forEach(d => {
-                 const m = new Date(d).toLocaleDateString('es-MX', { month: 'long' });
+                 // Ensure correct local time parsing for month name
+                 const m = new Date(d + 'T00:00:00').toLocaleDateString('es-MX', { month: 'long' });
                  const label = m.charAt(0).toUpperCase() + m.slice(1);
                  const last = months[months.length - 1];
                  if (last && last.label === label) {
@@ -264,18 +285,18 @@ const AttendanceView: React.FC = () => {
              return months.map(m => ({ label: m.label, width: m.count * DATE_COL_WIDTH }));
         };
 
-        if (p1Dates.length > 0) {
+        if (p1DatesArr.length > 0) {
             structure.push({
                 label: 'Primer Parcial',
-                width: p1Dates.length * DATE_COL_WIDTH,
-                months: groupDatesByMonth(p1Dates)
+                width: p1DatesArr.length * DATE_COL_WIDTH,
+                months: groupDatesByMonth(p1DatesArr)
             });
         }
-        if (p2Dates.length > 0) {
+        if (p2DatesArr.length > 0) {
             structure.push({
                 label: 'Segundo Parcial',
-                width: p2Dates.length * DATE_COL_WIDTH,
-                months: groupDatesByMonth(p2Dates)
+                width: p2DatesArr.length * DATE_COL_WIDTH,
+                months: groupDatesByMonth(p2DatesArr)
             });
         }
         
@@ -311,12 +332,17 @@ const AttendanceView: React.FC = () => {
         return () => window.removeEventListener('mouseup', handleMouseUp);
     }, []);
 
+    // Optimized KeyDown Listener using Refs to prevent re-binding
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!group) return;
             
-            if (focusedCell) {
-                const { r, c } = focusedCell;
+            // Access latest state from refs without effect dependencies on them
+            const currentFocus = focusRef.current;
+            const currentSelection = selectionRef.current;
+            
+            if (currentFocus) {
+                const { r, c } = currentFocus;
                 const maxR = group.students.length - 1;
                 const maxC = classDates.length - 1;
                 
@@ -354,18 +380,19 @@ const AttendanceView: React.FC = () => {
             if (statusToApply && selectedGroupId) {
                 e.preventDefault();
                 let updateRange: { r: number, c: number }[] = [];
-                if (selection.start && selection.end) {
-                     const minR = Math.min(selection.start.r, selection.end.r);
-                     const maxR = Math.max(selection.start.r, selection.end.r);
-                     const minC = Math.min(selection.start.c, selection.end.c);
-                     const maxC = Math.max(selection.start.c, selection.end.c);
+                
+                if (currentSelection.start && currentSelection.end) {
+                     const minR = Math.min(currentSelection.start.r, currentSelection.end.r);
+                     const maxR = Math.max(currentSelection.start.r, currentSelection.end.r);
+                     const minC = Math.min(currentSelection.start.c, currentSelection.end.c);
+                     const maxC = Math.max(currentSelection.start.c, currentSelection.end.c);
                      for (let r = minR; r <= maxR; r++) {
                          for (let c = minC; c <= maxC; c++) {
                              updateRange.push({ r, c });
                          }
                      }
-                } else if (focusedCell) {
-                    updateRange.push(focusedCell);
+                } else if (currentFocus) {
+                    updateRange.push(currentFocus);
                 }
 
                 updateRange.forEach(({ r, c }) => {
@@ -380,7 +407,7 @@ const AttendanceView: React.FC = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [group, focusedCell, selection, classDates, selectedGroupId, handleStatusChange]);
+    }, [group, classDates, selectedGroupId, handleStatusChange]);
     
     
     const handleScrollToToday = () => {
@@ -388,7 +415,7 @@ const AttendanceView: React.FC = () => {
         
         let targetIndex = classDates.findIndex(d => d === todayStr);
         if (targetIndex === -1) {
-            targetIndex = classDates.findIndex(d => new Date(d) > new Date(todayStr));
+            targetIndex = classDates.findIndex(d => d > todayStr);
             if (targetIndex === -1) targetIndex = classDates.length - 1;
         }
 
@@ -450,7 +477,6 @@ const AttendanceView: React.FC = () => {
                             const hasVerticalScroll = (group.students.length * ROW_HEIGHT) > height;
                             
                             // Instead of changing header width, we add padding to compensate for scrollbar
-                            // This keeps the content alignment strictly based on width
                             const headerStyle = {
                                 height: HEADER_HEIGHT,
                                 width: width,
@@ -542,18 +568,21 @@ const AttendanceView: React.FC = () => {
                                         itemData={{
                                             students: group.students,
                                             classDates,
+                                            p1Dates, // Pass pre-calculated
+                                            p2Dates, // Pass pre-calculated
                                             attendance,
                                             groupId: group.id,
                                             handleStatusChange,
                                             focusedCell,
                                             selection,
                                             todayStr,
-                                            firstPartialEnd: settings.firstPartialEnd,
-                                            totalWidth: totalContentWidth, // Pass total width to Row
+                                            totalWidth: totalContentWidth,
                                             onMouseDown: handleMouseDown,
                                             onMouseEnter: handleMouseEnter
                                         }}
                                         className="overflow-x-auto"
+                                        // Performance optimization: hint to browser
+                                        style={{ willChange: 'transform' }}
                                         innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
                                             <div
                                                 ref={ref}
