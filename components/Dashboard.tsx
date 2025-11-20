@@ -18,10 +18,10 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 const WelcomeWidget: React.FC<{ dateString: string }> = ({ dateString }) => {
     const { state } = useContext(AppContext);
     return (
-        <>
+        <div className="flex flex-col justify-center h-full">
             <h3 className="font-bold text-xl mb-1 text-text-primary">Bienvenido/a, {state.settings.professorName}!</h3>
             <p className="text-text-secondary capitalize">{dateString}</p>
-        </>
+        </div>
     );
 };
 
@@ -29,14 +29,14 @@ const StatsWidget: React.FC = () => {
     const { state } = useContext(AppContext);
     const totalStudents = state.groups.reduce((sum, group) => sum + group.students.length, 0);
     return (
-        <div className="grid grid-cols-2 gap-4 text-center h-full">
-            <div className="flex flex-col justify-center">
-                <p className="text-3xl font-bold text-primary">{state.groups.length}</p>
-                <p className="text-sm text-text-secondary">Grupos</p>
+        <div className="grid grid-cols-2 gap-2 text-center h-full items-center">
+            <div className="flex flex-col justify-center p-2 bg-surface-secondary/50 rounded-lg">
+                <p className="text-2xl font-bold text-primary">{state.groups.length}</p>
+                <p className="text-xs text-text-secondary font-medium uppercase tracking-wide">Grupos</p>
             </div>
-            <div className="flex flex-col justify-center">
-                <p className="text-3xl font-bold text-primary">{totalStudents}</p>
-                <p className="text-sm text-text-secondary">Alumnos</p>
+            <div className="flex flex-col justify-center p-2 bg-surface-secondary/50 rounded-lg">
+                <p className="text-2xl font-bold text-primary">{totalStudents}</p>
+                <p className="text-xs text-text-secondary font-medium uppercase tracking-wide">Alumnos</p>
             </div>
         </div>
     );
@@ -79,15 +79,15 @@ const UpcomingEventsWidget: React.FC = () => {
             return acc;
         }, [] as { id: string; title: string; startDate: string; endDate: string; }[]);
         
-        return grouped.slice(0, 3);
+        return grouped.slice(0, 5); // Show more events since we have more space
     }, [state.gcalEvents]);
     
     if (upcomingEvents.length === 0) {
-        return <p className="text-text-secondary text-center flex items-center justify-center h-full">No hay próximos eventos de Google Calendar.</p>;
+        return <p className="text-text-secondary text-center flex items-center justify-center h-full opacity-60 text-sm">No hay próximos eventos de Google Calendar.</p>;
     }
 
     return (
-        <ul className="space-y-2 overflow-y-auto h-full pr-2">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto h-full pr-1 content-start">
             {upcomingEvents.map(event => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -122,9 +122,9 @@ const UpcomingEventsWidget: React.FC = () => {
                 }
 
                 return (
-                    <li key={event.id} className={`text-sm p-2 rounded-md transition-colors ${colorClass}`}>
-                        <p className="font-semibold text-text-primary">{event.title}</p>
-                        <p className="text-xs text-text-secondary capitalize">{dateString}</p>
+                    <li key={event.id} className={`text-sm p-3 rounded-md transition-colors shadow-sm flex flex-col justify-center ${colorClass}`}>
+                        <p className="font-semibold text-text-primary leading-tight">{event.title}</p>
+                        <p className="text-xs text-text-secondary capitalize mt-1">{dateString}</p>
                     </li>
                 );
             })}
@@ -156,15 +156,30 @@ const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) =
     }, [state.groups, state.attendance, todayStr, dayOfWeek]);
 
     if (total === 0) {
-        return <p className="text-text-secondary text-center flex items-center justify-center h-full">No hay alumnos en clases hoy.</p>;
+        return <p className="text-text-secondary text-center flex items-center justify-center h-full text-xs opacity-70">Sin clases hoy.</p>;
     }
+
+    const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
+    const color = percentage >= 80 ? 'text-emerald-600' : percentage >= 50 ? 'text-amber-500' : 'text-rose-500';
 
     return (
         <div className="flex flex-col items-center justify-center h-full text-center">
-            <p className="text-4xl font-bold text-primary">
-                {present} <span className="text-2xl text-text-secondary">/ {total}</span>
+             <div className="relative w-20 h-20 flex items-center justify-center">
+                {/* Simple circular indicator background */}
+                <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                    <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-surface-secondary" />
+                    <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" 
+                        strokeDasharray={226} 
+                        strokeDashoffset={226 - (226 * percentage) / 100}
+                        className={`${color} transition-all duration-1000 ease-out`} 
+                    />
+                </svg>
+                <span className={`text-xl font-bold ${color}`}>{percentage}%</span>
+            </div>
+            <p className="text-sm font-bold text-text-primary mt-2">
+                {present} / {total}
             </p>
-            <p className="text-sm text-text-secondary mt-1">Alumnos Presentes Hoy</p>
+            <p className="text-[10px] text-text-secondary uppercase tracking-wide">Asistencia</p>
         </div>
     );
 };
@@ -181,14 +196,12 @@ const QuickActionsWidget: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col gap-3 h-full justify-center">
-            <Button onClick={handleSyncAttendance} variant="secondary" className="w-full">
-                <Icon name="upload-cloud" className="w-4 h-4" />
-                Subir Asistencias
+        <div className="flex flex-col gap-2 h-full justify-center">
+            <Button onClick={handleSyncAttendance} variant="secondary" size="sm" className="w-full justify-start">
+                <Icon name="upload-cloud" className="w-4 h-4" /> Subir Asistencias
             </Button>
-            <Button onClick={handleSyncSchedule} className="w-full bg-accent text-white hover:opacity-90">
-                <Icon name="download-cloud" className="w-4 h-4" />
-                Actualizar Horario
+            <Button onClick={handleSyncSchedule} size="sm" className="w-full justify-start bg-accent text-white hover:opacity-90">
+                <Icon name="download-cloud" className="w-4 h-4" /> Actualizar Horario
             </Button>
         </div>
     );
@@ -202,29 +215,36 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
     const todaysClasses = state.groups.filter(g => g.classDays.some(d => d.toLowerCase() === dayOfWeek.toLowerCase()));
 
     if (todaysClasses.length === 0) {
-        return <p className="text-text-secondary text-center flex items-center justify-center h-full">No hay grupos con clase hoy.</p>;
+        return (
+            <div className="flex flex-col items-center justify-center h-full text-text-secondary opacity-60">
+                <Icon name="calendar" className="w-10 h-10 mb-2" />
+                <p className="text-sm">No hay clases programadas para hoy.</p>
+            </div>
+        );
     }
     
-    const baseClasses = 'font-bold rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface transition-all duration-200 ease-in-out inline-flex items-center justify-start gap-3 text-left disabled:opacity-50 disabled:cursor-not-allowed';
-    const sizeClasses = 'p-3 text-base';
+    const baseClasses = 'rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface transition-all duration-200 ease-in-out flex items-center justify-start gap-3 text-left disabled:opacity-50 disabled:cursor-not-allowed';
+    // Reduced padding and font size for better fit
+    const sizeClasses = 'px-3 py-2.5';
 
     return (
-        <div className="flex flex-wrap gap-3 h-full overflow-y-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto h-full content-start pr-1">
             {todaysClasses.map(group => {
                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
                 return (
                      <motion.button
                         key={group.id}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={() => onTakeAttendance(group)}
-                        // Use solid colors for better visibility and match the new style
-                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90 shadow-md w-full sm:w-auto flex-grow`}
+                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90 shadow-sm w-full`}
                     >
-                        <Icon name="list-checks" className="w-5 h-5 flex-shrink-0" />
-                        <div>
-                            <p className="font-semibold text-sm leading-tight">{group.name}</p>
-                            <p className="text-xs opacity-80 font-normal leading-tight">{group.subject}</p>
+                        <div className="bg-white/20 p-1.5 rounded-md">
+                             <Icon name="list-checks" className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="font-bold text-sm leading-tight truncate">{group.name}</p>
+                            <p className="text-xs opacity-90 font-normal leading-tight truncate">{group.subject}</p>
                         </div>
                     </motion.button>
                 );
@@ -235,9 +255,9 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
 
 
 const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode; autoHeight?: boolean; }> = ({ title, children, autoHeight = false }) => (
-    <div className="bg-surface p-4 rounded-xl shadow-sm border border-border-color flex flex-col h-full">
-        {title && <h3 className="font-bold mb-3 text-text-secondary">{title}</h3>}
-        <div className={!autoHeight ? "flex-grow" : ""}>
+    <div className="bg-surface p-3 sm:p-4 rounded-xl shadow-sm border border-border-color flex flex-col h-full overflow-hidden">
+        {title && <h3 className="font-bold text-sm text-text-secondary mb-3 uppercase tracking-wider flex-shrink-0">{title}</h3>}
+        <div className={!autoHeight ? "flex-grow overflow-hidden" : ""}>
             {children}
         </div>
     </div>
@@ -289,43 +309,42 @@ const Dashboard: React.FC = () => {
         }
     };
     
-    // Updated Layout: Removed "Todays Classes", Prioritized "Take Attendance"
+    // Optimized Layout to use vertical space
+    // Row Height reduced to 120 for finer control
     const layouts = {
         lg: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
             { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
             
-            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 1 },
+            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 2 }, // Taller to fit buttons
             { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 1 },
+            { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 }, // Stacked under summary
 
-            { i: 'upcoming-events', x: 0, y: 2, w: 2, h: 1 },
-            { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 },
+            { i: 'upcoming-events', x: 0, y: 3, w: 3, h: 2 }, // Full width bottom, tall
         ],
          md: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
             { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
-            
-            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 1 },
+            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 2 },
             { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 1 },
-
-            { i: 'upcoming-events', x: 0, y: 2, w: 2, h: 1 },
             { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 },
+            { i: 'upcoming-events', x: 0, y: 3, w: 3, h: 2 },
         ],
         sm: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
-            { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
-            { i: 'take-attendance', x: 0, y: 2, w: 2, h: 1 },
-            { i: 'attendance-summary', x: 1, y: 1, w: 1, h: 1 },
-            { i: 'upcoming-events', x: 0, y: 3, w: 2, h: 1 },
-            { i: 'quick-actions', x: 0, y: 4, w: 2, h: 1 },
+            { i: 'stats', x: 0, y: 1, w: 2, h: 1 }, // Full width stats on mobile
+            { i: 'take-attendance', x: 0, y: 2, w: 2, h: 2 },
+            { i: 'attendance-summary', x: 0, y: 4, w: 1, h: 1 },
+            { i: 'quick-actions', x: 1, y: 4, w: 1, h: 1 },
+            { i: 'upcoming-events', x: 0, y: 5, w: 2, h: 2 },
         ],
         xs: [
             { i: 'welcome', x: 0, y: 0, w: 1, h: 1 },
             { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
-            { i: 'take-attendance', x: 0, y: 2, w: 1, h: 1 },
-            { i: 'attendance-summary', x: 0, y: 3, w: 1, h: 1 },
-            { i: 'upcoming-events', x: 0, y: 4, w: 1, h: 2 },
-            { i: 'quick-actions', x: 0, y: 6, w: 1, h: 1 },
+            { i: 'take-attendance', x: 0, y: 2, w: 1, h: 2 },
+            { i: 'attendance-summary', x: 0, y: 4, w: 1, h: 1 },
+            { i: 'quick-actions', x: 0, y: 5, w: 1, h: 1 },
+            { i: 'upcoming-events', x: 0, y: 6, w: 1, h: 2 },
         ],
     };
 
@@ -337,7 +356,7 @@ const Dashboard: React.FC = () => {
                 layouts={layouts}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                 cols={{ lg: 3, md: 3, sm: 2, xs: 1, xxs: 1 }}
-                rowHeight={140}
+                rowHeight={120}
                 isDraggable={false}
                 isResizable={false}
                 margin={[16, 16]}
