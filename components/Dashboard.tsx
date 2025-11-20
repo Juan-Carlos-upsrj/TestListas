@@ -25,23 +25,6 @@ const WelcomeWidget: React.FC<{ dateString: string }> = ({ dateString }) => {
     );
 };
 
-const StatsWidget: React.FC = () => {
-    const { state } = useContext(AppContext);
-    const totalStudents = state.groups.reduce((sum, group) => sum + group.students.length, 0);
-    return (
-        <div className="grid grid-cols-2 gap-2 text-center h-full items-center">
-            <div className="flex flex-col justify-center p-2 bg-surface-secondary/50 rounded-lg">
-                <p className="text-2xl font-bold text-primary">{state.groups.length}</p>
-                <p className="text-xs text-text-secondary font-medium uppercase tracking-wide">Grupos</p>
-            </div>
-            <div className="flex flex-col justify-center p-2 bg-surface-secondary/50 rounded-lg">
-                <p className="text-2xl font-bold text-primary">{totalStudents}</p>
-                <p className="text-xs text-text-secondary font-medium uppercase tracking-wide">Alumnos</p>
-            </div>
-        </div>
-    );
-};
-
 const UpcomingEventsWidget: React.FC = () => {
     const { state } = useContext(AppContext);
     const upcomingEvents = useMemo(() => {
@@ -79,7 +62,7 @@ const UpcomingEventsWidget: React.FC = () => {
             return acc;
         }, [] as { id: string; title: string; startDate: string; endDate: string; }[]);
         
-        return grouped.slice(0, 5); // Show more events since we have more space
+        return grouped.slice(0, 3); // Show fewer events as the widget is smaller now
     }, [state.gcalEvents]);
     
     if (upcomingEvents.length === 0) {
@@ -87,7 +70,7 @@ const UpcomingEventsWidget: React.FC = () => {
     }
 
     return (
-        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto h-full pr-1 content-start">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 overflow-y-auto h-full pr-1 content-start">
             {upcomingEvents.map(event => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -112,19 +95,19 @@ const UpcomingEventsWidget: React.FC = () => {
                 // Date formatting logic
                 let dateString: string;
                 if (startDate.getTime() === endDate.getTime()) {
-                    dateString = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
+                    dateString = startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
                 } else {
                     if (startDate.getMonth() === endDate.getMonth()) {
-                        dateString = `${startDate.getDate()} - ${endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}`;
+                        dateString = `${startDate.getDate()} - ${endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
                     } else {
                         dateString = `${startDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} - ${endDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
                     }
                 }
 
                 return (
-                    <li key={event.id} className={`text-sm p-3 rounded-md transition-colors shadow-sm flex flex-col justify-center ${colorClass}`}>
-                        <p className="font-semibold text-text-primary leading-tight">{event.title}</p>
-                        <p className="text-xs text-text-secondary capitalize mt-1">{dateString}</p>
+                    <li key={event.id} className={`text-xs p-2 rounded-md transition-colors shadow-sm flex flex-col justify-center ${colorClass}`}>
+                        <p className="font-semibold text-text-primary leading-tight truncate">{event.title}</p>
+                        <p className="text-[10px] text-text-secondary capitalize mt-0.5">{dateString}</p>
                     </li>
                 );
             })}
@@ -133,10 +116,11 @@ const UpcomingEventsWidget: React.FC = () => {
 };
 
 
-const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) => {
+const CombinedOverviewWidget: React.FC<{ todayStr: string }> = ({ todayStr }) => {
     const { state } = useContext(AppContext);
     const today = new Date();
     const dayOfWeek = today.toLocaleDateString('es-ES', { weekday: 'long' });
+    const totalStudents = state.groups.reduce((sum, group) => sum + group.students.length, 0);
 
     const { present, total } = useMemo(() => {
         let presentCount = 0;
@@ -155,31 +139,47 @@ const AttendanceSummaryWidget: React.FC<{ todayStr: string }> = ({ todayStr }) =
         return { present: presentCount, total: totalCount };
     }, [state.groups, state.attendance, todayStr, dayOfWeek]);
 
-    if (total === 0) {
-        return <p className="text-text-secondary text-center flex items-center justify-center h-full text-xs opacity-70">Sin clases hoy.</p>;
-    }
-
     const percentage = total > 0 ? Math.round((present / total) * 100) : 0;
     const color = percentage >= 80 ? 'text-emerald-600' : percentage >= 50 ? 'text-amber-500' : 'text-rose-500';
 
     return (
-        <div className="flex flex-col items-center justify-center h-full text-center">
-             <div className="relative w-20 h-20 flex items-center justify-center">
-                {/* Simple circular indicator background */}
-                <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                    <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-surface-secondary" />
-                    <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" 
-                        strokeDasharray={226} 
-                        strokeDashoffset={226 - (226 * percentage) / 100}
-                        className={`${color} transition-all duration-1000 ease-out`} 
-                    />
-                </svg>
-                <span className={`text-xl font-bold ${color}`}>{percentage}%</span>
+        <div className="flex flex-col h-full divide-y divide-border-color">
+            {/* Top Section: Stats */}
+            <div className="flex-1 grid grid-cols-2 gap-2 items-center p-2 pb-3">
+                <div className="flex flex-col items-center justify-center p-1">
+                    <p className="text-xl font-bold text-primary">{state.groups.length}</p>
+                    <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wide">Grupos</p>
+                </div>
+                <div className="flex flex-col items-center justify-center p-1">
+                    <p className="text-xl font-bold text-primary">{totalStudents}</p>
+                    <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wide">Alumnos</p>
+                </div>
             </div>
-            <p className="text-sm font-bold text-text-primary mt-2">
-                {present} / {total}
-            </p>
-            <p className="text-[10px] text-text-secondary uppercase tracking-wide">Asistencia</p>
+            
+            {/* Bottom Section: Attendance Chart */}
+            <div className="flex-[2] flex flex-col items-center justify-center p-2 pt-3">
+                {total === 0 ? (
+                    <p className="text-text-secondary text-center text-xs opacity-70">Sin clases hoy.</p>
+                ) : (
+                    <>
+                        <div className="relative w-24 h-24 flex items-center justify-center">
+                            <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                                <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-surface-secondary" />
+                                <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" 
+                                    strokeDasharray={251} 
+                                    strokeDashoffset={251 - (251 * percentage) / 100}
+                                    className={`${color} transition-all duration-1000 ease-out`} 
+                                />
+                            </svg>
+                            <span className={`text-2xl font-bold ${color}`}>{percentage}%</span>
+                        </div>
+                        <p className="text-xs font-bold text-text-primary mt-2">
+                            {present} / {total} Presentes
+                        </p>
+                        <p className="text-[10px] text-text-secondary uppercase tracking-wide mt-1">Asistencia Hoy</p>
+                    </>
+                )}
+            </div>
         </div>
     );
 };
@@ -224,8 +224,8 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
     }
     
     const baseClasses = 'rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface transition-all duration-200 ease-in-out flex items-center justify-start gap-3 text-left disabled:opacity-50 disabled:cursor-not-allowed';
-    // Reduced padding and font size for better fit
-    const sizeClasses = 'px-3 py-2.5';
+    // Compact grid styling
+    const sizeClasses = 'px-3 py-2';
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto h-full content-start pr-1">
@@ -239,12 +239,12 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
                         onClick={() => onTakeAttendance(group)}
                         className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90 shadow-sm w-full`}
                     >
-                        <div className="bg-white/20 p-1.5 rounded-md">
+                        <div className="bg-white/20 p-1 rounded-md flex-shrink-0">
                              <Icon name="list-checks" className="w-4 h-4" />
                         </div>
-                        <div className="min-w-0">
-                            <p className="font-bold text-sm leading-tight truncate">{group.name}</p>
-                            <p className="text-xs opacity-90 font-normal leading-tight truncate">{group.subject}</p>
+                        <div className="min-w-0 overflow-hidden">
+                            <p className="font-bold text-xs leading-tight truncate">{group.name}</p>
+                            <p className="text-[10px] opacity-90 font-normal leading-tight truncate">{group.subject}</p>
                         </div>
                     </motion.button>
                 );
@@ -256,7 +256,7 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
 
 const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode; autoHeight?: boolean; }> = ({ title, children, autoHeight = false }) => (
     <div className="bg-surface p-3 sm:p-4 rounded-xl shadow-sm border border-border-color flex flex-col h-full overflow-hidden">
-        {title && <h3 className="font-bold text-sm text-text-secondary mb-3 uppercase tracking-wider flex-shrink-0">{title}</h3>}
+        {title && <h3 className="font-bold text-xs text-text-secondary mb-3 uppercase tracking-wider flex-shrink-0">{title}</h3>}
         <div className={!autoHeight ? "flex-grow overflow-hidden" : ""}>
             {children}
         </div>
@@ -314,37 +314,33 @@ const Dashboard: React.FC = () => {
     const layouts = {
         lg: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
-            { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
+            { i: 'quick-actions', x: 2, y: 0, w: 1, h: 1 }, // Top Right for Quick Actions
             
-            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 2 }, // Taller to fit buttons
-            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 1 },
-            { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 }, // Stacked under summary
-
-            { i: 'upcoming-events', x: 0, y: 3, w: 3, h: 2 }, // Full width bottom, tall
+            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 2 }, // Big central widget
+            { i: 'combined-overview', x: 2, y: 1, w: 1, h: 3 }, // Tall sidebar widget for stats/attendance
+            
+            { i: 'upcoming-events', x: 0, y: 3, w: 2, h: 1 }, // Bottom left, half height
         ],
          md: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
-            { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
+            { i: 'quick-actions', x: 2, y: 0, w: 1, h: 1 },
             { i: 'take-attendance', x: 0, y: 1, w: 2, h: 2 },
-            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 1 },
-            { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 },
-            { i: 'upcoming-events', x: 0, y: 3, w: 3, h: 2 },
+            { i: 'combined-overview', x: 2, y: 1, w: 1, h: 3 },
+            { i: 'upcoming-events', x: 0, y: 3, w: 2, h: 1 },
         ],
         sm: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
-            { i: 'stats', x: 0, y: 1, w: 2, h: 1 }, // Full width stats on mobile
+            { i: 'quick-actions', x: 0, y: 1, w: 2, h: 1 },
             { i: 'take-attendance', x: 0, y: 2, w: 2, h: 2 },
-            { i: 'attendance-summary', x: 0, y: 4, w: 1, h: 1 },
-            { i: 'quick-actions', x: 1, y: 4, w: 1, h: 1 },
-            { i: 'upcoming-events', x: 0, y: 5, w: 2, h: 2 },
+            { i: 'combined-overview', x: 0, y: 4, w: 2, h: 2 },
+            { i: 'upcoming-events', x: 0, y: 6, w: 2, h: 1 },
         ],
         xs: [
             { i: 'welcome', x: 0, y: 0, w: 1, h: 1 },
-            { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+            { i: 'quick-actions', x: 0, y: 1, w: 1, h: 1 },
             { i: 'take-attendance', x: 0, y: 2, w: 1, h: 2 },
-            { i: 'attendance-summary', x: 0, y: 4, w: 1, h: 1 },
-            { i: 'quick-actions', x: 0, y: 5, w: 1, h: 1 },
-            { i: 'upcoming-events', x: 0, y: 6, w: 1, h: 2 },
+            { i: 'combined-overview', x: 0, y: 4, w: 1, h: 2 },
+            { i: 'upcoming-events', x: 0, y: 6, w: 1, h: 1 },
         ],
     };
 
@@ -364,14 +360,11 @@ const Dashboard: React.FC = () => {
                 <div key="welcome">
                     <WidgetWrapper title=""><WelcomeWidget dateString={dateString} /></WidgetWrapper>
                 </div>
-                <div key="stats">
-                     <WidgetWrapper title=""><StatsWidget /></WidgetWrapper>
-                </div>
                 <div key="take-attendance">
                      <WidgetWrapper title="Pase de Lista Hoy"><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
                 </div>
-                <div key="attendance-summary">
-                     <WidgetWrapper title="Asistencia de Hoy"><AttendanceSummaryWidget todayStr={todayStr} /></WidgetWrapper>
+                <div key="combined-overview">
+                     <WidgetWrapper title="Resumen"><CombinedOverviewWidget todayStr={todayStr} /></WidgetWrapper>
                 </div>
                 <div key="upcoming-events">
                      <WidgetWrapper title="Próximos Eventos (GCAL)"><UpcomingEventsWidget /></WidgetWrapper>
