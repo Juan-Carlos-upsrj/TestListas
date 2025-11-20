@@ -180,7 +180,7 @@ const Row = React.memo(({ index, style }: ListChildComponentProps) => {
     const { p1, p2, global } = precalcStats[index];
     
     // Shift row down by header height
-    const top = parseFloat(style.top.toString()) + HEADER_HEIGHT;
+    const top = parseFloat((style.top ?? 0).toString()) + HEADER_HEIGHT;
     
     const getScoreColor = (pct: number) => pct >= 90 ? 'text-emerald-600 bg-emerald-50' : pct >= 80 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
     
