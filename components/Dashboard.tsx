@@ -42,25 +42,6 @@ const StatsWidget: React.FC = () => {
     );
 };
 
-const TodaysClassesWidget: React.FC = () => {
-    const { state } = useContext(AppContext);
-    const today = new Date();
-    const dayOfWeek = today.toLocaleDateString('es-ES', { weekday: 'long' });
-    const todaysClasses = state.groups.filter(g => g.classDays.some(d => d.toLowerCase() === dayOfWeek.toLowerCase()));
-
-    if (todaysClasses.length === 0) {
-        return <p className="text-text-secondary text-center flex items-center justify-center h-full">No hay clases programadas para hoy.</p>;
-    }
-
-    return (
-        <ul className="space-y-2 overflow-y-auto h-full pr-2">
-            {todaysClasses.map(g => (
-                <li key={g.id} className="text-sm p-2 bg-surface-secondary rounded-md">{g.name}</li>
-            ))}
-        </ul>
-    );
-};
-
 const UpcomingEventsWidget: React.FC = () => {
     const { state } = useContext(AppContext);
     const upcomingEvents = useMemo(() => {
@@ -228,7 +209,7 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
     const sizeClasses = 'p-3 text-base';
 
     return (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 h-full overflow-y-auto">
             {todaysClasses.map(group => {
                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
                 return (
@@ -238,7 +219,7 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onTakeAttendance(group)}
                         // Use solid colors for better visibility and match the new style
-                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90 shadow-md`}
+                        className={`${baseClasses} ${sizeClasses} ${groupColor.bg} ${groupColor.text} hover:opacity-90 shadow-md w-full sm:w-auto flex-grow`}
                     >
                         <Icon name="list-checks" className="w-5 h-5 flex-shrink-0" />
                         <div>
@@ -308,42 +289,43 @@ const Dashboard: React.FC = () => {
         }
     };
     
+    // Updated Layout: Removed "Todays Classes", Prioritized "Take Attendance"
     const layouts = {
         lg: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
             { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
-            { i: 'todays-classes', x: 0, y: 1, w: 1, h: 2 },
-            { i: 'upcoming-events', x: 1, y: 1, w: 1, h: 2 },
-            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 2 },
-            { i: 'quick-actions', x: 0, y: 3, w: 1, h: 1 },
-            { i: 'take-attendance', x: 1, y: 3, w: 2, h: 1 },
+            
+            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 1 },
+            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 1 },
+
+            { i: 'upcoming-events', x: 0, y: 2, w: 2, h: 1 },
+            { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 },
         ],
          md: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
             { i: 'stats', x: 2, y: 0, w: 1, h: 1 },
-            { i: 'todays-classes', x: 0, y: 1, w: 1, h: 2 },
-            { i: 'upcoming-events', x: 1, y: 1, w: 1, h: 2 },
-            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 2 },
-            { i: 'quick-actions', x: 0, y: 3, w: 1, h: 1 },
-            { i: 'take-attendance', x: 1, y: 3, w: 2, h: 1 },
+            
+            { i: 'take-attendance', x: 0, y: 1, w: 2, h: 1 },
+            { i: 'attendance-summary', x: 2, y: 1, w: 1, h: 1 },
+
+            { i: 'upcoming-events', x: 0, y: 2, w: 2, h: 1 },
+            { i: 'quick-actions', x: 2, y: 2, w: 1, h: 1 },
         ],
         sm: [
             { i: 'welcome', x: 0, y: 0, w: 2, h: 1 },
             { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
+            { i: 'take-attendance', x: 0, y: 2, w: 2, h: 1 },
             { i: 'attendance-summary', x: 1, y: 1, w: 1, h: 1 },
-            { i: 'todays-classes', x: 0, y: 2, w: 1, h: 2 },
-            { i: 'upcoming-events', x: 1, y: 2, w: 1, h: 2 },
-            { i: 'quick-actions', x: 0, y: 4, w: 1, h: 1 },
-            { i: 'take-attendance', x: 1, y: 4, w: 1, h: 1 },
+            { i: 'upcoming-events', x: 0, y: 3, w: 2, h: 1 },
+            { i: 'quick-actions', x: 0, y: 4, w: 2, h: 1 },
         ],
         xs: [
             { i: 'welcome', x: 0, y: 0, w: 1, h: 1 },
             { i: 'stats', x: 0, y: 1, w: 1, h: 1 },
-            { i: 'attendance-summary', x: 0, y: 2, w: 1, h: 1 },
-            { i: 'todays-classes', x: 0, y: 3, w: 1, h: 2 },
-            { i: 'upcoming-events', x: 0, y: 5, w: 1, h: 2 },
-            { i: 'take-attendance', x: 0, y: 7, w: 1, h: 2 },
-            { i: 'quick-actions', x: 0, y: 9, w: 1, h: 1 },
+            { i: 'take-attendance', x: 0, y: 2, w: 1, h: 1 },
+            { i: 'attendance-summary', x: 0, y: 3, w: 1, h: 1 },
+            { i: 'upcoming-events', x: 0, y: 4, w: 1, h: 2 },
+            { i: 'quick-actions', x: 0, y: 6, w: 1, h: 1 },
         ],
     };
 
@@ -355,7 +337,7 @@ const Dashboard: React.FC = () => {
                 layouts={layouts}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
                 cols={{ lg: 3, md: 3, sm: 2, xs: 1, xxs: 1 }}
-                rowHeight={120}
+                rowHeight={140}
                 isDraggable={false}
                 isResizable={false}
                 margin={[16, 16]}
@@ -366,20 +348,17 @@ const Dashboard: React.FC = () => {
                 <div key="stats">
                      <WidgetWrapper title=""><StatsWidget /></WidgetWrapper>
                 </div>
-                <div key="todays-classes">
-                     <WidgetWrapper title="Clases de Hoy"><TodaysClassesWidget /></WidgetWrapper>
-                </div>
-                <div key="upcoming-events">
-                     <WidgetWrapper title="Próximos Eventos (GCAL)"><UpcomingEventsWidget /></WidgetWrapper>
+                <div key="take-attendance">
+                     <WidgetWrapper title="Pase de Lista Hoy"><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
                 </div>
                 <div key="attendance-summary">
                      <WidgetWrapper title="Asistencia de Hoy"><AttendanceSummaryWidget todayStr={todayStr} /></WidgetWrapper>
                 </div>
+                <div key="upcoming-events">
+                     <WidgetWrapper title="Próximos Eventos (GCAL)"><UpcomingEventsWidget /></WidgetWrapper>
+                </div>
                 <div key="quick-actions">
                      <WidgetWrapper title="Acciones Rápidas"><QuickActionsWidget /></WidgetWrapper>
-                </div>
-                <div key="take-attendance">
-                     <WidgetWrapper title="Pase de Lista Hoy" autoHeight><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
                 </div>
             </ResponsiveGridLayout>
             
