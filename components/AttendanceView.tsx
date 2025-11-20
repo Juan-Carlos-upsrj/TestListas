@@ -35,6 +35,7 @@ interface CellData {
     selection: { start: Coords | null; end: Coords | null; isDragging: boolean };
     todayStr: string;
     firstPartialEnd: string;
+    totalWidth: number; // Added to force row width
     onMouseDown: (r: number, c: number) => void;
     onMouseEnter: (r: number, c: number) => void;
 }
@@ -76,7 +77,7 @@ const calculatePercentage = (
 const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
     const { 
         students, classDates, attendance, groupId, 
-        focusedCell, selection, todayStr, firstPartialEnd,
+        focusedCell, selection, todayStr, firstPartialEnd, totalWidth,
         onMouseDown, onMouseEnter, handleStatusChange
     } = data;
     
@@ -98,9 +99,10 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
         index <= Math.max(selection.start.r, selection.end.r);
 
     return (
-        <div style={style} className={`flex items-center border-b border-border-color/70 hover:bg-surface-secondary/40 transition-colors ${isRowInSelection ? 'bg-blue-50/30' : ''}`}>
+        // IMPORTANT: Force width to totalWidth to prevent flex compression and ensure alignment with header
+        <div style={{ ...style, width: totalWidth }} className={`flex items-center border-b border-border-color/70 hover:bg-surface-secondary/40 transition-colors ${isRowInSelection ? 'bg-blue-50/30' : ''}`}>
             <div 
-                className="sticky left-0 z-10 bg-surface flex items-center px-3 border-r border-border-color h-full shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                className="sticky left-0 z-10 bg-surface flex items-center px-3 border-r border-border-color h-full shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] flex-shrink-0"
                 style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
             >
                 <div className="truncate w-full">
@@ -128,7 +130,7 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
                 return (
                     <div 
                         key={date}
-                        className={`flex items-center justify-center border-r border-border-color/50 h-full relative select-none cursor-pointer
+                        className={`flex items-center justify-center border-r border-border-color/50 h-full relative select-none cursor-pointer flex-shrink-0
                             ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}
                             ${isSelected ? 'bg-blue-200/50 dark:bg-blue-800/50' : ''}
                         `}
@@ -153,19 +155,19 @@ const Row = ({ index, style, data }: ListChildComponentProps<CellData>) => {
             })}
             
             <div 
-                className="sticky z-10 bg-amber-50/80 dark:bg-amber-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs"
+                className="sticky z-10 bg-amber-50/80 dark:bg-amber-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs flex-shrink-0"
                 style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
             >
                  <span className={getScoreColor(p1Stats.percent)}>{p1Stats.percent}%</span>
             </div>
             <div 
-                className="sticky z-10 bg-sky-50/80 dark:bg-sky-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs"
+                className="sticky z-10 bg-sky-50/80 dark:bg-sky-900/20 flex items-center justify-center border-l border-border-color h-full font-mono text-xs flex-shrink-0"
                 style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
             >
                  <span className={getScoreColor(p2Stats.percent)}>{p2Stats.percent}%</span>
             </div>
             <div 
-                className="sticky right-0 z-10 bg-surface flex items-center justify-center border-l-2 border-border-color h-full font-bold text-sm shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)]"
+                className="sticky right-0 z-10 bg-surface flex items-center justify-center border-l-2 border-border-color h-full font-bold text-sm shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] flex-shrink-0"
                 style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}
             >
                  <span className={getScoreColor(globalStats.percent)}>{globalStats.percent}%</span>
@@ -446,8 +448,14 @@ const AttendanceView: React.FC = () => {
                             
                             // Determine if vertical scrollbar is present
                             const hasVerticalScroll = (group.students.length * ROW_HEIGHT) > height;
-                            // If present, subtract its width from the header container to align columns
-                            const headerWidth = hasVerticalScroll ? width - scrollbarWidth : width;
+                            
+                            // Instead of changing header width, we add padding to compensate for scrollbar
+                            // This keeps the content alignment strictly based on width
+                            const headerStyle = {
+                                height: HEADER_HEIGHT,
+                                width: width,
+                                paddingRight: hasVerticalScroll ? scrollbarWidth : 0
+                            };
 
                             return (
                                 <div style={{ width, height }} className="flex flex-col">
@@ -456,48 +464,48 @@ const AttendanceView: React.FC = () => {
                                     <div 
                                         ref={headerRef}
                                         className="overflow-hidden border-b-2 border-border-color bg-surface-secondary/30 flex-shrink-0"
-                                        style={{ height: HEADER_HEIGHT, width: headerWidth }}
+                                        style={headerStyle}
                                     >
                                          <div style={{ width: totalContentWidth, height: '100%', display: 'flex', flexDirection: 'column' }}>
                                             
                                             {/* Row 1: Partials */}
                                             <div className="flex h-1/3 w-full border-b border-border-color/50">
-                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 flex-shrink-0" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
                                                     {/* Empty Corner */}
                                                 </div>
                                                 
                                                 {headerStructure.map((part, i) => (
-                                                    <div key={i} className="flex items-center justify-center border-r border-border-color font-bold text-xs uppercase tracking-wide bg-surface-secondary/50 text-text-secondary" style={{ width: part.width }}>
+                                                    <div key={i} className="flex items-center justify-center border-r border-border-color font-bold text-xs uppercase tracking-wide bg-surface-secondary/50 text-text-secondary flex-shrink-0" style={{ width: part.width }}>
                                                         {part.label}
                                                     </div>
                                                 ))}
 
                                                 {/* Stats Placeholders */}
-                                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
+                                                <div className="sticky right-0 z-20 flex flex-shrink-0" style={{ width: STAT_COL_WIDTH * 3 }}>
                                                      <div className="w-full bg-surface-secondary/50 border-l border-border-color"></div>
                                                 </div>
                                             </div>
 
                                             {/* Row 2: Months */}
                                             <div className="flex h-1/3 w-full border-b border-border-color/50">
-                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 flex-shrink-0" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
                                                      {/* Empty Corner */}
                                                 </div>
 
                                                 {headerStructure.flatMap((part) => part.months.map((month, j) => (
-                                                    <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-border-color text-[10px] font-semibold uppercase text-text-secondary bg-surface/50" style={{ width: month.width }}>
+                                                    <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-border-color text-[10px] font-semibold uppercase text-text-secondary bg-surface/50 flex-shrink-0" style={{ width: month.width }}>
                                                         {month.label}
                                                     </div>
                                                 )))}
 
-                                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
+                                                <div className="sticky right-0 z-20 flex flex-shrink-0" style={{ width: STAT_COL_WIDTH * 3 }}>
                                                      <div className="w-full bg-surface/50 border-l border-border-color"></div>
                                                 </div>
                                             </div>
 
                                             {/* Row 3: Days & Labels */}
                                             <div className="flex h-1/3 w-full">
-                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] flex-shrink-0" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
                                                     <span className="text-sm font-semibold text-text-secondary">Alumno</span>
                                                 </div>
 
@@ -507,7 +515,7 @@ const AttendanceView: React.FC = () => {
                                                     return (
                                                         <div 
                                                             key={date}
-                                                            className={`flex flex-col items-center justify-center border-r border-border-color/50 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`}
+                                                            className={`flex flex-col items-center justify-center border-r border-border-color/50 flex-shrink-0 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`}
                                                             style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
                                                         >
                                                             <span className="text-[10px] uppercase opacity-70 leading-none">{dateObj.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span>
@@ -516,9 +524,9 @@ const AttendanceView: React.FC = () => {
                                                     );
                                                 })}
 
-                                                <div className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P1</div>
-                                                <div className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P2</div>
-                                                <div className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>Global</div>
+                                                <div className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary flex-shrink-0" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P1</div>
+                                                <div className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary flex-shrink-0" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P2</div>
+                                                <div className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary flex-shrink-0" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>Global</div>
                                             </div>
                                          </div>
                                     </div>
@@ -541,6 +549,7 @@ const AttendanceView: React.FC = () => {
                                             selection,
                                             todayStr,
                                             firstPartialEnd: settings.firstPartialEnd,
+                                            totalWidth: totalContentWidth, // Pass total width to Row
                                             onMouseDown: handleMouseDown,
                                             onMouseEnter: handleMouseEnter
                                         }}
