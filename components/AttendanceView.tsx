@@ -1,4 +1,4 @@
-import React, { useContext, useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import React, { useContext, useState, useMemo, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import { AppContext } from '../context/AppContext';
 import { AttendanceStatus, Student } from '../types';
 import { getClassDates } from '../services/dateUtils';
@@ -38,6 +38,19 @@ interface CellData {
     onMouseDown: (r: number, c: number) => void;
     onMouseEnter: (r: number, c: number) => void;
 }
+
+// Helper to calculate scrollbar width dynamically
+const getScrollbarWidth = () => {
+    const outer = document.createElement('div');
+    outer.style.visibility = 'hidden';
+    outer.style.overflow = 'scroll';
+    document.body.appendChild(outer);
+    const inner = document.createElement('div');
+    outer.appendChild(inner);
+    const scrollbarWidth = outer.offsetWidth - inner.offsetWidth;
+    outer.parentNode?.removeChild(outer);
+    return scrollbarWidth;
+};
 
 const calculatePercentage = (
     studentAttendance: { [date: string]: AttendanceStatus },
@@ -168,11 +181,15 @@ const AttendanceView: React.FC = () => {
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [isBulkFillOpen, setBulkFillOpen] = useState(false);
     const [isTextImporterOpen, setTextImporterOpen] = useState(false);
+    const [scrollbarWidth, setScrollbarWidth] = useState(0);
     
     const headerRef = useRef<HTMLDivElement>(null);
-    // Use a manual ref to attach the scroll listener to the actual DOM element of the list
     const outerListRef = useRef<HTMLDivElement>(null);
     const listRef = useRef<any>(null);
+
+    useEffect(() => {
+        setScrollbarWidth(getScrollbarWidth());
+    }, []);
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -205,22 +222,20 @@ const AttendanceView: React.FC = () => {
         }
     }, [groups, selectedGroupId, setSelectedGroupId]);
     
-    // --- SCROLL SYNCING FIX ---
-    // Using a native event listener on the outer container is more reliable 
-    // than react-window's onScroll for horizontal scrolling in a vertical list.
-    useEffect(() => {
+    // --- SCROLL SYNCING (STRICT) ---
+    // useLayoutEffect fires synchronously after DOM mutations, preventing the "lag" or "float" effect.
+    useLayoutEffect(() => {
         const container = outerListRef.current;
-        if (!container) return;
+        const header = headerRef.current;
+        if (!container || !header) return;
 
         const handleScroll = () => {
-            if (headerRef.current) {
-                headerRef.current.scrollLeft = container.scrollLeft;
-            }
+            header.scrollLeft = container.scrollLeft;
         };
 
         container.addEventListener('scroll', handleScroll);
         return () => container.removeEventListener('scroll', handleScroll);
-    }, [group]); // Re-bind when group changes/re-renders
+    }, [group]); 
 
     // --- Header Structure Logic ---
     const headerStructure = useMemo(() => {
@@ -425,122 +440,129 @@ const AttendanceView: React.FC = () => {
             {group ? (
                 <div className="flex-1 border border-border-color rounded-xl overflow-hidden bg-surface flex flex-col shadow-sm select-none">
                     
-                    {/* --- 3-Level Header --- */}
-                    <div 
-                        ref={headerRef}
-                        className="overflow-hidden border-b-2 border-border-color bg-surface-secondary/30 flex-shrink-0"
-                        style={{ height: HEADER_HEIGHT }}
-                    >
-                         <div style={{ width: totalContentWidth, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    {/* Virtualized Body Container with AutoSizer */}
+                    <AutoSizer>
+                        {({ height, width }: { height: number, width: number }) => {
                             
-                            {/* Row 1: Partials */}
-                            <div className="flex h-1/3 w-full border-b border-border-color/50">
-                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
-                                    {/* Empty Corner */}
-                                </div>
-                                
-                                {headerStructure.map((part, i) => (
-                                    <div key={i} className="flex items-center justify-center border-r border-border-color font-bold text-xs uppercase tracking-wide bg-surface-secondary/50 text-text-secondary" style={{ width: part.width }}>
-                                        {part.label}
+                            // Determine if vertical scrollbar is present
+                            const hasVerticalScroll = (group.students.length * ROW_HEIGHT) > height;
+                            // If present, subtract its width from the header container to align columns
+                            const headerWidth = hasVerticalScroll ? width - scrollbarWidth : width;
+
+                            return (
+                                <div style={{ width, height }} className="flex flex-col">
+                                    
+                                    {/* --- Header Section --- */}
+                                    <div 
+                                        ref={headerRef}
+                                        className="overflow-hidden border-b-2 border-border-color bg-surface-secondary/30 flex-shrink-0"
+                                        style={{ height: HEADER_HEIGHT, width: headerWidth }}
+                                    >
+                                         <div style={{ width: totalContentWidth, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                                            
+                                            {/* Row 1: Partials */}
+                                            <div className="flex h-1/3 w-full border-b border-border-color/50">
+                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                                    {/* Empty Corner */}
+                                                </div>
+                                                
+                                                {headerStructure.map((part, i) => (
+                                                    <div key={i} className="flex items-center justify-center border-r border-border-color font-bold text-xs uppercase tracking-wide bg-surface-secondary/50 text-text-secondary" style={{ width: part.width }}>
+                                                        {part.label}
+                                                    </div>
+                                                ))}
+
+                                                {/* Stats Placeholders */}
+                                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
+                                                     <div className="w-full bg-surface-secondary/50 border-l border-border-color"></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Row 2: Months */}
+                                            <div className="flex h-1/3 w-full border-b border-border-color/50">
+                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                                     {/* Empty Corner */}
+                                                </div>
+
+                                                {headerStructure.flatMap((part) => part.months.map((month, j) => (
+                                                    <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-border-color text-[10px] font-semibold uppercase text-text-secondary bg-surface/50" style={{ width: month.width }}>
+                                                        {month.label}
+                                                    </div>
+                                                )))}
+
+                                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
+                                                     <div className="w-full bg-surface/50 border-l border-border-color"></div>
+                                                </div>
+                                            </div>
+
+                                            {/* Row 3: Days & Labels */}
+                                            <div className="flex h-1/3 w-full">
+                                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
+                                                    <span className="text-sm font-semibold text-text-secondary">Alumno</span>
+                                                </div>
+
+                                                {classDates.map(date => {
+                                                    const isToday = date === todayStr;
+                                                    const dateObj = new Date(date + 'T00:00:00');
+                                                    return (
+                                                        <div 
+                                                            key={date}
+                                                            className={`flex flex-col items-center justify-center border-r border-border-color/50 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`}
+                                                            style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
+                                                        >
+                                                            <span className="text-[10px] uppercase opacity-70 leading-none">{dateObj.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span>
+                                                            <span className="text-xs leading-none">{dateObj.toLocaleDateString('es-MX', { day: '2-digit' })}</span>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                <div className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P1</div>
+                                                <div className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P2</div>
+                                                <div className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>Global</div>
+                                            </div>
+                                         </div>
                                     </div>
-                                ))}
 
-                                {/* Stats Placeholders */}
-                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
-                                     <div className="w-full bg-surface-secondary/50 border-l border-border-color"></div>
+                                    {/* --- List Section --- */}
+                                    <List
+                                        ref={listRef}
+                                        outerRef={outerListRef}
+                                        height={height - HEADER_HEIGHT} // Subtract header height
+                                        width={width}
+                                        itemCount={group.students.length}
+                                        itemSize={ROW_HEIGHT}
+                                        itemData={{
+                                            students: group.students,
+                                            classDates,
+                                            attendance,
+                                            groupId: group.id,
+                                            handleStatusChange,
+                                            focusedCell,
+                                            selection,
+                                            todayStr,
+                                            firstPartialEnd: settings.firstPartialEnd,
+                                            onMouseDown: handleMouseDown,
+                                            onMouseEnter: handleMouseEnter
+                                        }}
+                                        className="overflow-x-auto"
+                                        innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
+                                            <div
+                                                ref={ref}
+                                                style={{
+                                                    ...style,
+                                                    width: totalContentWidth,
+                                                    position: 'relative'
+                                                }}
+                                                {...rest}
+                                            />
+                                        ))}
+                                    >
+                                        {Row}
+                                    </List>
                                 </div>
-                            </div>
-
-                            {/* Row 2: Months */}
-                            <div className="flex h-1/3 w-full border-b border-border-color/50">
-                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
-                                     {/* Empty Corner */}
-                                </div>
-
-                                {headerStructure.flatMap((part) => part.months.map((month, j) => (
-                                    <div key={`${part.label}-${j}`} className="flex items-center justify-center border-r border-border-color text-[10px] font-semibold uppercase text-text-secondary bg-surface/50" style={{ width: month.width }}>
-                                        {month.label}
-                                    </div>
-                                )))}
-
-                                <div className="sticky right-0 z-20 flex" style={{ width: STAT_COL_WIDTH * 3 }}>
-                                     <div className="w-full bg-surface/50 border-l border-border-color"></div>
-                                </div>
-                            </div>
-
-                            {/* Row 3: Days & Labels */}
-                            <div className="flex h-1/3 w-full">
-                                <div className="sticky left-0 z-20 bg-surface border-r border-border-color flex items-center px-3 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]" style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}>
-                                    <span className="text-sm font-semibold text-text-secondary">Alumno</span>
-                                </div>
-
-                                {classDates.map(date => {
-                                    const isToday = date === todayStr;
-                                    const dateObj = new Date(date + 'T00:00:00');
-                                    return (
-                                        <div 
-                                            key={date}
-                                            className={`flex flex-col items-center justify-center border-r border-border-color/50 ${isToday ? 'bg-blue-50 dark:bg-blue-900/20 text-primary font-bold' : 'text-text-secondary'}`}
-                                            style={{ width: DATE_COL_WIDTH, minWidth: DATE_COL_WIDTH }}
-                                        >
-                                            <span className="text-[10px] uppercase opacity-70 leading-none">{dateObj.toLocaleDateString('es-MX', { weekday: 'short' }).replace('.','')}</span>
-                                            <span className="text-xs leading-none">{dateObj.toLocaleDateString('es-MX', { day: '2-digit' })}</span>
-                                        </div>
-                                    );
-                                })}
-
-                                <div className="sticky z-20 bg-amber-50 dark:bg-amber-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH * 2, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P1</div>
-                                <div className="sticky z-20 bg-sky-50 dark:bg-sky-900/20 border-l border-border-color flex items-center justify-center text-xs font-semibold text-text-secondary" style={{ right: STAT_COL_WIDTH, width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>% P2</div>
-                                <div className="sticky right-0 z-20 bg-surface border-l-2 border-border-color flex items-center justify-center shadow-[-2px_0_5px_-2px_rgba(0,0,0,0.1)] text-xs font-bold text-primary" style={{ width: STAT_COL_WIDTH, minWidth: STAT_COL_WIDTH }}>Global</div>
-                            </div>
-
-                         </div>
-                    </div>
-
-                    {/* Virtualized Body */}
-                    <div className="flex-1 relative">
-                        <AutoSizer>
-                            {({ height, width }: { height: number, width: number }) => (
-                                <List
-                                    ref={listRef}
-                                    outerRef={outerListRef}
-                                    height={height}
-                                    width={width}
-                                    itemCount={group.students.length}
-                                    itemSize={ROW_HEIGHT}
-                                    itemData={{
-                                        students: group.students,
-                                        classDates,
-                                        attendance,
-                                        groupId: group.id,
-                                        handleStatusChange,
-                                        focusedCell,
-                                        selection,
-                                        todayStr,
-                                        firstPartialEnd: settings.firstPartialEnd,
-                                        onMouseDown: handleMouseDown,
-                                        onMouseEnter: handleMouseEnter
-                                    }}
-                                    // REMOVED: onScroll prop is unreliable for horizontal sync in vertical lists.
-                                    // Used native listener above instead.
-                                    className="overflow-x-auto"
-                                    innerElementType={React.forwardRef(({ style, ...rest }: any, ref) => (
-                                        <div
-                                            ref={ref}
-                                            style={{
-                                                ...style,
-                                                width: totalContentWidth,
-                                                position: 'relative'
-                                            }}
-                                            {...rest}
-                                        />
-                                    ))}
-                                >
-                                    {Row}
-                                </List>
-                            )}
-                        </AutoSizer>
-                    </div>
+                            );
+                        }}
+                    </AutoSizer>
                 </div>
             ) : (
                 <div className="text-center py-20 bg-surface rounded-xl shadow-sm border border-border-color">
