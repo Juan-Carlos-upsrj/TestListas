@@ -73,11 +73,16 @@ export const MOTIVATIONAL_QUOTES: MotivationalQuote[] = [
 export const GROUP_COLORS = [
     { name: 'blue', hex: '#2563eb', bg: 'bg-blue-600', text: 'text-white', ring: 'ring-blue-600', calendar: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200' },
     { name: 'teal', hex: '#0d9488', bg: 'bg-teal-600', text: 'text-white', ring: 'ring-teal-600', calendar: 'bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-200' },
-    { name: 'amber', hex: '#d97706', bg: 'bg-amber-600', text: 'text-white', ring: 'ring-amber-600', calendar: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
-    { name: 'red', hex: '#dc2626', bg: 'bg-red-600', text: 'text-white', ring: 'ring-red-600', calendar: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' },
+    { name: 'cyan', hex: '#0891b2', bg: 'bg-cyan-600', text: 'text-white', ring: 'ring-cyan-600', calendar: 'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-800 dark:text-cyan-200' },
     { name: 'green', hex: '#16a34a', bg: 'bg-green-600', text: 'text-white', ring: 'ring-green-600', calendar: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200' },
-    { name: 'fuchsia', hex: '#c026d3', bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600', calendar: 'bg-fuchsia-100 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
+    { name: 'lime', hex: '#65a30d', bg: 'bg-lime-600', text: 'text-white', ring: 'ring-lime-600', calendar: 'bg-lime-100 dark:bg-lime-900/50 text-lime-800 dark:text-lime-200' },
+    { name: 'amber', hex: '#d97706', bg: 'bg-amber-600', text: 'text-white', ring: 'ring-amber-600', calendar: 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' },
+    { name: 'orange', hex: '#ea580c', bg: 'bg-orange-600', text: 'text-white', ring: 'ring-orange-600', calendar: 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-200' },
+    { name: 'red', hex: '#dc2626', bg: 'bg-red-600', text: 'text-white', ring: 'ring-red-600', calendar: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200' },
     { name: 'rose', hex: '#e11d48', bg: 'bg-rose-600', text: 'text-white', ring: 'ring-rose-600', calendar: 'bg-rose-100 dark:bg-rose-900/50 text-rose-800 dark:text-rose-200' },
+    { name: 'pink', hex: '#db2777', bg: 'bg-pink-600', text: 'text-white', ring: 'ring-pink-600', calendar: 'bg-pink-100 dark:bg-pink-900/50 text-pink-800 dark:text-pink-200' },
+    { name: 'fuchsia', hex: '#c026d3', bg: 'bg-fuchsia-600', text: 'text-white', ring: 'ring-fuchsia-600', calendar: 'bg-fuchsia-100 dark:bg-fuchsia-900/50 text-fuchsia-800 dark:text-fuchsia-200' },
+    { name: 'violet', hex: '#7c3aed', bg: 'bg-violet-600', text: 'text-white', ring: 'ring-violet-600', calendar: 'bg-violet-100 dark:bg-violet-900/50 text-violet-800 dark:text-violet-200' },
     { name: 'indigo', hex: '#4f46e5', bg: 'bg-indigo-600', text: 'text-white', ring: 'ring-indigo-600', calendar: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-200' },
 ];
 
