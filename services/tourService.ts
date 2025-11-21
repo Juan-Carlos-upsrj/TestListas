@@ -1,3 +1,4 @@
+// @ts-ignore
 import { driver } from "driver.js";
 
 export const startTour = () => {
