@@ -100,9 +100,10 @@ export const EvaluationTypesEditor: React.FC<{
 // Form for creating/editing a group
 export const GroupForm: React.FC<{
     group?: Group;
+    existingGroups?: Group[];
     onSave: (group: Group) => void;
     onCancel: () => void;
-}> = ({ group, onSave, onCancel }) => {
+}> = ({ group, existingGroups = [], onSave, onCancel }) => {
     const [name, setName] = useState(group?.name || '');
     const [subject, setSubject] = useState(group?.subject || '');
     const [classDays, setClassDays] = useState<DayOfWeek[]>(group?.classDays || []);
@@ -114,6 +115,18 @@ export const GroupForm: React.FC<{
         setClassDays(prev =>
             prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
         );
+    };
+
+    const handleImportCriteria = (sourceGroupId: string) => {
+        const sourceGroup = existingGroups.find(g => g.id === sourceGroupId);
+        if (!sourceGroup) return;
+        
+        if (window.confirm(`¿Reemplazar los criterios actuales con los del grupo "${sourceGroup.name}"?`)) {
+             const newP1 = sourceGroup.evaluationTypes.partial1.map(t => ({...t, id: uuidv4()}));
+             const newP2 = sourceGroup.evaluationTypes.partial2.map(t => ({...t, id: uuidv4()}));
+             setP1Types(newP1);
+             setP2Types(newP2);
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -186,7 +199,29 @@ export const GroupForm: React.FC<{
                     </div>
                 </div>
                  <div>
-                    <label className="block text-sm font-medium mb-2">Ponderación de Calificaciones</label>
+                    <div className="flex justify-between items-end mb-2">
+                        <label className="block text-sm font-medium">Ponderación de Calificaciones</label>
+                        {existingGroups.length > 0 && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-text-secondary">Copiar de:</span>
+                                <select 
+                                    className="text-xs p-1 border border-border-color rounded bg-surface focus:ring-1 focus:ring-primary max-w-[150px]"
+                                    onChange={(e) => {
+                                        if(e.target.value) {
+                                            handleImportCriteria(e.target.value);
+                                            e.target.value = ""; // Reset selection
+                                        }
+                                    }}
+                                    defaultValue=""
+                                >
+                                    <option value="" disabled>Seleccionar...</option>
+                                    {existingGroups.filter(g => g.id !== group?.id).map(g => (
+                                        <option key={g.id} value={g.id}>{g.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+                    </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <EvaluationTypesEditor types={p1Types} onTypesChange={setP1Types} partialName="Parcial 1" />
                         <EvaluationTypesEditor types={p2Types} onTypesChange={setP2Types} partialName="Parcial 2" />
@@ -344,6 +379,25 @@ const GroupManagement: React.FC = () => {
         }
     };
 
+    const handleDuplicateGroup = (sourceGroup: Group) => {
+        if (!window.confirm(`¿Crear una copia del grupo "${sourceGroup.name}" con todos sus alumnos?`)) return;
+        
+        const newGroup: Group = {
+            ...sourceGroup,
+            id: uuidv4(),
+            name: `${sourceGroup.name} (Copia)`,
+            // Deep copy students with new IDs to ensure they are distinct entities
+            students: sourceGroup.students.map(s => ({...s, id: uuidv4()})),
+            // Deep copy eval types with new IDs
+            evaluationTypes: {
+                partial1: sourceGroup.evaluationTypes.partial1.map(t => ({...t, id: uuidv4()})),
+                partial2: sourceGroup.evaluationTypes.partial2.map(t => ({...t, id: uuidv4()}))
+            }
+        };
+        dispatch({ type: 'SAVE_GROUP', payload: newGroup });
+        dispatch({ type: 'ADD_TOAST', payload: { message: 'Grupo duplicado con éxito.', type: 'success' } });
+    };
+
     const handleDeleteGroup = (groupId: string) => {
         if (window.confirm('¿Seguro que quieres eliminar este grupo? Se borrarán todos los datos asociados (alumnos, asistencia, calificaciones).')) {
             const groupName = groups.find(g => g.id === groupId)?.name;
@@ -412,6 +466,7 @@ const GroupManagement: React.FC = () => {
                                        </div>
                                        <div className="flex gap-2 items-center flex-shrink-0">
                                             <button onClick={(e) => { e.stopPropagation(); setEditingGroup(group); setGroupModalOpen(true); }} className={`p-1 ${isSelected ? 'hover:bg-white/20' : 'hover:text-primary'}`}><Icon name="edit-3" className="w-4 h-4"/></button>
+                                            <button onClick={(e) => { e.stopPropagation(); handleDuplicateGroup(group); }} className={`p-1 ${isSelected ? 'hover:bg-white/20' : 'hover:text-primary'}`} title="Duplicar Grupo"><Icon name="copy" className="w-4 h-4"/></button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDeleteGroup(group.id); }} className={`p-1 ${isSelected ? 'hover:bg-white/20' : 'hover:text-accent-red'}`}><Icon name="trash-2" className="w-4 h-4"/></button>
                                        </div>
                                    </div>
@@ -505,7 +560,7 @@ const GroupManagement: React.FC = () => {
             </div>
 
             <Modal isOpen={isGroupModalOpen} onClose={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} title={editingGroup ? 'Editar Grupo' : 'Nuevo Grupo'} size="xl">
-                <GroupForm group={editingGroup} onSave={handleSaveGroup} onCancel={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} />
+                <GroupForm group={editingGroup} existingGroups={groups} onSave={handleSaveGroup} onCancel={() => { setGroupModalOpen(false); setEditingGroup(undefined); }} />
             </Modal>
             <Modal isOpen={isStudentModalOpen} onClose={() => { setStudentModalOpen(false); setEditingStudent(undefined); }} title={editingStudent ? 'Editar Alumno' : 'Nuevo Alumno'}>
                 <StudentForm student={editingStudent} onSave={handleSaveStudent} onCancel={() => { setStudentModalOpen(false); setEditingStudent(undefined); }} />

@@ -414,7 +414,7 @@ const GradesView: React.FC = () => {
                 <EvaluationForm evaluation={editingEvaluation} group={group} onSave={handleSaveEvaluation} onCancel={() => setEvalModalOpen(false)} />
             </Modal>}
             {group && <Modal isOpen={isGroupConfigOpen} onClose={() => setGroupConfigOpen(false)} title="Configuración del Grupo" size="xl">
-                <GroupForm group={group} onSave={handleUpdateGroup} onCancel={() => setGroupConfigOpen(false)} />
+                <GroupForm group={group} existingGroups={groups} onSave={handleUpdateGroup} onCancel={() => setGroupConfigOpen(false)} />
             </Modal>}
         </div>
     );
