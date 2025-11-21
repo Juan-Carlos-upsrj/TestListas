@@ -254,8 +254,8 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
 };
 
 
-const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode; autoHeight?: boolean; }> = ({ title, children, autoHeight = false }) => (
-    <div className="bg-surface p-3 sm:p-4 rounded-xl shadow-sm border border-border-color flex flex-col h-full overflow-hidden">
+const WidgetWrapper: React.FC<{ title: string; children: React.ReactNode; autoHeight?: boolean; id?: string }> = ({ title, children, autoHeight = false, id }) => (
+    <div id={id} className="bg-surface p-3 sm:p-4 rounded-xl shadow-sm border border-border-color flex flex-col h-full overflow-hidden">
         {title && <h3 className="font-bold text-xs text-text-secondary mb-3 uppercase tracking-wider flex-shrink-0">{title}</h3>}
         <div className={!autoHeight ? "flex-grow overflow-hidden" : ""}>
             {children}
@@ -361,16 +361,16 @@ const Dashboard: React.FC = () => {
                     <WidgetWrapper title=""><WelcomeWidget dateString={dateString} /></WidgetWrapper>
                 </div>
                 <div key="take-attendance">
-                     <WidgetWrapper title="Pase de Lista Hoy"><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
+                     <WidgetWrapper id="dashboard-attendance-widget" title="Pase de Lista Hoy"><TakeAttendanceWidget onTakeAttendance={handleTakeAttendance} /></WidgetWrapper>
                 </div>
                 <div key="combined-overview">
-                     <WidgetWrapper title="Resumen"><CombinedOverviewWidget todayStr={todayStr} /></WidgetWrapper>
+                     <WidgetWrapper id="dashboard-combined-overview" title="Resumen"><CombinedOverviewWidget todayStr={todayStr} /></WidgetWrapper>
                 </div>
                 <div key="upcoming-events">
-                     <WidgetWrapper title="Próximos Eventos (GCAL)"><UpcomingEventsWidget /></WidgetWrapper>
+                     <WidgetWrapper id="dashboard-upcoming-events" title="Próximos Eventos (GCAL)"><UpcomingEventsWidget /></WidgetWrapper>
                 </div>
                 <div key="quick-actions">
-                     <WidgetWrapper title="Acciones Rápidas"><QuickActionsWidget /></WidgetWrapper>
+                     <WidgetWrapper id="dashboard-quick-actions" title="Acciones Rápidas"><QuickActionsWidget /></WidgetWrapper>
                 </div>
             </ResponsiveGridLayout>
             

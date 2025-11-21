@@ -23,7 +23,7 @@ export const startTour = () => {
                 element: '#sidebar-nav',
                 popover: {
                     title: 'Navegación Principal',
-                    description: 'Aquí encontrarás todas las secciones: Inicio, Grupos, Asistencia, Calendario, Calificaciones y Reportes.',
+                    description: 'Aquí encontrarás todas las secciones para administrar tus clases.',
                     side: 'right'
                 }
             },
@@ -31,23 +31,47 @@ export const startTour = () => {
                 element: '#sidebar-quick-groups',
                 popover: {
                     title: 'Grupos Rápidos',
-                    description: 'Tus grupos aparecerán aquí como botones. Haz clic para cambiar el "Grupo Activo" al instante desde cualquier pantalla.',
+                    description: 'Tus grupos aparecerán aquí. Haz clic para cambiar el "Grupo Activo" rápidamente desde cualquier pantalla.',
                     side: 'right'
                 }
             },
             {
-                element: '#nav-item-groups',
+                element: '#dashboard-combined-overview',
                 popover: {
-                    title: 'Paso 1: Crear Grupos',
-                    description: 'Empieza aquí. Crea tus grupos, define sus horarios y carga tu lista de alumnos (manualmente o importando desde texto).',
-                    side: 'right'
+                    title: 'Resumen de Hoy',
+                    description: 'Visualiza el total de tus alumnos y un gráfico en tiempo real del porcentaje de asistencia del día.',
+                    side: 'left'
                 }
             },
             {
                 element: '#dashboard-attendance-widget',
                 popover: {
-                    title: 'Paso 2: Toma de Lista',
-                    description: 'Desde el Inicio, verás botones para tomar asistencia rápidamente a las clases de hoy.',
+                    title: 'Pase de Lista Rápido',
+                    description: '¡Lo más importante! Aquí aparecerán tus clases de hoy. Un clic y estarás tomando asistencia.',
+                    side: 'right'
+                }
+            },
+            {
+                element: '#dashboard-upcoming-events',
+                popover: {
+                    title: 'Próximos Eventos',
+                    description: 'Consulta días festivos y eventos sincronizados desde tu Google Calendar.',
+                    side: 'top'
+                }
+            },
+            {
+                element: '#dashboard-quick-actions',
+                popover: {
+                    title: 'Acciones Rápidas',
+                    description: 'Botones útiles para subir tus datos a la nube o actualizar tu horario docente.',
+                    side: 'left'
+                }
+            },
+            {
+                element: '#nav-item-groups',
+                popover: {
+                    title: 'Gestión de Grupos',
+                    description: 'Crea grupos nuevos, duplícalos para otras materias y administra tu lista de alumnos (puedes importar listas desde texto).',
                     side: 'right'
                 }
             },
@@ -55,7 +79,7 @@ export const startTour = () => {
                 element: '#nav-item-attendance',
                 popover: {
                     title: 'Vista de Asistencia',
-                    description: 'Aquí verás la tabla completa. ¡Usa el teclado para ser más veloz!',
+                    description: 'La tabla completa. Puedes usar "Relleno Rápido" para días pasados o editar manualmente.',
                     side: 'right'
                 }
             },
@@ -66,10 +90,34 @@ export const startTour = () => {
                 }
             },
             {
+                element: '#nav-item-grades',
+                popover: {
+                    title: 'Calificaciones',
+                    description: 'Configura los porcentajes de evaluación (Tareas, Exámenes) y vincula la asistencia para que se califique automáticamente.',
+                    side: 'right'
+                }
+            },
+            {
+                element: '#nav-item-reports',
+                popover: {
+                    title: 'Reportes',
+                    description: 'Genera reportes oficiales en PDF con gráficas de rendimiento o exporta tus datos a Excel (CSV).',
+                    side: 'right'
+                }
+            },
+            {
+                element: '#nav-item-calendar',
+                popover: {
+                    title: 'Calendario',
+                    description: 'Una vista mensual de tus clases y eventos.',
+                    side: 'right'
+                }
+            },
+            {
                 element: '#sidebar-settings',
                 popover: {
                     title: 'Configuración',
-                    description: 'Asegúrate de configurar las fechas del semestre, parciales y tu nombre aquí para que los reportes salgan correctos.',
+                    description: 'Importante: Configura aquí las fechas del semestre y conecta tu Google Calendar para sacar el máximo provecho.',
                     side: 'right',
                     align: 'end'
                 }
