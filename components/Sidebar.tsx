@@ -5,16 +5,17 @@ import Icon from './icons/Icon';
 import { motion } from 'framer-motion';
 import { ActiveView } from '../types';
 import { GROUP_COLORS } from '../constants';
+import { startTour } from '../services/tourService';
 
 type View = ActiveView;
 
-const navItems: { view: View; label: string; icon: string }[] = [
-  { view: 'dashboard', label: 'Inicio', icon: 'home' },
-  { view: 'groups', label: 'Grupos', icon: 'users' },
-  { view: 'attendance', label: 'Asistencia', icon: 'check-square' },
-  { view: 'calendar', label: 'Calendario', icon: 'calendar' },
-  { view: 'grades', label: 'Calificaciones', icon: 'graduation-cap' },
-  { view: 'reports', label: 'Reportes', icon: 'bar-chart-3' },
+const navItems: { view: View; label: string; icon: string; id: string }[] = [
+  { view: 'dashboard', label: 'Inicio', icon: 'home', id: 'nav-item-dashboard' },
+  { view: 'groups', label: 'Grupos', icon: 'users', id: 'nav-item-groups' },
+  { view: 'attendance', label: 'Asistencia', icon: 'check-square', id: 'nav-item-attendance' },
+  { view: 'calendar', label: 'Calendario', icon: 'calendar', id: 'nav-item-calendar' },
+  { view: 'grades', label: 'Calificaciones', icon: 'graduation-cap', id: 'nav-item-grades' },
+  { view: 'reports', label: 'Reportes', icon: 'bar-chart-3', id: 'nav-item-reports' },
 ];
 
 const Sidebar: React.FC = () => {
@@ -39,8 +40,8 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      <aside className="w-64 bg-surface flex flex-col flex-shrink-0 z-20 border-r border-border-color" aria-label="Barra lateral principal">
-        <div className="p-4 border-b border-border-color flex items-center gap-3">
+      <aside className="w-64 bg-surface flex flex-col flex-shrink-0 z-20 border-r border-border-color" aria-label="Barra lateral principal" id="sidebar-main">
+        <div className="p-4 border-b border-border-color flex items-center gap-3" id="sidebar-logo">
             <motion.img 
                 src="logo.png" 
                 alt="IAEV Logo" 
@@ -54,7 +55,7 @@ const Sidebar: React.FC = () => {
         </div>
         
         {/* Quick Group Selector Buttons */}
-        <div className="p-4 border-b border-border-color">
+        <div className="p-4 border-b border-border-color" id="sidebar-quick-groups">
             <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider mb-3">Grupos Rápidos</h3>
             {groups.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -88,12 +89,13 @@ const Sidebar: React.FC = () => {
             )}
         </div>
 
-        <nav className="flex-grow p-4">
+        <nav className="flex-grow p-4" id="sidebar-nav">
           <ul>
             {navItems.map((item) => (
               <li key={item.view}>
                 <motion.a
                   href="#"
+                  id={item.id}
                   onClick={(e) => {
                     e.preventDefault();
                     handleNavClick(item.view);
@@ -113,8 +115,17 @@ const Sidebar: React.FC = () => {
             ))}
           </ul>
         </nav>
-        <div className="p-4 border-t border-border-color">
+        <div className="p-4 border-t border-border-color space-y-2">
           <button
+            onClick={startTour}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-secondary hover:text-primary hover:bg-surface-secondary transition-colors duration-200 border border-transparent hover:border-primary/20"
+          >
+            <Icon name="help-circle" className="w-5 h-5" />
+            <span className="text-sm font-semibold">Guía Rápida</span>
+          </button>
+          
+          <button
+            id="sidebar-settings"
             onClick={() => setIsSettingsOpen(true)}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-text-primary hover:bg-surface-secondary transition-colors duration-200"
           >

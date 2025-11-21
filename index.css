@@ -1,6 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+@import 'driver.js/dist/driver.css';
 
 @layer base {
   :root {
@@ -75,4 +76,50 @@
   opacity: 0.2 !important;
   border-radius: 0.75rem; /* rounded-xl */
   z-index: 2;
+}
+
+/* Driver.js Customization */
+.driver-popover.driverjs-theme {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+}
+
+.driver-popover.driverjs-theme .driver-popover-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.driver-popover.driverjs-theme .driver-popover-description {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.driver-popover.driverjs-theme button {
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-color);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-shadow: none;
+  transition: all 0.2s;
+}
+
+.driver-popover.driverjs-theme button:hover {
+  background-color: var(--color-border-color);
+}
+
+.driver-popover.driverjs-theme button.driver-popover-next-btn {
+  background-color: var(--color-primary);
+  color: var(--color-primary-text);
+  border-color: transparent;
+}
+
+.driver-popover.driverjs-theme button.driver-popover-next-btn:hover {
+  background-color: var(--color-primary-hover);
 }

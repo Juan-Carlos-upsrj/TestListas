@@ -18,7 +18,7 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 const WelcomeWidget: React.FC<{ dateString: string }> = ({ dateString }) => {
     const { state } = useContext(AppContext);
     return (
-        <div className="flex flex-col justify-center h-full">
+        <div className="flex flex-col justify-center h-full" id="dashboard-welcome-widget">
             <h3 className="font-bold text-xl mb-1 text-text-primary">Bienvenido/a, {state.settings.professorName}!</h3>
             <p className="text-text-secondary capitalize">{dateString}</p>
         </div>
@@ -228,7 +228,7 @@ const TakeAttendanceWidget: React.FC<{ onTakeAttendance: (group: Group) => void 
     const sizeClasses = 'px-3 py-2';
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto h-full content-start pr-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 overflow-y-auto h-full content-start pr-1" id="dashboard-attendance-widget">
             {todaysClasses.map(group => {
                 const groupColor = GROUP_COLORS.find(c => c.name === group.color) || GROUP_COLORS[0];
                 return (
