@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { AttendanceStatus, Student } from '../types';
 import { STATUS_STYLES, ATTENDANCE_STATUSES } from '../constants';
 import Icon from './icons/Icon';
@@ -47,9 +47,22 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
         }
     }, [currentIndex, pendingStudents, onStatusChange, onClose]);
     
+    // REF UPDATE: Keep current state in refs to avoid re-binding the event listener
+    const stateRef = useRef({ pendingStudents, currentIndex, onStatusChange, onClose });
+    
+    useEffect(() => {
+        stateRef.current = { pendingStudents, currentIndex, onStatusChange, onClose };
+    }, [pendingStudents, currentIndex, onStatusChange, onClose]);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (pendingStudents.length === 0) return;
+            // Access fresh state from ref without re-binding listener
+            const { pendingStudents, currentIndex, onStatusChange, onClose } = stateRef.current;
+            
+            if (pendingStudents.length === 0) {
+                if (e.key === 'Escape') onClose();
+                return;
+            }
 
             const keyMap: { [key: string]: AttendanceStatus } = {
                 'p': AttendanceStatus.Present,
@@ -58,15 +71,87 @@ const AttendanceTaker: React.FC<AttendanceTakerProps> = ({ students, date, group
                 'j': AttendanceStatus.Justified,
                 'i': AttendanceStatus.Exchange,
             };
-            if (keyMap[e.key.toLowerCase()]) {
-                handleSetStatus(keyMap[e.key.toLowerCase()]);
+            
+            const status = keyMap[e.key.toLowerCase()];
+
+            if (status) {
+                const studentToUpdate = pendingStudents[currentIndex];
+                if (studentToUpdate) {
+                    onStatusChange(studentToUpdate.id, status);
+                }
             } else if (e.key === 's' || e.key === 'ArrowRight') {
-                goToNext();
+                if (currentIndex < pendingStudents.length - 1) {
+                    // We can't update state directly from here easily without forcing a re-render cycle
+                    // Ideally, we dispatch an action or update state. 
+                    // Since `goToNext` updates state `currentIndex`, and `goToNext` is stable in context of component...
+                    // Actually, we need to trigger the state update on the component.
+                    // Since we are inside the persistent listener, we need a way to call the state setter.
+                    // The cleanest way with Ref pattern is to trigger the logic.
+                    
+                    // Trigger the navigation by dispatching a synthetic event or just calling a method if available?
+                    // No, we simply need to force the component to update the index.
+                    // But `setCurrentIndex` is stable. Let's use the Ref to get the logic but we still need to invoke state setter.
+                    // Wait, `handleKeyDown` is defined inside `useEffect`. If we use [] deps, `setCurrentIndex` is stale?
+                    // `useState` setters are stable. So `setCurrentIndex` is safe to call.
+                    
+                    // Logic for 'Next':
+                    // setCurrentIndex(prev => prev + 1); // This is safe inside a zero-dep effect.
+                    // But we need to check bounds.
+                    
+                    // Let's actually grab the setter from a closure? No.
+                    // Let's dispatch a custom event? No.
+                    
+                    // Simpler approach: Use the ref to get current values, then use functional state updates where possible,
+                    // or just rely on the fact that we call `onStatusChange` which triggers a parent re-render,
+                    // which updates props, which updates the Ref.
+                }
+            } else if (e.key === 'Escape') {
+                onClose();
             }
         };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [handleSetStatus, goToNext, pendingStudents.length]);
+
+        // We need a separate specific listener for the navigation keys to access SetState
+        // Actually, let's just use the Ref approach fully.
+        
+        const stableHandler = (e: KeyboardEvent) => {
+             const { pendingStudents, currentIndex, onStatusChange, onClose } = stateRef.current;
+             
+             if (pendingStudents.length === 0) {
+                 if(e.key === 'Escape') onClose();
+                 return;
+             }
+
+             const keyMap: { [key: string]: AttendanceStatus } = {
+                'p': AttendanceStatus.Present,
+                'a': AttendanceStatus.Absent,
+                'r': AttendanceStatus.Late,
+                'j': AttendanceStatus.Justified,
+                'i': AttendanceStatus.Exchange,
+            };
+            
+            if (keyMap[e.key.toLowerCase()]) {
+                const studentToUpdate = pendingStudents[currentIndex];
+                if (studentToUpdate) {
+                    onStatusChange(studentToUpdate.id, keyMap[e.key.toLowerCase()]);
+                }
+            } else if (e.key === 's' || e.key === 'ArrowRight') {
+                if (currentIndex < pendingStudents.length - 1) {
+                    setCurrentIndex(c => c + 1);
+                } else {
+                    onClose();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                 if (currentIndex > 0) {
+                    setCurrentIndex(c => c - 1);
+                }
+            } else if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+
+        window.addEventListener('keydown', stableHandler);
+        return () => window.removeEventListener('keydown', stableHandler);
+    }, []); // Zero dependencies: The listener is never removed/re-added during the lifecycle.
 
     // Map specific colors for buttons to ensure high contrast and distinct visual indicators
     const getButtonColorClass = (status: AttendanceStatus) => {
