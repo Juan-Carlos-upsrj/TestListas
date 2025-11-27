@@ -276,6 +276,7 @@ const AttendanceView: React.FC = () => {
     const [isBulkFillOpen, setBulkFillOpen] = useState(false);
     const [isTextImporterOpen, setTextImporterOpen] = useState(false);
     const [isReady, setIsReady] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Fix for tab switching render issue
     useEffect(() => {
@@ -300,6 +301,18 @@ const AttendanceView: React.FC = () => {
 
     const group = useMemo(() => groups.find(g => g.id === selectedGroupId), [groups, selectedGroupId]);
     
+    // Filter Students Logic
+    const filteredStudents = useMemo(() => {
+        if (!group) return [];
+        if (!searchTerm.trim()) return group.students;
+        const term = searchTerm.toLowerCase();
+        return group.students.filter(s => 
+            s.name.toLowerCase().includes(term) || 
+            (s.matricula && s.matricula.toLowerCase().includes(term)) ||
+            (s.nickname && s.nickname.toLowerCase().includes(term))
+        );
+    }, [group, searchTerm]);
+
     useEffect(() => {
          if (!selectedGroupId && groups.length > 0) setSelectedGroupId(groups[0].id);
     }, [groups, selectedGroupId, setSelectedGroupId]);
@@ -333,9 +346,12 @@ const AttendanceView: React.FC = () => {
             
             // Navigation
             if (focusedCell && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                // Prevent default only if we are navigating grid, to allow typing in search bar if focused (though focus would be there)
+                // Actually, if focusedCell is set, we probably want to capture.
+                
                 e.preventDefault();
                 let { r, c } = focusedCell;
-                const maxR = group.students.length - 1;
+                const maxR = filteredStudents.length - 1;
                 const maxC = classDates.length - 1;
                 
                 if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
@@ -353,7 +369,7 @@ const AttendanceView: React.FC = () => {
             const keyMap: any = { 'p': 'Presente', 'a': 'Ausente', 'r': 'Retardo', 'j': 'Justificado', 'i': 'Intercambio', 'delete': 'Pendiente', 'backspace': 'Pendiente' };
             const status = keyMap[e.key.toLowerCase()];
             
-            if (status) {
+            if (status && focusedCell) { // Only trigger if a cell is focused
                 e.preventDefault();
                 let targets = [];
                 if (selection.start && selection.end) {
@@ -367,7 +383,7 @@ const AttendanceView: React.FC = () => {
                 }
                 
                 targets.forEach(({r, c}) => {
-                     const s = group.students[r];
+                     const s = filteredStudents[r]; // Use filtered list
                      const d = classDates[c];
                      if(s && d) handleStatusChange(s.id, d, status as AttendanceStatus);
                 });
@@ -380,7 +396,7 @@ const AttendanceView: React.FC = () => {
             window.removeEventListener('mouseup', handleMouseUp);
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [classDates, handleStatusChange]);
+    }, [classDates, handleStatusChange, filteredStudents]); // Added filteredStudents dep
 
 
     // Derived Data
@@ -390,16 +406,17 @@ const AttendanceView: React.FC = () => {
     }), [classDates, settings.firstPartialEnd]);
 
     const precalcStats = useMemo(() => {
-        if (!group) return [];
-        return group.students.map(s => {
-            const att = attendance[group.id]?.[s.id] || {};
+        if (!selectedGroupId) return [];
+        // Calculate stats based on filteredStudents
+        return filteredStudents.map(s => {
+            const att = attendance[selectedGroupId]?.[s.id] || {};
             return {
                 p1: calculateStats(att, p1Dates, todayStr),
                 p2: calculateStats(att, p2Dates, todayStr),
                 global: calculateStats(att, classDates, todayStr)
             };
         });
-    }, [group, attendance, p1Dates, p2Dates, classDates, todayStr]);
+    }, [filteredStudents, attendance, selectedGroupId, p1Dates, p2Dates, classDates, todayStr]);
 
     const headerStructure = useMemo(() => {
         const p1End = new Date(settings.firstPartialEnd);
@@ -427,20 +444,24 @@ const AttendanceView: React.FC = () => {
     const totalWidth = useMemo(() => NAME_COL_WIDTH + (classDates.length * DATE_COL_WIDTH) + (STAT_COL_WIDTH * 3), [classDates.length]);
 
     const handleScrollToToday = () => {
-        if (!listRef.current || !group) return;
         const idx = classDates.findIndex(d => d >= todayStr);
         if(idx >= 0) {
-             // We can't easily scroll horizontal in standard FixedSizeList, but standard html scroll works on outer container
-             // We can try to find the outer element reference if needed, but for now vertical scroll is priority
-             // To scroll horizontal, we'd need a ref to the outer element of react-window
              const outer = document.querySelector('.react-window-outer');
              if(outer) outer.scrollLeft = (idx * DATE_COL_WIDTH);
         }
     };
+    
+    // Auto-scroll effect
+    useEffect(() => {
+        if (isReady && group && classDates.length > 0) {
+            // Small delay to ensure DOM is rendered
+            setTimeout(handleScrollToToday, 100);
+        }
+    }, [isReady, group?.id, classDates.length]);
 
     // Context Value
     const contextValue: AttendanceContextValue | null = useMemo(() => (!group ? null : {
-        students: group.students,
+        students: filteredStudents, // Use filtered list
         classDates,
         attendance,
         groupId: group.id,
@@ -453,7 +474,7 @@ const AttendanceView: React.FC = () => {
         onMouseDown: handleMouseDown,
         onMouseEnter: handleMouseEnter,
         precalcStats
-    }), [group, classDates, attendance, focusedCell, selection, todayStr, headerStructure, totalWidth, handleStatusChange, handleMouseDown, handleMouseEnter, precalcStats]);
+    }), [filteredStudents, classDates, attendance, group, focusedCell, selection, todayStr, headerStructure, totalWidth, handleStatusChange, handleMouseDown, handleMouseEnter, precalcStats]);
 
     return (
         <div className="flex flex-col h-full">
@@ -463,6 +484,20 @@ const AttendanceView: React.FC = () => {
                         <option value="" disabled>Selecciona un grupo</option>
                         {groups.map(g => <option key={g.id} value={g.id}>{g.name} - {g.subject}</option>)}
                     </select>
+                    
+                    <div className="relative w-full sm:w-48">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Icon name="search" className="h-4 w-4 text-slate-400" />
+                        </div>
+                        <input
+                            type="text"
+                            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-md leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-primary focus:border-primary sm:text-sm"
+                            placeholder="Buscar alumno..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
                     <Button onClick={handleScrollToToday} disabled={!group} variant="secondary"><Icon name="calendar" className="w-4 h-4" /> Ir a Hoy</Button>
                     <div className="hidden md:flex gap-2">
                         <Button onClick={() => setTextImporterOpen(true)} disabled={!group} variant="secondary" size="sm"><Icon name="upload-cloud" className="w-4 h-4" /> Importar</Button>
@@ -481,7 +516,7 @@ const AttendanceView: React.FC = () => {
                                     ref={listRef}
                                     height={height}
                                     width={width}
-                                    itemCount={group.students.length}
+                                    itemCount={filteredStudents.length} // Use filtered count
                                     itemSize={ROW_HEIGHT}
                                     className="react-window-outer"
                                     innerElementType={InnerElement}
