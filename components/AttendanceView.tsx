@@ -9,8 +9,11 @@ import Button from './common/Button';
 import AttendanceTaker from './AttendanceTaker';
 import BulkAttendanceModal from './BulkAttendanceModal';
 import AttendanceTextImporter from './AttendanceTextImporter';
+// @ts-ignore
 import * as ReactWindow from 'react-window';
+// @ts-ignore
 import type { ListChildComponentProps } from 'react-window';
+// @ts-ignore
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 // Robust import for FixedSizeList
@@ -180,6 +183,7 @@ const Row = React.memo(({ index, style }: ListChildComponentProps) => {
     const { p1, p2, global } = precalcStats[index];
     
     // Shift row down by header height
+    // Add default 0 for safety if style.top is missing
     const top = parseFloat((style.top ?? 0).toString()) + HEADER_HEIGHT;
     
     const getScoreColor = (pct: number) => pct >= 90 ? 'text-emerald-600 bg-emerald-50' : pct >= 80 ? 'text-amber-600 bg-amber-50' : 'text-rose-600 bg-rose-50';
