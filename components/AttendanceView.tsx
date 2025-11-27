@@ -345,6 +345,12 @@ const AttendanceView: React.FC = () => {
         const handleMouseUp = () => setSelection(prev => ({ ...prev, isDragging: false }));
         
         const handleKeyDown = (e: KeyboardEvent) => {
+            // FIX: Ignore shortcuts if typing in an input field
+            const target = e.target as HTMLElement;
+            if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+                return;
+            }
+
             const { focusedCell, selection, group } = stateRef.current;
             if (!group) return;
             
