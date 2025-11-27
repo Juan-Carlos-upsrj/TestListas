@@ -1,3 +1,4 @@
+
 // FIX: Define DayOfWeek here to break circular dependency with constants.ts
 export type DayOfWeek = 'Lunes' | 'Martes' | 'Miércoles' | 'Jueves' | 'Viernes' | 'Sábado';
 
@@ -34,6 +35,7 @@ export interface Group {
   id: string;
   name: string;
   subject: string;
+  quarter?: string; // New field for Cuatrimestre (e.g., "1º", "5º")
   classDays: DayOfWeek[];
   students: Student[];
   color: string; // e.g., 'indigo', 'green', etc.

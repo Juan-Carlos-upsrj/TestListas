@@ -1,3 +1,4 @@
+
 import React, { useContext, useState, useMemo } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Group, Student, DayOfWeek, EvaluationType } from '../types';
@@ -106,6 +107,7 @@ export const GroupForm: React.FC<{
 }> = ({ group, existingGroups = [], onSave, onCancel }) => {
     const [name, setName] = useState(group?.name || '');
     const [subject, setSubject] = useState(group?.subject || '');
+    const [quarter, setQuarter] = useState(group?.quarter || '');
     const [classDays, setClassDays] = useState<DayOfWeek[]>(group?.classDays || []);
     const [color, setColor] = useState(group?.color || GROUP_COLORS[0].name);
     const [p1Types, setP1Types] = useState(group?.evaluationTypes?.partial1 || [{ id: uuidv4(), name: 'General', weight: 100 }]);
@@ -147,6 +149,7 @@ export const GroupForm: React.FC<{
             id: group?.id || uuidv4(),
             name,
             subject,
+            quarter,
             classDays,
             students: group?.students || [],
             color,
@@ -157,9 +160,15 @@ export const GroupForm: React.FC<{
     return (
         <form onSubmit={handleSubmit}>
             <div className="space-y-4">
-                <div>
-                    <label htmlFor="groupName" className="block text-sm font-medium">Nombre del Grupo</label>
-                    <input type="text" id="groupName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2 sm:col-span-1">
+                        <label htmlFor="groupName" className="block text-sm font-medium">Nombre del Grupo</label>
+                        <input type="text" id="groupName" value={name} onChange={e => setName(e.target.value)} required className="mt-1 w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" />
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                        <label htmlFor="quarter" className="block text-sm font-medium">Cuatrimestre (Opcional)</label>
+                        <input type="text" id="quarter" placeholder="Ej. 5º, 10" value={quarter} onChange={e => setQuarter(e.target.value)} className="mt-1 w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" />
+                    </div>
                 </div>
                 <div>
                     <label htmlFor="subject" className="block text-sm font-medium">Materia</label>
@@ -460,7 +469,14 @@ const GroupManagement: React.FC = () => {
                                    <div className="flex justify-between items-start">
                                        <div className="flex items-start gap-3">
                                             <div>
-                                               <p className="font-semibold">{group.name}</p>
+                                               <div className="flex items-center gap-2">
+                                                   <p className="font-semibold">{group.name}</p>
+                                                   {group.quarter && (
+                                                       <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${isSelected ? 'bg-white/20 text-white' : 'bg-white text-text-secondary border border-border-color'}`}>
+                                                           {group.quarter}
+                                                       </span>
+                                                   )}
+                                               </div>
                                                <p className={`text-sm ${isSelected ? 'opacity-90' : 'text-text-secondary'}`}>{group.subject}</p>
                                            </div>
                                        </div>

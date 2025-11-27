@@ -1,3 +1,4 @@
+
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
 import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
 import { GROUP_COLORS } from '../constants';
@@ -49,6 +50,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
                 ...group,
                 classDays: group.classDays || [],
                 color: group.color || GROUP_COLORS[index % GROUP_COLORS.length].name,
+                quarter: group.quarter || '', // Migrate quarter field
                 // Migration logic for evaluation types
                 evaluationTypes: hasEvalTypes ? group.evaluationTypes : {
                     partial1: [{ id: uuidv4(), name: 'General', weight: 100 }],
