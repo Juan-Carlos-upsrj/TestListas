@@ -1,3 +1,4 @@
+
 import React, { useContext, useMemo, useState } from 'react';
 import { Responsive, WidthProvider } from 'react-grid-layout';
 import { AppContext } from '../context/AppContext';
@@ -7,9 +8,10 @@ import BirthdayCelebration from './BirthdayCelebration';
 import { PROFESSOR_BIRTHDAYS, GROUP_COLORS } from '../constants';
 import Modal from './common/Modal';
 import AttendanceTaker from './AttendanceTaker';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { syncAttendanceData, syncScheduleData } from '../services/syncService';
 import Button from './common/Button';
+import SemesterTransitionModal from './SemesterTransitionModal';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -269,9 +271,15 @@ const Dashboard: React.FC = () => {
     const { state, dispatch } = useContext(AppContext);
     const [isTakerOpen, setTakerOpen] = useState(false);
     const [attendanceGroup, setAttendanceGroup] = useState<Group | null>(null);
+    const [isTransitionOpen, setTransitionOpen] = useState(false);
 
     const [today, setToday] = useState(new Date());
     const [birthdayPerson, setBirthdayPerson] = useState<string | null>(null);
+
+    const isSemesterOver = useMemo(() => {
+        const end = new Date(state.settings.semesterEnd);
+        return today > end;
+    }, [today, state.settings.semesterEnd]);
 
     React.useEffect(() => {
         const timer = setInterval(() => setToday(new Date()), 60000); // Update every minute
@@ -348,6 +356,28 @@ const Dashboard: React.FC = () => {
         <div>
             <BirthdayCelebration name={birthdayPerson || ''} show={!!birthdayPerson} />
             
+            <AnimatePresence>
+                {isSemesterOver && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="bg-indigo-600 text-white p-3 rounded-lg shadow-md mb-4 flex items-center justify-between"
+                    >
+                        <div className="flex items-center gap-3">
+                            <Icon name="info" className="w-6 h-6"/>
+                            <div>
+                                <p className="font-bold">El semestre ha finalizado.</p>
+                                <p className="text-xs opacity-90">¿Deseas preparar tus grupos para el siguiente ciclo?</p>
+                            </div>
+                        </div>
+                        <Button onClick={() => setTransitionOpen(true)} size="sm" variant="secondary" className="!bg-white !text-indigo-600 whitespace-nowrap">
+                            Cerrar Ciclo
+                        </Button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            
             <ResponsiveGridLayout
                 layouts={layouts}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
@@ -385,6 +415,8 @@ const Dashboard: React.FC = () => {
                     />
                 </Modal>
              )}
+             
+             <SemesterTransitionModal isOpen={isTransitionOpen} onClose={() => setTransitionOpen(false)} />
         </div>
     );
 };

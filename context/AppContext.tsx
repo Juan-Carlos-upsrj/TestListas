@@ -1,6 +1,6 @@
 
 import React, { createContext, useReducer, useEffect, ReactNode, Dispatch, useState } from 'react';
-import { AppState, AppAction, AttendanceStatus, Group, Evaluation } from '../types';
+import { AppState, AppAction, AttendanceStatus, Group, Evaluation, Archive } from '../types';
 import { GROUP_COLORS } from '../constants';
 import { getState, saveState } from '../services/dbService';
 import { fetchGoogleCalendarEvents } from '../services/calendarService';
@@ -36,6 +36,7 @@ const defaultState: AppState = {
   activeView: 'dashboard',
   selectedGroupId: null,
   toasts: [],
+  archives: [],
 };
 
 const appReducer = (state: AppState, action: AppAction): AppState => {
@@ -94,6 +95,7 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             activeView: 'dashboard',
             selectedGroupId: loadedState.selectedGroupId ?? null,
             toasts: [],
+            archives: Array.isArray(loadedState.archives) ? loadedState.archives : [],
         };
         return newState;
     }
@@ -341,6 +343,43 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
         return { ...state, calendarEvents: state.calendarEvents.filter(e => e.id !== action.payload) };
     case 'SET_GCAL_EVENTS':
         return { ...state, gcalEvents: action.payload };
+    case 'ARCHIVE_CURRENT_STATE': {
+        const newArchive: Archive = {
+            id: uuidv4(),
+            name: action.payload,
+            dateArchived: new Date().toISOString(),
+            data: JSON.parse(JSON.stringify(state)) // Deep copy current state
+        };
+        return { ...state, archives: [...state.archives, newArchive] };
+    }
+    case 'RESTORE_ARCHIVE': {
+        const archive = state.archives.find(a => a.id === action.payload);
+        if (!archive) return state;
+        // Restore state but keep current settings like theme if desired,
+        // or just full restore. Let's do full restore but keep the archives list itself.
+        // Also preserve current theme preference from current settings maybe?
+        // For simplicity: restore everything except the archives list (so we don't lose other backups)
+        return {
+            ...archive.data,
+            archives: state.archives, // Keep current archives list
+            toasts: [], // Clear toasts
+        };
+    }
+    case 'DELETE_ARCHIVE':
+        return { ...state, archives: state.archives.filter(a => a.id !== action.payload) };
+    case 'TRANSITION_SEMESTER': {
+        const { newGroups, newSettings } = action.payload;
+        return {
+            ...state,
+            groups: newGroups,
+            settings: { ...state.settings, ...newSettings },
+            attendance: {}, // Wipe attendance
+            grades: {}, // Wipe grades
+            evaluations: {}, // Wipe evaluations (specific assignments), keep types in groups
+            calendarEvents: state.calendarEvents.filter(e => e.type !== 'class' && e.type !== 'evaluation'), // Keep custom/gcal, remove class specific
+            selectedGroupId: null,
+        };
+    }
     default:
       return state;
   }

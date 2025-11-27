@@ -1,3 +1,4 @@
+
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { AppContext } from '../context/AppContext';
 import { Settings } from '../types';
@@ -7,6 +8,7 @@ import { GROUP_COLORS } from '../constants';
 import { exportBackup, importBackup } from '../services/backupService';
 import Icon from './icons/Icon';
 import { syncAttendanceData, syncScheduleData } from '../services/syncService';
+import SemesterTransitionModal from './SemesterTransitionModal';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -19,6 +21,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [updateStatus, setUpdateStatus] = useState<string>('');
     const [isChecking, setIsChecking] = useState(false);
+    const [isTransitionOpen, setTransitionOpen] = useState(false);
 
     useEffect(() => {
         setSettings(state.settings);
@@ -104,6 +107,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         }
     };
     
+    const handleRestoreArchive = (archiveId: string) => {
+        if(window.confirm('¿Restaurar este ciclo antiguo? Perderás los datos actuales no guardados si no has hecho un respaldo.')) {
+            dispatch({ type: 'RESTORE_ARCHIVE', payload: archiveId });
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'Ciclo restaurado.', type: 'success' } });
+            onClose();
+        }
+    };
+
+    const handleDeleteArchive = (archiveId: string) => {
+        if(window.confirm('¿Eliminar este respaldo permanentemente?')) {
+            dispatch({ type: 'DELETE_ARCHIVE', payload: archiveId });
+        }
+    };
 
     return (
         <>
@@ -139,7 +155,33 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                                 <input type="date" name="semesterEnd" value={settings.semesterEnd} onChange={handleChange} className="mt-1 w-full p-2 border border-border-color rounded-md bg-surface focus:ring-2 focus:ring-primary" />
                             </div>
                         </div>
+                        <div className="mt-4 pt-3 border-t border-border-color">
+                            <Button onClick={() => setTransitionOpen(true)} className="w-full justify-center bg-indigo-600 hover:bg-indigo-700 text-white">
+                                <Icon name="users" className="w-4 h-4"/> Asistente de Cierre de Ciclo
+                            </Button>
+                            <p className="text-xs text-text-secondary mt-2 text-center">Usa esto al finalizar el cuatrimestre para promover grupos y limpiar datos.</p>
+                        </div>
                     </fieldset>
+                    
+                    {state.archives.length > 0 && (
+                        <fieldset className="border p-4 rounded-lg border-border-color bg-slate-50 dark:bg-slate-800/50">
+                            <legend className="px-2 font-semibold text-indigo-600 dark:text-indigo-400">Historial de Ciclos</legend>
+                            <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {state.archives.map(archive => (
+                                    <div key={archive.id} className="flex items-center justify-between p-2 bg-surface rounded border border-border-color text-sm">
+                                        <div>
+                                            <p className="font-semibold">{archive.name}</p>
+                                            <p className="text-xs text-text-secondary">{new Date(archive.dateArchived).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => handleRestoreArchive(archive.id)} className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded hover:bg-indigo-200 text-xs font-medium">Cargar</button>
+                                            <button onClick={() => handleDeleteArchive(archive.id)} className="p-1 text-red-500 hover:bg-red-100 rounded"><Icon name="trash-2" className="w-4 h-4"/></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </fieldset>
+                    )}
                     
                      <fieldset className="border p-4 rounded-lg border-border-color">
                         <legend className="px-2 font-semibold">Información del Docente</legend>
@@ -270,6 +312,8 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                     <Button onClick={handleSave}>Guardar Cambios</Button>
                 </div>
             </Modal>
+            
+            <SemesterTransitionModal isOpen={isTransitionOpen} onClose={() => setTransitionOpen(false)} />
         </>
     );
 };

@@ -84,6 +84,13 @@ export interface Toast {
     type: 'success' | 'error' | 'info';
 }
 
+export interface Archive {
+    id: string;
+    name: string;
+    dateArchived: string;
+    data: AppState;
+}
+
 export interface AppState {
   groups: Group[];
   attendance: {
@@ -109,6 +116,7 @@ export interface AppState {
   activeView: ActiveView;
   selectedGroupId: string | null;
   toasts: Toast[];
+  archives: Archive[];
 }
 
 export type AppAction =
@@ -134,7 +142,11 @@ export type AppAction =
   | { type: 'REMOVE_TOAST'; payload: number }
   | { type: 'SAVE_EVENT'; payload: CalendarEvent }
   | { type: 'DELETE_EVENT'; payload: string }
-  | { type: 'SET_GCAL_EVENTS'; payload: CalendarEvent[] };
+  | { type: 'SET_GCAL_EVENTS'; payload: CalendarEvent[] }
+  | { type: 'ARCHIVE_CURRENT_STATE'; payload: string } // payload: name of archive
+  | { type: 'RESTORE_ARCHIVE'; payload: string } // payload: archiveId
+  | { type: 'DELETE_ARCHIVE'; payload: string } // payload: archiveId
+  | { type: 'TRANSITION_SEMESTER'; payload: { newGroups: Group[]; newSettings: Partial<Settings> } };
 
 export interface Professor {
     name: string;
