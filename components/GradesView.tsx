@@ -5,8 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import Icon from './icons/Icon';
-import { getClassDates } from '../services/dateUtils';
 import { GroupForm } from './GroupManagement';
+import { calculatePartialAverage, getGradeColor, calculateAttendancePercentage } from '../services/gradeCalculation';
+import GradeImageModal from './GradeImageModal';
 
 const EvaluationForm: React.FC<{
     evaluation?: Evaluation;
@@ -18,13 +19,10 @@ const EvaluationForm: React.FC<{
     const [maxScore, setMaxScore] = useState(evaluation?.maxScore || 10);
     const [partial, setPartial] = useState<1 | 2>(evaluation?.partial || 1);
     
-    // Filter types that are NOT attendance, as attendance is calculated automatically
     const availableTypes = (partial === 1 ? group.evaluationTypes.partial1 : group.evaluationTypes.partial2).filter(t => !t.isAttendance);
-    
     const [typeId, setTypeId] = useState(evaluation?.typeId || availableTypes[0]?.id || '');
 
     useEffect(() => {
-        // If the partial changes, reset the typeId to the first available type of the new partial
         const newAvailableTypes = (partial === 1 ? group.evaluationTypes.partial1 : group.evaluationTypes.partial2).filter(t => !t.isAttendance);
         if (!newAvailableTypes.some(t => t.id === typeId)) {
             setTypeId(newAvailableTypes[0]?.id || '');
@@ -83,6 +81,7 @@ const GradesView: React.FC = () => {
 
     const [isEvalModalOpen, setEvalModalOpen] = useState(false);
     const [isGroupConfigOpen, setGroupConfigOpen] = useState(false);
+    const [isImageModalOpen, setImageModalOpen] = useState(false);
     const [editingEvaluation, setEditingEvaluation] = useState<Evaluation | undefined>(undefined);
 
     const setSelectedGroupId = useCallback((id: string | null) => {
@@ -96,7 +95,6 @@ const GradesView: React.FC = () => {
     const p1Evaluations = useMemo(() => groupEvaluations.filter(e => e.partial === 1), [groupEvaluations]);
     const p2Evaluations = useMemo(() => groupEvaluations.filter(e => e.partial === 2), [groupEvaluations]);
 
-    // Find attendance evaluation types
     const p1AttendanceType = useMemo(() => group?.evaluationTypes.partial1.find(t => t.isAttendance), [group]);
     const p2AttendanceType = useMemo(() => group?.evaluationTypes.partial2.find(t => t.isAttendance), [group]);
 
@@ -123,11 +121,9 @@ const GradesView: React.FC = () => {
 
     const handleDeleteEvaluation = (evaluationId: string) => {
         if (!selectedGroupId) return;
-        
         const evaluation = groupEvaluations.find(e => e.id === evaluationId);
         if (!evaluation) return;
         
-        // Contar cuántas calificaciones existen para esta evaluación
         const gradesCount = Object.values(groupGrades).filter(studentGrades => 
             studentGrades[evaluationId] !== null && 
             studentGrades[evaluationId] !== undefined
@@ -139,10 +135,7 @@ const GradesView: React.FC = () => {
         
         if (window.confirm(message)) {
             dispatch({ type: 'DELETE_EVALUATION', payload: { groupId: selectedGroupId, evaluationId } });
-            dispatch({ type: 'ADD_TOAST', payload: { 
-                message: `Evaluación '${evaluation.name}' eliminada.`, 
-                type: 'error' 
-            }});
+            dispatch({ type: 'ADD_TOAST', payload: { message: `Evaluación '${evaluation.name}' eliminada.`, type: 'error' }});
         }
     };
 
@@ -158,94 +151,6 @@ const GradesView: React.FC = () => {
         }
     };
 
-    // Calculate Attendance Percentage for a specific partial
-    const getAttendancePercentage = useCallback((studentId: string, partial: 1 | 2) => {
-        if (!group) return 0;
-        
-        // Determine date range for the partial
-        const start = settings.semesterStart;
-        const end = partial === 1 ? settings.firstPartialEnd : settings.semesterEnd;
-        const partialStart = partial === 1 ? start : new Date(new Date(settings.firstPartialEnd).setDate(new Date(settings.firstPartialEnd).getDate() + 1)).toISOString().split('T')[0]; // Partial 2 starts day after partial 1 ends
-        
-        const dates = getClassDates(partialStart, end, group.classDays);
-        if (dates.length === 0) return 100; // Default to 100 if no classes defined yet
-
-        const studentAttendance = attendance[group.id]?.[studentId] || {};
-        let presentCount = 0;
-        
-        dates.forEach(date => {
-            const status = studentAttendance[date];
-            if (status === AttendanceStatus.Present || 
-                status === AttendanceStatus.Late || 
-                status === AttendanceStatus.Justified || 
-                status === AttendanceStatus.Exchange) {
-                presentCount++;
-            }
-        });
-
-        return (presentCount / dates.length) * 100;
-    }, [group, settings, attendance]);
-
-    const calculatePartialAverage = useCallback((studentId: string, partial: 1 | 2) => {
-        if (!group) return { average: null, color: '' };
-        
-        const types: EvaluationType[] = partial === 1 ? group.evaluationTypes.partial1 : group.evaluationTypes.partial2;
-        const evaluationsForPartial = partial === 1 ? p1Evaluations : p2Evaluations;
-        const studentGrades = groupGrades[studentId] || {};
-
-        let finalPartialScore = 0;
-        let totalWeightOfGradedItems = 0;
-
-        types.forEach(type => {
-            if (type.isAttendance) {
-                // Calculate based on attendance records
-                const attendancePct = getAttendancePercentage(studentId, partial);
-                // Convert percentage (0-100) to score contribution based on weight
-                // e.g., 90% attendance with 20% weight = 0.9 * 20 = 18 pts towards final 100
-                // But here we are calculating a 0-10 scale average usually?
-                // Let's stick to normalized 0-1 ratio for calculation then scale to 10 at the end
-                finalPartialScore += (attendancePct / 100) * type.weight;
-                totalWeightOfGradedItems += type.weight;
-            } else {
-                // Calculate based on manual evaluations
-                const evalsOfType = evaluationsForPartial.filter(ev => ev.typeId === type.id);
-                if (evalsOfType.length === 0) return; // No evaluations of this type created yet
-
-                let totalScoreForType = 0;
-                let maxScoreForType = 0;
-                let hasGradesForType = false;
-
-                evalsOfType.forEach(ev => {
-                    const grade = studentGrades[ev.id];
-                    if (grade !== null && grade !== undefined) {
-                        totalScoreForType += grade;
-                        maxScoreForType += ev.maxScore;
-                        hasGradesForType = true;
-                    }
-                });
-
-                if (hasGradesForType && maxScoreForType > 0) {
-                    const typePercentage = totalScoreForType / maxScoreForType; // e.g., 0.85
-                    finalPartialScore += typePercentage * type.weight;
-                    totalWeightOfGradedItems += type.weight;
-                }
-            }
-        });
-
-        if (totalWeightOfGradedItems === 0) return { average: null, color: '' };
-
-        // finalPartialScore is sum of (percentage * weight). E.g., 0.85 * 50 + 0.90 * 50 = 42.5 + 45 = 87.5 (out of 100)
-        // We want to display it on a 0-10 scale usually? Or 0-100?
-        // The previous code did: const weightedAverage = (finalPartialScore / totalWeightOfGradedItems) * 10;
-        
-        // If finalPartialScore is accumulated as (ratio * weight), then max value is 100.
-        // So (87.5 / 100) * 10 = 8.75.
-        const weightedAverage = (finalPartialScore / totalWeightOfGradedItems) * 10;
-        const color = weightedAverage >= 7 ? 'text-accent-green-dark' : weightedAverage >= 6 ? 'text-accent-yellow-dark' : 'text-accent-red';
-
-        return { average: weightedAverage, color };
-    }, [group, p1Evaluations, p2Evaluations, groupGrades, getAttendancePercentage]);
-    
     return (
         <div>
             <div className="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
@@ -267,6 +172,9 @@ const GradesView: React.FC = () => {
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-3 gap-3">
                         <h2 className="text-xl font-bold">Evaluaciones del Grupo</h2>
                         <div className="flex gap-3 w-full sm:w-auto">
+                            <Button variant="secondary" onClick={() => setImageModalOpen(true)} className="flex-1 sm:flex-initial" title="Captura de Calificaciones">
+                                <Icon name="camera" className="w-4 h-4"/>
+                            </Button>
                             <Button variant="secondary" onClick={() => setGroupConfigOpen(true)} className="flex-1 sm:flex-initial">
                                 <Icon name="settings" className="w-4 h-4"/> Configurar Grupo
                             </Button>
@@ -292,7 +200,6 @@ const GradesView: React.FC = () => {
                         </div>
                     ) : <p className="text-text-secondary">Aún no has creado evaluaciones para este grupo.</p>}
                     
-                    {/* Show Attendance Weights if configured */}
                     {(p1AttendanceType || p2AttendanceType) && (
                         <div className="mt-4 pt-3 border-t border-border-color">
                             <p className="text-sm font-semibold text-text-secondary mb-2">Criterios de Asistencia Automática:</p>
@@ -317,23 +224,19 @@ const GradesView: React.FC = () => {
                         <thead>
                             <tr>
                                 <th rowSpan={2} className="sticky left-0 bg-surface p-2 text-left font-semibold z-10 border-b-2 border-border-color">Alumno</th>
-                                {/* Partial 1 Header */}
                                 {(p1Evaluations.length > 0 || p1AttendanceType) && (
                                     <th colSpan={p1Evaluations.length + (p1AttendanceType ? 1 : 0) + 1} className="p-2 font-semibold text-center text-lg border-b-2 border-border-color">Primer Parcial</th>
                                 )}
-                                {/* Partial 2 Header */}
                                 {(p2Evaluations.length > 0 || p2AttendanceType) && (
                                     <th colSpan={p2Evaluations.length + (p2AttendanceType ? 1 : 0) + 1} className="p-2 font-semibold text-center text-lg border-b-2 border-border-color">Segundo Parcial</th>
                                 )}
                                 <th rowSpan={2} className="p-2 font-semibold text-center text-sm border-b-2 border-border-color bg-surface-secondary min-w-[100px]">Promedio Final</th>
                             </tr>
                             <tr className="border-b border-border-color">
-                                {/* Partial 1 Columns */}
                                 {p1Evaluations.map(ev => <th key={ev.id} className="p-2 font-semibold text-center text-sm min-w-[100px]">{ev.name} <span className="font-normal text-xs">({ev.maxScore}pts)</span></th>)}
                                 {p1AttendanceType && <th className="p-2 font-semibold text-center text-sm min-w-[100px] text-emerald-600">Asistencia <span className="font-normal text-xs">({p1AttendanceType.weight}%)</span></th>}
                                 {(p1Evaluations.length > 0 || p1AttendanceType) && <th className="p-2 font-semibold text-center text-sm bg-surface-secondary/80 min-w-[100px]">Prom. P1</th>}
 
-                                {/* Partial 2 Columns */}
                                 {p2Evaluations.map(ev => <th key={ev.id} className="p-2 font-semibold text-center text-sm min-w-[100px]">{ev.name} <span className="font-normal text-xs">({ev.maxScore}pts)</span></th>)}
                                 {p2AttendanceType && <th className="p-2 font-semibold text-center text-sm min-w-[100px] text-emerald-600">Asistencia <span className="font-normal text-xs">({p2AttendanceType.weight}%)</span></th>}
                                 {(p2Evaluations.length > 0 || p2AttendanceType) && <th className="p-2 font-semibold text-center text-sm bg-surface-secondary/80 min-w-[100px]">Prom. P2</th>}
@@ -341,11 +244,13 @@ const GradesView: React.FC = () => {
                         </thead>
                         <tbody>
                             {group.students.map(student => {
-                                const { average: p1Avg, color: p1Color } = calculatePartialAverage(student.id, 1);
-                                const { average: p2Avg, color: p2Color } = calculatePartialAverage(student.id, 2);
+                                const p1Avg = calculatePartialAverage(student.id, group, 1, evaluations[group.id] || [], groupGrades[student.id] || {}, settings, attendance[group.id]?.[student.id] || {});
+                                const p2Avg = calculatePartialAverage(student.id, group, 2, evaluations[group.id] || [], groupGrades[student.id] || {}, settings, attendance[group.id]?.[student.id] || {});
+                                const p1Color = getGradeColor(p1Avg);
+                                const p2Color = getGradeColor(p2Avg);
                                 
-                                const p1AttendancePct = p1AttendanceType ? getAttendancePercentage(student.id, 1) : 0;
-                                const p2AttendancePct = p2AttendanceType ? getAttendancePercentage(student.id, 2) : 0;
+                                const p1AttendancePct = p1AttendanceType ? calculateAttendancePercentage(student.id, group, 1, settings, attendance[group.id]?.[student.id] || {}) : 0;
+                                const p2AttendancePct = p2AttendanceType ? calculateAttendancePercentage(student.id, group, 2, settings, attendance[group.id]?.[student.id] || {}) : 0;
 
                                 let finalAvg: number | null = null;
                                 if (p1Avg !== null && p2Avg !== null) {
@@ -355,13 +260,12 @@ const GradesView: React.FC = () => {
                                 } else if (p2Avg !== null) {
                                     finalAvg = p2Avg;
                                 }
-                                const finalColor = finalAvg === null ? '' : finalAvg >= 7 ? 'text-accent-green-dark' : finalAvg >= 6 ? 'text-accent-yellow-dark' : 'text-accent-red';
+                                const finalColor = getGradeColor(finalAvg);
 
                                 return (
                                     <tr key={student.id} className="border-b border-border-color/70 hover:bg-surface-secondary/40">
                                         <td className="sticky left-0 bg-surface p-2 font-medium z-10 whitespace-nowrap">{student.name}</td>
                                         
-                                        {/* Partial 1 Data */}
                                         {p1Evaluations.map(ev => (
                                             <td key={ev.id} className="p-1 text-center">
                                                 <input type="number" value={groupGrades[student.id]?.[ev.id] ?? ''} onChange={(e) => handleGradeChange(student.id, ev.id, e.target.value)}
@@ -377,7 +281,6 @@ const GradesView: React.FC = () => {
                                         )}
                                         {(p1Evaluations.length > 0 || p1AttendanceType) && <td className={`p-2 text-center font-bold text-lg bg-surface-secondary/80 ${p1Color}`}>{p1Avg?.toFixed(1) || '-'}</td>}
 
-                                        {/* Partial 2 Data */}
                                         {p2Evaluations.map(ev => (
                                             <td key={ev.id} className="p-1 text-center">
                                                 <input type="number" value={groupGrades[student.id]?.[ev.id] ?? ''} onChange={(e) => handleGradeChange(student.id, ev.id, e.target.value)}
@@ -393,7 +296,6 @@ const GradesView: React.FC = () => {
                                         )}
                                         {(p2Evaluations.length > 0 || p2AttendanceType) && <td className={`p-2 text-center font-bold text-lg bg-surface-secondary/80 ${p2Color}`}>{p2Avg?.toFixed(1) || '-'}</td>}
 
-                                        {/* Final Average */}
                                         <td className={`p-2 text-center font-bold text-xl bg-surface-secondary ${finalColor}`}>{finalAvg?.toFixed(1) || '-'}</td>
                                     </tr>
                                 );
@@ -416,6 +318,15 @@ const GradesView: React.FC = () => {
             {group && <Modal isOpen={isGroupConfigOpen} onClose={() => setGroupConfigOpen(false)} title="Configuración del Grupo" size="xl">
                 <GroupForm group={group} existingGroups={groups} onSave={handleUpdateGroup} onCancel={() => setGroupConfigOpen(false)} />
             </Modal>}
+            {group && <GradeImageModal 
+                isOpen={isImageModalOpen} 
+                onClose={() => setImageModalOpen(false)} 
+                group={group}
+                evaluations={groupEvaluations}
+                grades={groupGrades}
+                attendance={attendance[group.id] || {}}
+                settings={settings}
+            />}
         </div>
     );
 };
