@@ -1,5 +1,6 @@
 import React, { useState, useRef, useContext } from 'react';
 import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Modal from './common/Modal';
 import Button from './common/Button';
 import Icon from './icons/Icon';
@@ -56,6 +57,63 @@ const GradeImageModal: React.FC<GradeImageModalProps> = ({
         }
     };
 
+    const handleDownloadPDF = async () => {
+        if (!tableRef.current) return;
+        dispatch({ type: 'ADD_TOAST', payload: { message: 'Generando PDF, por favor espera...', type: 'info' } });
+    
+        try {
+            const canvas = await html2canvas(tableRef.current, { scale: 2, backgroundColor: '#ffffff' });
+            
+            const orientation = canvas.width > canvas.height ? 'l' : 'p';
+            const pdf = new jsPDF({
+                orientation,
+                unit: 'pt',
+                format: 'a4',
+            });
+    
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+    
+            const ratio = pdfWidth / canvasWidth;
+            const totalPdfHeight = canvasHeight * ratio;
+    
+            let position = 0;
+            let pageCount = 0;
+    
+            while (position < totalPdfHeight) {
+                if (pageCount > 0) {
+                    pdf.addPage();
+                }
+    
+                const sliceHeightOnCanvas = pdfHeight / ratio;
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = canvasWidth;
+                pageCanvas.height = sliceHeightOnCanvas;
+                const pageCtx = pageCanvas.getContext('2d');
+                
+                if (!pageCtx) continue;
+    
+                pageCtx.drawImage(canvas, 0, position / ratio, canvasWidth, sliceHeightOnCanvas, 0, 0, canvasWidth, sliceHeightOnCanvas);
+                const pageDataUrl = pageCanvas.toDataURL('image/png');
+    
+                pdf.addImage(pageDataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+                
+                position += pdfHeight;
+                pageCount++;
+            }
+            
+            pdf.save(`calificaciones_${group.name}_${viewMode}.pdf`);
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'PDF descargado con éxito.', type: 'success' } });
+    
+        } catch (err) {
+            console.error(err);
+            dispatch({ type: 'ADD_TOAST', payload: { message: 'Error al generar el PDF.', type: 'error' } });
+        }
+    };
+
     const partialEvaluations = evaluations.filter(e => e.partial === (viewMode === 'p1' ? 1 : 2));
     const p1Attendance = group.evaluationTypes.partial1.find(t => t.isAttendance);
     const p2Attendance = group.evaluationTypes.partial2.find(t => t.isAttendance);
@@ -86,10 +144,13 @@ const GradeImageModal: React.FC<GradeImageModalProps> = ({
                     </div>
                     <div className="flex gap-2">
                         <Button size="sm" variant="secondary" onClick={handleCopy}>
-                            <Icon name="copy" className="w-4 h-4"/> Copiar
+                            <Icon name="copy" className="w-4 h-4"/> Copiar Imagen
                         </Button>
-                        <Button size="sm" onClick={handleDownload}>
-                            <Icon name="download-cloud" className="w-4 h-4"/> Descargar
+                        <Button size="sm" variant="secondary" onClick={handleDownload}>
+                            <Icon name="download-cloud" className="w-4 h-4"/> Descargar PNG
+                        </Button>
+                        <Button size="sm" onClick={handleDownloadPDF}>
+                            <Icon name="download-cloud" className="w-4 h-4"/> Descargar PDF
                         </Button>
                     </div>
                 </div>
