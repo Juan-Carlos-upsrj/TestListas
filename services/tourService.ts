@@ -14,8 +14,8 @@ export const startTour = () => {
             {
                 element: '#sidebar-logo',
                 popover: {
-                    title: 'Bienvenido a Gestión IAEV',
-                    description: 'Esta es tu herramienta integral para el control académico. <br/><br/>Este recorrido te enseñará no solo dónde están las cosas, sino <strong>cómo sacarles el máximo provecho</strong> para ahorrar tiempo.',
+                    title: '🎓 Masterclass: Gestión IAEV',
+                    description: 'Bienvenido a tu nueva herramienta de control académico. <br/><br/>Este recorrido no solo te mostrará los botones, sino <strong>cómo usarlos estratégicamente</strong> para ahorrar horas de trabajo administrativo.<br/><br/><em>Toma unos minutos para leer los tips.</em>',
                     side: 'right',
                     align: 'start'
                 }
@@ -23,64 +23,56 @@ export const startTour = () => {
             {
                 element: '#sidebar-quick-groups',
                 popover: {
-                    title: 'Acceso Inmediato',
-                    description: 'Tus grupos aparecerán aquí como botones. <br/>Al hacer clic, la aplicación se "enfoca" en ese grupo, mostrando sus alumnos y datos en cualquier sección que visites (Asistencia, Calificaciones, etc).',
+                    title: '⚡ Navegación por Contexto',
+                    description: 'Estos botones son el corazón de la navegación. <br/><br/>Al seleccionar un grupo aquí, <strong>toda la aplicación se filtra</strong> para mostrar solo los datos de ese grupo (Asistencia, Calificaciones, Reportes). <br/><br/>Úsalos para cambiar rápidamente entre clases sin perderte.',
                     side: 'right'
                 }
             },
             {
                 element: '#dashboard-attendance-widget',
                 popover: {
-                    title: 'Pase de Lista Rápido (Diario)',
-                    description: 'Esta es tu herramienta de batalla diaria. <br/>Solo aparecerán aquí los grupos que te tocan <strong>hoy</strong> según tu horario. Úsalo para tomar asistencia al vuelo sin entrar a menús complejos.',
+                    title: '📅 Pase de Lista Diario',
+                    description: 'Este widget se actualiza automáticamente según el día de la semana. <br/><br/><strong>Tip Pro:</strong> Úsalo al iniciar la clase para tomar asistencia en segundos. Si necesitas editar una fecha anterior, ve a la sección completa de "Asistencia" en el menú.',
                     side: 'right'
-                }
-            },
-            {
-                element: '#dashboard-combined-overview',
-                popover: {
-                    title: 'Termómetro de Asistencia',
-                    description: 'Este gráfico se llena en tiempo real. Te permite ver de un vistazo qué porcentaje de tus alumnos ha asistido a las clases del día.',
-                    side: 'left'
                 }
             },
             {
                 element: '#nav-item-groups',
                 popover: {
-                    title: 'Gestión de Grupos',
-                    description: 'Aquí es donde nace todo. <br/><ul><li>Crea grupos y asigna colores.</li><li>Importa listas de alumnos desde Excel/Texto.</li><li><strong>Tip:</strong> Usa el botón de "Duplicar" si das la misma materia a otro grupo.</li></ul>',
+                    title: '👥 Gestión Inteligente de Grupos',
+                    description: 'Aquí configuras tus materias. <br/><br/><strong>Funciones Avanzadas:</strong><br/>🔹 <strong>Duplicar Grupo:</strong> Si das la misma materia a dos grupos (A y B) o el mismo grupo en otra materia, usa el botón de "Copiar" para clonar la lista de alumnos instantáneamente.<br/>🔹 <strong>Importación:</strong> Pega listas desde Excel directamente.',
                     side: 'right'
                 }
             },
             {
                 element: '#nav-item-attendance',
                 popover: {
-                    title: 'Matriz de Asistencia Avanzada',
-                    description: 'Aquí verás la tabla completa del semestre. <br/><br/><strong>Funciones Clave:</strong><br/>1. <strong>Importar con IA:</strong> Sube una foto de tu lista física y la app la digitalizará.<br/>2. <strong>Relleno Rápido:</strong> Pon asistencia a todos en un rango de fechas.<br/>3. <strong>Atajos:</strong> Usa (P), (A), (R) y las flechas del teclado.',
+                    title: '✅ Matriz de Asistencia & IA',
+                    description: 'La herramienta más potente. <br/><br/>🤖 <strong>Importar con IA:</strong> ¿Tienes una lista en papel? Tómale una foto, súbela aquí y la IA digitalizará la asistencia por ti.<br/><br/>⌨️ <strong>Atajos de Teclado:</strong><br/>- <strong>P</strong>: Presente<br/>- <strong>A</strong>: Ausente<br/>- <strong>R</strong>: Retardo<br/>- <strong>Flechas</strong>: Moverse por la tabla.',
                     side: 'right'
                 }
             },
             {
                 element: '#nav-item-grades',
                 popover: {
-                    title: 'Libreta de Calificaciones',
-                    description: 'Olvídate de calcular promedios a mano.<br/><br/>Configura los criterios (ej. 40% Examen, 60% Tareas). Puedes activar una opción para que el <strong>% de Asistencia</strong> se convierta automáticamente en puntos de calificación.',
+                    title: '📊 Calificaciones Automatizadas',
+                    description: 'Configura tus criterios de evaluación (ej. 40% Examen, 60% Proyecto).<br/><br/><strong>Tip Pro:</strong> Al configurar el grupo, puedes añadir un criterio de "Asistencia Automática". El sistema calculará el % de asistencia y lo sumará a la calificación final sin que tengas que hacer nada.',
                     side: 'right'
                 }
             },
             {
                 element: '#nav-item-reports',
                 popover: {
-                    title: 'Reportes Ejecutivos',
-                    description: 'Genera PDFs profesionales con gráficas de rendimiento mensual y desglose por alumno, listos para entregar a coordinación. También puedes exportar a Excel (CSV).',
+                    title: '📄 Reportes Ejecutivos',
+                    description: 'Genera PDFs listos para entregar a coordinación o enviar a alumnos.<br/><br/>Incluye gráficas de rendimiento mensual y un desglose detallado. También puedes exportar a Excel (CSV) si necesitas manipular los datos manualmente.',
                     side: 'right'
                 }
             },
             {
                 element: '#sidebar-settings',
                 popover: {
-                    title: 'Configuración y Ciclo de Vida',
-                    description: 'Define aquí las fechas de inicio/fin de semestre y conecta tu Google Calendar.<br/><br/><strong>⚠️ Al finalizar el Cuatri:</strong> Busca aquí el botón <strong>"Asistente de Cierre de Ciclo"</strong>. Te ayudará a respaldar todo, promover grupos al siguiente nivel y limpiar los datos antiguos automáticamente.',
+                    title: '⚙️ Ciclo de Vida del Semestre',
+                    description: 'Aquí configuras las fechas de parciales.<br/><br/>🚀 <strong>Asistente de Cierre de Ciclo:</strong><br/>Al terminar el cuatrimestre, busca aquí el botón para "Cerrar Ciclo". El sistema:<br/>1. Creará un respaldo completo.<br/>2. Promoverá los grupos al siguiente nivel (ej. de 4º a 5º).<br/>3. Limpiará las asistencias viejas para empezar de nuevo.',
                     side: 'right',
                     align: 'end'
                 }
