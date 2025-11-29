@@ -7,7 +7,6 @@ export const getGradeColor = (grade: number | null): string => {
 };
 
 export const calculateAttendancePercentage = (
-    studentId: string,
     group: Group,
     partial: 1 | 2,
     settings: Settings,
@@ -62,7 +61,7 @@ export const calculatePartialAverage = (
         const weight = Number(type.weight) || 0;
         
         if (type.isAttendance) {
-            const attendancePct = calculateAttendancePercentage(studentId, group, partial, settings, studentAttendance);
+            const attendancePct = calculateAttendancePercentage(group, partial, settings, studentAttendance);
             finalPartialScore += (attendancePct / 100) * weight;
             totalWeightOfGradedItems += weight;
         } else {

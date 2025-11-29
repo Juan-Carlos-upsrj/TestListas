@@ -1,6 +1,6 @@
 import React, { useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { AppContext } from '../context/AppContext';
-import { Evaluation, Group, EvaluationType, AttendanceStatus } from '../types';
+import { Evaluation, Group } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import Modal from './common/Modal';
 import Button from './common/Button';
@@ -249,8 +249,8 @@ const GradesView: React.FC = () => {
                                 const p1Color = getGradeColor(p1Avg);
                                 const p2Color = getGradeColor(p2Avg);
                                 
-                                const p1AttendancePct = p1AttendanceType ? calculateAttendancePercentage(student.id, group, 1, settings, attendance[group.id]?.[student.id] || {}) : 0;
-                                const p2AttendancePct = p2AttendanceType ? calculateAttendancePercentage(student.id, group, 2, settings, attendance[group.id]?.[student.id] || {}) : 0;
+                                const p1AttendancePct = p1AttendanceType ? calculateAttendancePercentage(group, 1, settings, attendance[group.id]?.[student.id] || {}) : 0;
+                                const p2AttendancePct = p2AttendanceType ? calculateAttendancePercentage(group, 2, settings, attendance[group.id]?.[student.id] || {}) : 0;
 
                                 let finalAvg: number | null = null;
                                 if (p1Avg !== null && p2Avg !== null) {
