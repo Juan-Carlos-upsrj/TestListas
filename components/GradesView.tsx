@@ -244,8 +244,8 @@ const GradesView: React.FC = () => {
                         </thead>
                         <tbody>
                             {group.students.map(student => {
-                                const p1Avg = calculatePartialAverage(student.id, group, 1, evaluations[group.id] || [], groupGrades[student.id] || {}, settings, attendance[group.id]?.[student.id] || {});
-                                const p2Avg = calculatePartialAverage(student.id, group, 2, evaluations[group.id] || [], groupGrades[student.id] || {}, settings, attendance[group.id]?.[student.id] || {});
+                                const p1Avg = calculatePartialAverage(group, 1, evaluations[group.id] || [], groupGrades[student.id] || {}, settings, attendance[group.id]?.[student.id] || {});
+                                const p2Avg = calculatePartialAverage(group, 2, evaluations[group.id] || [], groupGrades[student.id] || {}, settings, attendance[group.id]?.[student.id] || {});
                                 const p1Color = getGradeColor(p1Avg);
                                 const p2Color = getGradeColor(p2Avg);
                                 

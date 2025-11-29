@@ -43,7 +43,6 @@ export const calculateAttendancePercentage = (
 };
 
 export const calculatePartialAverage = (
-    studentId: string,
     group: Group,
     partial: 1 | 2,
     groupEvaluations: Evaluation[],

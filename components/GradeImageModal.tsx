@@ -190,8 +190,8 @@ const GradeImageModal: React.FC<GradeImageModalProps> = ({
                             </thead>
                             <tbody>
                                 {group.students.map((student, idx) => {
-                                    const p1Avg = calculatePartialAverage(student.id, group, 1, evaluations, grades[student.id] || {}, settings, attendance[student.id] || {});
-                                    const p2Avg = calculatePartialAverage(student.id, group, 2, evaluations, grades[student.id] || {}, settings, attendance[student.id] || {});
+                                    const p1Avg = calculatePartialAverage(group, 1, evaluations, grades[student.id] || {}, settings, attendance[student.id] || {});
+                                    const p2Avg = calculatePartialAverage(group, 2, evaluations, grades[student.id] || {}, settings, attendance[student.id] || {});
                                     
                                     let finalAvg: number | null = null;
                                     if (p1Avg !== null && p2Avg !== null) finalAvg = (p1Avg + p2Avg) / 2;
