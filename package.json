@@ -68,7 +68,9 @@
       ]
     },
     "mac": {
-      "icon": "public/logo.png"
+      "icon": "public/logo.png",
+      "category": "public.app-category.education", // Opcional pero recomendado
+      "target": ["dmg"] // <--- Agrega esto para asegurar que salga el instalable
     },
     "linux": {
       "icon": "public/logo.png"
