@@ -69,8 +69,9 @@
     },
     "mac": {
       "icon": "public/logo.png",
-      "category": "public.app-category.education", // Opcional pero recomendado
-      "target": ["dmg"] // <--- Agrega esto para asegurar que salga el instalable
+      "category": "public.app-category.education",
+      "target": ["dmg"],
+      "artifactName": "Gestion-Academica-IAEV-Mac-${version}.${ext}"
     },
     "linux": {
       "icon": "public/logo.png"
